@@ -1,19 +1,21 @@
 #include <iostream>
 #include <unordered_map>
-#include <cmath>
 
 #include "FastaReader.hpp"
 #include "Kmer.hpp"
+#include "exampleHash.hpp"
+#include "Minimiser.hpp"
 
 using namespace std;
 
 int main(int argc, char*argv[]) {
-    if (argc < 3) {
-        cout << "Usage : ./superKmers file k" << endl;
+    if (argc < 4) {
+        cout << "Usage : ./superKmers file k m" << endl;
         return 0;
     }
 
     int k = atoi(argv[2]);
+    int m = atoi(argv[3]);
 
     FILE* fasta = fopen(argv[1], "r");
     unordered_map<char, int> encoding;
@@ -35,9 +37,14 @@ int main(int argc, char*argv[]) {
         current_value = ((current_value << 2) + encoding.at(c)) & filter;
         if (cmpt >= k) {
             Kmer kmer = Kmer(current_value, k);
-            cout << kmer.getValue() << endl;
-        };
+            Minimiser minimiser = Minimiser(alpha, kmer, m);
+            cout << kmer.toString() << " : " << kmer.getValue()
+            << " min in alphabetical order : " << minimiser.getValue() << " and is : " << minimiser.toString()
+            << endl;
+        }
     }
+
+    fclose(fasta);
 
     return 0;
 }

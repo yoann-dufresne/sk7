@@ -2,6 +2,7 @@
 #define SUPERKMERS_FASTAREADER_HPP
 
 
+
 class FastaReader {
 private:
     FILE* file;

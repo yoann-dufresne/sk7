@@ -2,6 +2,7 @@
 #define SK7_KMER_H
 
 #include <cinttypes>
+#include <string>
 
 class Kmer {
 
@@ -12,7 +13,9 @@ protected:
 public:
     uint64_t getValue();
     Kmer(uint64_t value, ushort size);
-    ~Kmer() {};
+    ~Kmer() = default;;
+    std::string toString();
+    ushort getSize();
 };
 
 

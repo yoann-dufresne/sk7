@@ -1,5 +1,5 @@
 # specify the C++ standard
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(CMAKE_BUILD_TYPE Debug)
@@ -13,15 +13,19 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -Ofast -fno-omit-frame-pointer")
 set(CMAKE_CXX_FLAGS_RELEASE "-Ofast")
 
 include_directories(${CMAKE_BINARY_DIR})
-include_directories(${CMAKE_BINARY_DIR}/kff-cpp-api/)
 
 set(SRCS
         FastaReader.cpp
         Kmer.cpp
-        main.cpp)
+        Minimiser.cpp
+        exampleHash.cpp
+        main.cpp
+        )
 
 set(HEADERS
         FastaReader.hpp
+        Minimiser.hpp
+        exampleHash.hpp
         Kmer.hpp
         )
 

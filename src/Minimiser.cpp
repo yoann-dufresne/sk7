@@ -1,27 +1,26 @@
-#include <string>
-#include <cmath>
-
-#include "Kmer.hpp"
-
+#include "Minimiser.hpp"
 
 /**
- * Consturctor from value
- * @param value the value of the wanted kmer
+ * Constructor for a minimiser
+ * @param hashFunction a function that gives an whole value to a kmer
+ * @param kmer the kmer to minimise
+ * @param size the wanted size of the minimiser
  */
-Kmer::Kmer(uint64_t value, ushort size) {
-    this->value = value;
+Minimiser ::Minimiser(uint64_t (*hashFunction)(Kmer, ushort), const Kmer& kmer, ushort size) {
+    this->hashFunction = hashFunction;
     this->size = size;
+    this->value = hashFunction(kmer, size);
 }
 
 /**
- * getter for the value
- * @return the value of the kmer
+ * getteur for the minimiser value
+ * @return the minimiser's value
  */
-uint64_t Kmer::getValue() {
+uint64_t Minimiser::getValue() const {
     return this->value;
 }
 
-std::string Kmer::toString() {
+std::string Minimiser::toString() const {
     uint64_t tmp = value;
     std::string res;
     ushort b = 4;
@@ -49,6 +48,3 @@ std::string Kmer::toString() {
     return res;
 }
 
-ushort Kmer::getSize() {
-    return this->size;
-}
