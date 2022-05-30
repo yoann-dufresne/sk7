@@ -1,10 +1,10 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "headers/FastaReader.hpp"
-#include "headers/Kmer.hpp"
-#include "headers/exampleHash.hpp"
-#include "headers/Minimiser.hpp"
+#include "../src/headers/FastaReader.hpp"
+#include "../src/headers/Kmer.hpp"
+#include "../src/headers/exampleHash.hpp"
+#include "../src/headers/Minimiser.hpp"
 
 using namespace std;
 
@@ -38,9 +38,11 @@ int main(int argc, char*argv[]) {
         if (cmpt >= k) {
             Kmer kmer = Kmer(current_value, k);
             Minimiser minimiser = Minimiser(alpha, kmer, m);
-            cout << "kmer : " << kmer.toString() << " its value is : " << kmer.getValue()
-            << " its minimiser with alphabetical order is : " << minimiser.toString() << " and its value : " << minimiser.getValue()
-            << endl;
+            cout << "kmer : " << kmer.toString()
+                 << " its value is : " << kmer.getValue()
+                 << " its minimiser with alphabetical order is : " << minimiser.toString()
+                 << " and its value : " << minimiser.getValue()
+                 << endl;
         }
     }
 

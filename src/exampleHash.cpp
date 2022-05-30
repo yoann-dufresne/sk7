@@ -1,7 +1,7 @@
 #include <bitset>
 #include <cmath>
 
-#include "exampleHash.hpp"
+#include "headers/exampleHash.hpp"
 
 /**
  * An hash function based on the alphabetical order

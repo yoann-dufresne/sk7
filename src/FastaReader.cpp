@@ -3,7 +3,7 @@
 #include <bitset>
 #include <string>
 
-#include "FastaReader.hpp"
+#include "headers/FastaReader.hpp"
 
 /**
  * Construct a reader for the giver file.

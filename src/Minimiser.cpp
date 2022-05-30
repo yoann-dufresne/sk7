@@ -1,4 +1,4 @@
-#include "Minimiser.hpp"
+#include "headers/Minimiser.hpp"
 
 /**
  * Constructor for a minimiser
@@ -11,6 +11,8 @@ Minimiser ::Minimiser(uint64_t (*hashFunction)(Kmer, ushort), const Kmer& kmer, 
     this->size = size;
     this->value = hashFunction(kmer, size);
 }
+
+//TODO : new constructor to find the minimiser from the prev one and the new char
 
 /**
  * getteur for the minimiser value

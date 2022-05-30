@@ -1,7 +1,7 @@
 #include <string>
 #include <cmath>
 
-#include "Kmer.hpp"
+#include "headers/Kmer.hpp"
 
 
 /**

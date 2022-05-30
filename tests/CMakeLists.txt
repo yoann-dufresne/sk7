@@ -15,19 +15,19 @@ set(CMAKE_CXX_FLAGS_RELEASE "-Ofast")
 include_directories(${CMAKE_BINARY_DIR})
 
 set(SRCS
-        FastaReader.cpp
-        Kmer.cpp
-        Minimiser.cpp
-        exampleHash.cpp
-        main.cpp
+        ../src/FastaReader.cpp
+        ../src/Kmer.cpp
+        ../src/Minimiser.cpp
+        ../src/exampleHash.cpp
+        testKmerMini.cpp
         )
 
 set(HEADERS
-        headers/FastaReader.hpp
-        headers/Minimiser.hpp
-        headers/exampleHash.hpp
-        headers/Kmer.hpp
+        ../src/headers/FastaReader.hpp
+        ../src/headers/Minimiser.hpp
+        ../src/headers/exampleHash.hpp
+        ../src/headers/Kmer.hpp
         )
 
 # add the executable
-add_executable(sk7 ${SRCS} ${HEADERS})
+add_executable(testKmerMini ${SRCS} ${HEADERS})
