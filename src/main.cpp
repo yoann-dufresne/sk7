@@ -29,18 +29,28 @@ int main(int argc, char*argv[]) {
 
     uint64_t current_value = 0;
     int cmpt  = 0;
+    Minimiser minimiser(alpha, m);
 
     while (true) {
         char c = fastareader.read_fasta();
         if (c == EOF) break;
         cmpt++;
         current_value = ((current_value << 2) + encoding.at(c)) & filter;
-        if (cmpt >= k) {
+        if (cmpt == k) {
             Kmer kmer = Kmer(current_value, k);
+            minimiser.init(kmer);
+            cout << "First kmer : " << kmer.toString() << " of value : " << kmer.getValue()
+            << " its minimiser is : " << minimiser.toString()
+            << " its pos is : " << minimiser.getPos()
+            << " and value : " << minimiser.getValue() << endl;
+        }
+        if (cmpt > k) {
+            Kmer kmer = Kmer(current_value, k);
+            minimiser.fromNewEnd(kmer);
             cout << "kmer : " << kmer.toString() << " its value is : " << kmer.getValue()
-            << " a substring from 1 to 3 (included) : " << kmer.getSubKmer(2, 5).toString()
-            << " of value : " << kmer.getSubKmer(2, 5).getValue()
-            << endl;
+            << " its minimiser is : " << minimiser.toString()
+            << " at pos : " << minimiser.getPos()
+            <<" of value : " << minimiser.getValue() << endl;
         }
     }
 

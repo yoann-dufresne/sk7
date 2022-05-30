@@ -3,14 +3,24 @@
 
 #include "Kmer.hpp"
 
+typedef struct hashPos {
+    uint64_t hashValue;
+    short pos;
+} hashPos;
+
 class Minimiser {
 protected:
     uint64_t value;
     ushort size;
-    uint64_t (*hashFunction) (Kmer, ushort);
+    short pos;
+    hashPos (*hashFunction) (Kmer, ushort);
+
 public:
-    Minimiser(uint64_t (*hashFunction) (Kmer, ushort), const Kmer& kmer, ushort size);
+    Minimiser(hashPos (*hashFunction) (Kmer, ushort), ushort size);
+    void init(Kmer kmer);
+    void fromNewEnd(Kmer kmer);
     uint64_t getValue() const;
+    short getPos() const;
     std::string toString() const;
 };
 

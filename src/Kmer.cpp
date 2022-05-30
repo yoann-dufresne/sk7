@@ -22,28 +22,30 @@ uint64_t Kmer::getValue() {
 }
 
 /**
- * Give a textual reprensentation of a kmer
+ * Give a textual representation of a kmer
  * @return a string on {'A', 'C', 'G', 'T'} that represents the kmer
  */
 std::string Kmer::toString() {
     uint64_t tmp = value;
     std::string res;
+    res.reserve(this->size);
     ushort b = 4;
     while (tmp != 0) {
         uint64_t q = tmp / b;
         int r = tmp % b;
         switch (r) {
             case 0:
-                res = "A" + res;
+                res = 'A' + res;
                 break;
             case 1:
-                res = "C" + res;
+                res = 'C' + res;
                 break;
             case 2:
-                res = "G" + res;
+                res = 'G' + res;
                 break;
             default:
-                res = "T" + res;
+                res = 'T' + res;
+                break;
         }
         tmp = q;
     }

@@ -2,6 +2,7 @@ import unittest
 import random
 import subprocess
 import genSeq
+import time
 
 
 class MyTestCase(unittest.TestCase):
@@ -35,7 +36,7 @@ class MyTestCase(unittest.TestCase):
                 self.assertEqual(find_value(minimiser), mini_val)
             file.close()
 
-        genSeq.generate_random_sequence('tests/seq.txt', 100000)
+        genSeq.generate_random_sequence('tests/seq.txt', 1000000)
         print("Sequence generated")
 
         k = random.randint(15, 25)
@@ -43,7 +44,10 @@ class MyTestCase(unittest.TestCase):
         inputs = ['tests/seq.txt', str(k), str(m)]
         cmd = ["./bin/testKmerMini"] + inputs
         out = open("tests/outfile.txt", "w")
+        start_time = time.time()
         subprocess.run(cmd, stdout=out)
+        exec_time = time.time() - start_time
+        print(f"Got cpp output in {exec_time}s")
         out.close()
         parse_out("tests/outfile.txt")
 

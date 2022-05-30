@@ -2,45 +2,90 @@
 
 /**
  * Constructor for a minimiser
- * @param hashFunction a function that gives an whole value to a kmer
- * @param kmer the kmer to minimise
+ * @param hashFunction a function that gives an whole value to a mmer
  * @param size the wanted size of the minimiser
  */
-Minimiser ::Minimiser(uint64_t (*hashFunction)(Kmer, ushort), const Kmer& kmer, ushort size) {
+Minimiser ::Minimiser(hashPos (*hashFunction)(Kmer, ushort), ushort size) {
     this->hashFunction = hashFunction;
     this->size = size;
-    this->value = hashFunction(kmer, size);
+    this->value = 0;
+    this->pos = 0;
 }
 
-//TODO : new constructor to find the minimiser from the prev one and the new char
+/**
+ * Initialise value with the hash of the given kmer
+ * @param kmer the initializer
+ */
+void Minimiser::init(Kmer kmer) {
+    hashPos retHash = hashFunction(kmer, this->size);
+    this->value = retHash.hashValue;
+    this->pos = retHash.pos;
+}
 
 /**
- * getteur for the minimiser value
+ * Build a minimiser depending on the new end
+ * @param hashFunction a function that gives an whole value to a mmer
+ * @param kmer the current kmer to minimise
+ * @param size the wanted size of the minimiser
+ * @return the current minimiser
+ */
+void Minimiser::fromNewEnd(Kmer kmer) {
+    if (pos == 0) {
+        this->init(kmer);
+        return;
+    }
+    Kmer end = kmer.getSubKmer(kmer.getSize() - size, kmer.getSize() - 1);
+    hashPos retHash = hashFunction(end, size);
+    uint64_t end_val = retHash.hashValue;
+    if (end_val < this->value) { //The new ending is the minimiser
+        this->value = end_val;
+        this->pos = kmer.getSize() - size;
+    } else {
+        this->pos--; //We keep the same minimiser but its position shift
+    }
+}
+
+/**
+ * Getter for the minimiser value
  * @return the minimiser's value
  */
 uint64_t Minimiser::getValue() const {
     return this->value;
 }
 
+/**
+ * Getter for the pos attribute
+ * @return the minimiser's pos
+ */
+short Minimiser::getPos() const {
+    return this->pos;
+}
+
+/**
+ * Give a textual representation of a minimiser
+ * @return a string on {'A', 'C', 'G', 'T'} that represents the minimiser
+ */
 std::string Minimiser::toString() const {
     uint64_t tmp = value;
     std::string res;
+    res.reserve(this->size);
     ushort b = 4;
     while (tmp != 0) {
         uint64_t q = tmp / b;
         int r = tmp % b;
         switch (r) {
             case 0:
-                res = "A" + res;
+                res = 'A' + res;
                 break;
             case 1:
-                res = "C" + res;
+                res = 'C' + res;
                 break;
             case 2:
-                res = "G" + res;
+                res = 'G' + res;
                 break;
             default:
-                res = "T" + res;
+                res = 'T' + res;
+                break;
         }
         tmp = q;
     }

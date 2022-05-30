@@ -29,15 +29,25 @@ int main(int argc, char*argv[]) {
 
     uint64_t current_value = 0;
     int cmpt  = 0;
+    Minimiser minimiser(alpha, m);
 
     while (true) {
         char c = fastareader.read_fasta();
         if (c == EOF) break;
         cmpt++;
         current_value = ((current_value << 2) + encoding.at(c)) & filter;
-        if (cmpt >= k) {
+        if (cmpt == k) {
             Kmer kmer = Kmer(current_value, k);
-            Minimiser minimiser = Minimiser(alpha, kmer, m);
+            minimiser.init(kmer);
+            cout << "kmer : " << kmer.toString()
+                 << " its value is : " << kmer.getValue()
+                 << " its minimiser with alphabetical order is : " << minimiser.toString()
+                 << " and its value : " << minimiser.getValue()
+                 << endl;
+        }
+        if (cmpt > k) {
+            Kmer kmer = Kmer(current_value, k);
+            minimiser.fromNewEnd(kmer);
             cout << "kmer : " << kmer.toString()
                  << " its value is : " << kmer.getValue()
                  << " its minimiser with alphabetical order is : " << minimiser.toString()
