@@ -37,9 +37,9 @@ int main(int argc, char*argv[]) {
         current_value = ((current_value << 2) + encoding.at(c)) & filter;
         if (cmpt >= k) {
             Kmer kmer = Kmer(current_value, k);
-            Minimiser minimiser = Minimiser(alpha, kmer, m);
             cout << "kmer : " << kmer.toString() << " its value is : " << kmer.getValue()
-            << " its minimiser with alphabetical order is : " << minimiser.toString() << " and its value : " << minimiser.getValue()
+            << " a substring from 1 to 3 (included) : " << kmer.getSubKmer(2, 5).toString()
+            << " of value : " << kmer.getSubKmer(2, 5).getValue()
             << endl;
         }
     }

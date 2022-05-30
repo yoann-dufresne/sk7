@@ -16,6 +16,7 @@ public:
     ~Kmer() = default;;
     std::string toString();
     ushort getSize();
+    Kmer getSubKmer(int start, int end);
 };
 
 
