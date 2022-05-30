@@ -41,7 +41,7 @@ class MyTestCase(unittest.TestCase):
         k = random.randint(15, 25)
         m = random.randint(5, 10)
         inputs = ['seq.txt', str(k), str(m)]
-        cmd = ["../bin/testKmerMini"] + inputs
+        cmd = ["./bin/testKmerMini"] + inputs
         out = open("outfile.txt", "w")
         subprocess.run(cmd, stdout=out)
         out.close()
