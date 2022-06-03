@@ -1,8 +1,5 @@
 #include "src/headers/utils.hpp"
 
-#include <iostream>
-
-using namespace std;
 
 /**
  * Build a Kmer in interleaved order from an existing kmer and its minimiser position

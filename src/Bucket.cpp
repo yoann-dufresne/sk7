@@ -31,22 +31,15 @@ void Bucket::addToList(SuperKmer superKmer) {
 /**
  * Search a element in a bucket
  * @param kmer the Kmer to search
- * @return true if kmer is in the Bucket else false
+ * @return the position of the kmer in the list if found else -1
  */
-bool Bucket::isIn(Kmer kmer) {
+int Bucket::isIn(Kmer kmer) {
     ///PREPARATION OF THE SEARCH
-    cout << endl << endl;
-//    if (kmer.getLength() < this->kmerLength) {
-//        throw (std::runtime_error(std::string("Illegal length for the given Kmer")));
-//    }
     Minimiser kmerMinimiser = Minimiser(alpha, this->minimiserLength, kmer);
     Kmer withoutMinimiser = kmer.removePart(kmerMinimiser.getPos(), this->minimiserLength);
-    cout << "striped : " << withoutMinimiser.toString() << endl;
 
     uint64_t kmerMask = interleavedOrder(withoutMinimiser, kmerMinimiser.getPos());
 
-    cout << "ordered : " << withoutMinimiser.toString() << endl;
-    cout << "kmerMask : " << kmerMask << endl;
     int prefixLen = kmerMinimiser.getPos();
     int suffixLen = kmer.getLength() - kmerMinimiser.getPos() - this->minimiserLength;
     int maxLen = (prefixLen < suffixLen)? suffixLen : prefixLen;
@@ -60,29 +53,20 @@ bool Bucket::isIn(Kmer kmer) {
 
     while (start <= end) {
         int middle = (end + start) / 2;
-//        int middle = 2; //For test
         SuperKmer current = this->orderedList.at(middle); //Current SuperKmer of the list
 
         int currentPrefixLen = current.accessBits(0, fixBitSize); //Current superkmer's prefix length
         int currentSuffixLen = current.accessBits(fixBitSize, SKheader); //Current superkmer's suffix length
         int currentMaxLen = (currentPrefixLen < currentSuffixLen) ? currentSuffixLen : currentPrefixLen;
 
-        cout << " Current prefix length : " << currentPrefixLen << " current suffix length : " << currentSuffixLen
-             << endl;
-
-
-        int totalNucleotides = currentPrefixLen + currentSuffixLen; //Taille du superkmer
         uint64_t currentValue = current.accessBits(SKheader, SKheader + currentMaxLen * 4); //Valeur du superkmer
 
-        cout << "current value : " << currentValue << endl;
-
         uint64_t maskedSK = (currentValue >> ((currentMaxLen - maxLen) * 4)) & kmerMask;
-        cout << Kmer(currentValue, totalNucleotides).toString() << " kmer masked to " << maskedSK << endl;
 
         uint64_t knownInfo = 0;
         int i = 0;
-        int needed = ceil(log2(withoutMinimiser.getValue()));
-        while (true) {
+
+        while (true) { //Build the mask from superkmer for known information
             if(i < currentSuffixLen) {
                 knownInfo = (knownInfo << 2) + 0b11;
             } else {
@@ -97,14 +81,10 @@ bool Bucket::isIn(Kmer kmer) {
             if (i >= currentSuffixLen && i >= currentPrefixLen) break;
         }
 
-        cout << "knownInfo : " << knownInfo << endl;
         int found = ceil(log2(knownInfo));
-
-        cout << withoutMinimiser.getValue() << endl;
-        cout << "found : " << found << " needed : " << needed << endl;
+        int needed = ceil(log2(withoutMinimiser.getValue()));
 
         uint64_t toCompare = withoutMinimiser.getValue() & (knownInfo >> (found - needed));
-        cout << "To compare : " << toCompare << " with : " << maskedSK << endl;
 
         if (toCompare < maskedSK) {
             end = middle - 1;
@@ -114,17 +94,16 @@ bool Bucket::isIn(Kmer kmer) {
             start = middle + 1;
             continue;
         }
-        if (toCompare == maskedSK) {
+        if (toCompare == maskedSK) { //Match
             if (currentPrefixLen >= prefixLen && currentSuffixLen >= suffixLen) {
-                return true;
-            } else {
+                return middle;
+            } else { //No info
                 start += 1;
                 continue;
             }
         }
-
     }
 
-    return false;
+    return -1;
 }
 

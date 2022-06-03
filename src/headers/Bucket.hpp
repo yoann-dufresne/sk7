@@ -17,13 +17,11 @@ private:
     uint64_t minimiser;
     int kmerLength;
     std::vector<SuperKmer> orderedList;
-//    bool test(Kmer interleavedKmer, uint64_t mask);
-
 
 public:
 
     Bucket(int minimiserLength, uint64_t minimiserValue, int kmerLength);
     void addToList(SuperKmer superKmer);
-    bool isIn(Kmer kmer);
+    int isIn(Kmer kmer);
 };
 #endif //SK7_BUCKET_HPP

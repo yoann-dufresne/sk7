@@ -1,10 +1,6 @@
 #include "headers/SuperKmer.hpp"
 
-#include <iostream>
 #include <utility>
-
-using namespace std;
-
 
 /**
  * Default constructor for a superKmer

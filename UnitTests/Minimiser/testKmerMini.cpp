@@ -1,10 +1,10 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "../src/headers/FastaReader.hpp"
-#include "../src/headers/Kmer.hpp"
-#include "../src/headers/exampleHash.hpp"
-#include "../src/headers/Minimiser.hpp"
+#include "src/headers/FastaReader.hpp"
+#include "src/headers/Kmer.hpp"
+#include "src/headers/exampleHash.hpp"
+#include "src/headers/Minimiser.hpp"
 
 using namespace std;
 
