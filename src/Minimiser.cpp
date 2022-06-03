@@ -1,13 +1,23 @@
 #include "headers/Minimiser.hpp"
 
 /**
- * Constructor for a minimiser
+ * Constructor for the minimiser of a given kmer
  * @param hashFunction a function that gives an whole value to a mmer
- * @param size the wanted size of the minimiser
+ * @param length the wanted length of the minimiser
+ * @param kmer the initial kmer
  */
-Minimiser ::Minimiser(hashPos (*hashFunction)(Kmer, ushort), ushort size) {
+Minimiser::Minimiser(hashPos (*hashFunction)(Kmer, ushort), ushort length, Kmer kmer): Minimiser(hashFunction, length) {
+    init(kmer);
+}
+
+/**
+ * Constructor for a minimiser for a sequence of kmer
+ * @param hashFunction a function that gives an whole value to a mmer
+ * @param length the wanted length of the minimiser
+ */
+Minimiser ::Minimiser(hashPos (*hashFunction)(Kmer, ushort), ushort length) {
     this->hashFunction = hashFunction;
-    this->size = size;
+    this->length = length;
     this->value = 0;
     this->pos = 0;
 }
@@ -17,29 +27,26 @@ Minimiser ::Minimiser(hashPos (*hashFunction)(Kmer, ushort), ushort size) {
  * @param kmer the initializer
  */
 void Minimiser::init(Kmer kmer) {
-    hashPos retHash = hashFunction(kmer, this->size);
+    hashPos retHash = hashFunction(kmer, this->length);
     this->value = retHash.hashValue;
     this->pos = retHash.pos;
 }
 
 /**
- * Build a minimiser depending on the new end
- * @param hashFunction a function that gives an whole value to a mmer
+ * Found the new minimiser depending on the new end
  * @param kmer the current kmer to minimise
- * @param size the wanted size of the minimiser
- * @return the current minimiser
  */
 void Minimiser::fromNewEnd(Kmer kmer) {
-    if (pos == 0) {
+    if (pos == 0) { //Forced change of the minimiser
         this->init(kmer);
         return;
     }
-    Kmer end = kmer.getSubKmer(kmer.getSize() - size, kmer.getSize() - 1);
-    hashPos retHash = hashFunction(end, size);
+    Kmer end = kmer.getSubKmer(kmer.getLength() - length, kmer.getLength() - 1);
+    hashPos retHash = hashFunction(end, length);
     uint64_t end_val = retHash.hashValue;
     if (end_val < this->value) { //The new ending is the minimiser
         this->value = end_val;
-        this->pos = kmer.getSize() - size;
+        this->pos = kmer.getLength() - length;
     } else {
         this->pos--; //We keep the same minimiser but its position shift
     }
@@ -68,7 +75,7 @@ short Minimiser::getPos() const {
 std::string Minimiser::toString() const {
     uint64_t tmp = value;
     std::string res;
-    res.reserve(this->size);
+    res.reserve(this->length);
     ushort b = 4;
     while (tmp != 0) {
         uint64_t q = tmp / b;
@@ -89,9 +96,11 @@ std::string Minimiser::toString() const {
         }
         tmp = q;
     }
-    while (res.length() < this->size) {
+    while (res.length() < this->length) {
         res = "A" + res;
     }
     return res;
 }
+
+
 

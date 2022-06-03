@@ -11,12 +11,13 @@ typedef struct hashPos {
 class Minimiser {
 protected:
     uint64_t value;
-    ushort size;
+    ushort length;
     short pos;
     hashPos (*hashFunction) (Kmer, ushort);
 
 public:
-    Minimiser(hashPos (*hashFunction) (Kmer, ushort), ushort size);
+    Minimiser(hashPos (*hashFunction) (Kmer, ushort), ushort length);
+    Minimiser(hashPos (*hashFunction) (Kmer, ushort), ushort length, Kmer kmer);
     void init(Kmer kmer);
     void fromNewEnd(Kmer kmer);
     uint64_t getValue() const;

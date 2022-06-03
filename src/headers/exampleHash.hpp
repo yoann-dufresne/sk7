@@ -4,6 +4,6 @@
 #include "Kmer.hpp"
 #include "Minimiser.hpp"
 
-hashPos alpha(Kmer kmer, ushort size);
+hashPos alpha(Kmer kmer, ushort length);
 
 #endif //SK7_EXAMPLEHASH_HPP

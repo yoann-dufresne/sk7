@@ -19,6 +19,9 @@ set(SRCS
         Kmer.cpp
         Minimiser.cpp
         exampleHash.cpp
+        SuperKmer.cpp
+        Bucket.cpp
+        utils.cpp
         main.cpp
         )
 
@@ -27,6 +30,9 @@ set(HEADERS
         headers/Minimiser.hpp
         headers/exampleHash.hpp
         headers/Kmer.hpp
+        headers/utils.hpp
+        headers/SuperKmer.hpp
+        headers/utils.hpp
         )
 
 # add the executable

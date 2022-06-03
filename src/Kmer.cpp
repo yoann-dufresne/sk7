@@ -1,16 +1,15 @@
-#include <string>
-
 #include "headers/Kmer.hpp"
+#include <string>
 
 
 /**
  * Constructor from value
  * @param value the value of the wanted kmer
- * @param size the size (in letter 'A', 'C', 'G', 'T') of the kmer
+ * @param length the length (in letter 'A', 'C', 'G', 'T') of the kmer
  */
-Kmer::Kmer(uint64_t value, ushort size) {
+Kmer::Kmer(uint64_t value, ushort length) {
     this->value = value;
-    this->size = size;
+    this->length = length;
 }
 
 /**
@@ -28,7 +27,7 @@ uint64_t Kmer::getValue() {
 std::string Kmer::toString() {
     uint64_t tmp = value;
     std::string res;
-    res.reserve(this->size);
+    res.reserve(this->length);
     ushort b = 4;
     while (tmp != 0) {
         uint64_t q = tmp / b;
@@ -49,18 +48,18 @@ std::string Kmer::toString() {
         }
         tmp = q;
     }
-    while (res.length() < this->size) {
+    while (res.length() < this->length) {
         res = "A" + res;
     }
     return res;
 }
 
 /**
- * a getter for the Kmer size
- * @return the size of the kmer
+ * a getter for the Kmer length
+ * @return the length of the kmer
  */
-ushort Kmer::getSize() {
-    return this->size;
+ushort Kmer::getLength() {
+    return this->length;
 }
 
 /**
@@ -70,9 +69,22 @@ ushort Kmer::getSize() {
  * @return the Kmer[start:end+1]
  */
 Kmer Kmer::getSubKmer(int start, int end) {
-    uint64_t mask = (1 << ((size - start) * 2)) - 1;
-    int decalage = ((size - end - 1) * 2);
+    uint64_t mask = (1 << ((this->length - start) * 2)) - 1;
+    int decalage = ((this->length - end - 1) * 2);
     mask = mask >> decalage;
     mask = mask << decalage;
-    return Kmer((this->value & mask) >> decalage, (end - start) + 1);
+    return Kmer((this->value & mask) >> decalage, end - start + 1);
+}
+
+/**
+ * Remove a part from a Kmer (ex. "ACGTACGT".removePart(2, 3) = "ACCGT")
+ * @param pos the starting position of the unwanted fragment
+ * @param fragLength the fragLength of the unwanted fragment
+ * @return a Kmer without the unwanted fragment
+ */
+Kmer Kmer::removePart(int pos, int fragLength) {
+    int suffixLen = this->length - pos - fragLength;
+    uint64_t mask = (1 << ((suffixLen) * 2)) - 1;
+    uint64_t suffix = this->value & mask;
+    return Kmer(((this->value >> ((this->length - pos) * 2)) << (suffixLen * 2)) + suffix, this->length - fragLength);
 }

@@ -8,15 +8,15 @@ class Kmer {
 
 protected:
     uint64_t value;
-    ushort size;
 
 public:
+    ushort length;
     uint64_t getValue();
-    Kmer(uint64_t value, ushort size);
-    ~Kmer() = default;;
+    Kmer(uint64_t value, ushort length);
     std::string toString();
-    ushort getSize();
+    ushort getLength();
     Kmer getSubKmer(int start, int end);
+    Kmer removePart(int pos, int fragLength);
 };
 
 
