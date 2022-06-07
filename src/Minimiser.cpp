@@ -88,10 +88,10 @@ std::string Minimiser::toString() const {
                 res = 'C' + res;
                 break;
             case 2:
-                res = 'G' + res;
+                res = 'T' + res;
                 break;
             default:
-                res = 'T' + res;
+                res = 'G' + res;
                 break;
         }
         tmp = q;

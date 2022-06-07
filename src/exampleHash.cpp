@@ -4,7 +4,7 @@
 #include "headers/Minimiser.hpp"
 
 /**
- * An hash function based on the alphabetical order
+ * An hash function based on the order A < C < T < G
  * @param kmer the kmer to hash
  * @param length the length of the wanted minimiser
  * @return the value of the lowest length-mer in kmer

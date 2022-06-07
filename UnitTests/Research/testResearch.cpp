@@ -8,24 +8,24 @@ using namespace std;
 int main() {
 
     /// SuperKmer 1 : G|CT
-    uint8_t firstSection1 = 0b01100110; //1, 2, C, G
-    uint8_t secondSection1 = 0b11000000; //T, _, _, _
+    uint8_t firstSection1 = 0b01100111; //1, 2, C, G
+    uint8_t secondSection1 = 0b10000000; //T, _, _, _
     vector<TYPE> tab1 = vector<TYPE>();
     tab1.push_back(firstSection1);
     tab1.push_back(secondSection1);
     SuperKmer SK1(tab1);
 
     ///SuperKmer 2 : CG|TT
-    uint8_t firstSection2 = 0b10101110; //2, 2, T, G
-    uint8_t secondSection2 = 0b11010000; // T, C, _, _
+    uint8_t firstSection2 = 0b10101011; //2, 2, T, G
+    uint8_t secondSection2 = 0b10010000; // T, C, _, _
     vector<TYPE> tab2 = vector<TYPE>();
     tab2.push_back(firstSection2);
     tab2.push_back(secondSection2);
     SuperKmer SK2(tab2);
 
     ///SuperKmer 3 : GG|
-    uint8_t firstSection3 = 0b10000010; //2, 0, _, G
-    uint8_t secondSection3 = 0b00100000;//_, G, _, _
+    uint8_t firstSection3 = 0b10000011; //2, 0, _, G
+    uint8_t secondSection3 = 0b00110000;//_, G, _, _
     vector<TYPE> tab3 = vector<TYPE>();
     tab3.push_back(firstSection3);
     tab3.push_back(secondSection3);
@@ -39,32 +39,32 @@ int main() {
 
 
     cout << "The bucket contains : " << " G|CT" << " CG|TT" << " GG|" << endl;
-    Kmer toSearch = Kmer(0b0000001100, 5); // AAATA
-    Kmer toSearch2 = Kmer(0b1100000001, 5); // TAAAC
-    Kmer toSearch3 = Kmer(0b1101000000, 5); // TCAAA
-    Kmer toSearch4 = Kmer(0b0000000111, 5); // AAACT;
-    Kmer toSearch5 = Kmer(0b1000000011, 5) ; // GAAAT
-    Kmer toSearch6 = Kmer(0b1010000000, 5); // GGAAA
-    Kmer toSearch7 = Kmer(0b0110000000, 5) ;// CGAAA
-    Kmer toSearch8 = Kmer(0b0000001111, 5); // AAATT
-    Kmer toSearch9 = Kmer(0b1000000001, 5); // GAAAC
-    Kmer toSearch10 = Kmer(0b00000011, 4); // AAAT
+    Kmer toSearch = Kmer(0b0000001000, 5); // AAATA
+    Kmer toSearch2 = Kmer(0b1000000001, 5); // TAAAC
+    Kmer toSearch3 = Kmer(0b1001000000, 5); // TCAAA
+    Kmer toSearch4 = Kmer(0b0000000110, 5); // AAACT;
+    Kmer toSearch5 = Kmer(0b1100000010, 5) ; // GAAAT
+    Kmer toSearch6 = Kmer(0b1111000000, 5); // GGAAA
+    Kmer toSearch7 = Kmer(0b0111000000, 5) ;// CGAAA
+    Kmer toSearch8 = Kmer(0b0000001010, 5); // AAATT
+    Kmer toSearch9 = Kmer(0b1100000001, 5); // GAAAC
+    Kmer toSearch10 = Kmer(0b00000010, 4); // AAAT
     Kmer toSearch11 = Kmer(0b00000010, 4); // AAAC
-    Kmer toSearch12 = Kmer(0b10000000, 4); // GAAA
+    Kmer toSearch12 = Kmer(0b11000000, 4); // GAAA
     Kmer toSearch13 = Kmer(0b01000000, 4); // CAAA
-    Kmer toSearch14 = Kmer(0b11000000, 4); // TAAA
+    Kmer toSearch14 = Kmer(0b10000000, 4); // TAAA
     Kmer toSearch15 = Kmer(0b00000000, 4); // AAAA
     Kmer toSearch16 = Kmer(0b00000001, 4); // AAAC
-    Kmer toSearch17 = Kmer(0b011000000011, 6); // CGAAAT
-    Kmer toSearch18 = Kmer(0b100000000111, 6); // GAAACT
-    Kmer toSearch19 = Kmer(0b100000001111, 6); // GAAATT
-    Kmer toSearch20 = Kmer(0b01100000001111, 7); // CGAAATT
-    Kmer toSearch21 = Kmer(0b101000000011, 6); // GGAAAT
-    Kmer toSearch22 = Kmer(0b100000001100, 6); // GAAATA
-    Kmer toSearch23 = Kmer(0b011000000001111, 8); // CGAAAATT
-    Kmer toSearch24 = Kmer(0b01100000000011, 7); // CGAAAAT
-    Kmer toSearch25 = Kmer(0b01101100000011, 7); // CGTAAAT
-    Kmer toSearch26 = Kmer(0b001010000000, 6); //AGGAAA
+    Kmer toSearch17 = Kmer(0b011100000010, 6); // CGAAAT
+    Kmer toSearch18 = Kmer(0b110000000110, 6); // GAAACT
+    Kmer toSearch19 = Kmer(0b110000001010, 6); // GAAATT
+    Kmer toSearch20 = Kmer(0b01110000001010, 7); // CGAAATT
+    Kmer toSearch21 = Kmer(0b111100000010, 6); // GGAAAT
+    Kmer toSearch22 = Kmer(0b110000001000, 6); // GAAATA
+    Kmer toSearch23 = Kmer(0b011100000001010, 8); // CGAAAATT
+    Kmer toSearch24 = Kmer(0b01110000000010, 7); // CGAAAAT
+    Kmer toSearch25 = Kmer(0b01111000000010, 7); // CGTAAAT
+    Kmer toSearch26 = Kmer(0b001111000000, 6); //AGGAAA
 
 
 

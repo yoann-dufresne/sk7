@@ -9,17 +9,28 @@ import time
 class MyTestCase(unittest.TestCase):
 
     def test_kmer_value_and_mini(self):
+
+        encoding = {"A": 0, "C": 1, "G": 3, "T": 2}
         def find_value(kmer):
             res = 0
-            encoding = {"A": 0, "C": 1, "G": 2, "T": 3}
             for c in kmer:
                 res = (res << 2) + encoding[c]
             return res
 
+        def lesser_than(str1:str, str2:str):
+            for c1, c2 in zip(str1, str2):
+                if encoding[c1] < encoding[c2]:
+                    return True
+                elif encoding[c1] > encoding[c2]:
+                    return False
+                else:
+                    continue
+            return True
+
         def find_mini(kmer, size):
-            minimiser = "T" * size
+            minimiser = "G" * size
             for i in range(len(kmer) - size + 1):
-                if kmer[i:i + size] < minimiser:
+                if lesser_than(kmer[i:i + size],  minimiser):
                     minimiser = kmer[i:i+size]
             return minimiser
 
