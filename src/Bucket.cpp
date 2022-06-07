@@ -1,4 +1,4 @@
-#include "src/headers/Bucket.hpp"
+#include "headers/Bucket.hpp"
 
 #include <iostream>
 #include <cmath>
@@ -42,17 +42,35 @@ int Bucket::isIn(Kmer kmer) {
 
     int prefixLen = kmerMinimiser.getPos();
     int suffixLen = kmer.getLength() - kmerMinimiser.getPos() - this->minimiserLength;
-    int maxLen = (prefixLen < suffixLen)? suffixLen : prefixLen;
+    int maxLen;
 
-    ///START OF THE BINARY SEARCH
-    int start = 0;
-    int end = this->orderedList.size();
+    int needed; // number of bits to compare
+    if (prefixLen > suffixLen) {
+        maxLen = prefixLen;
+        needed = maxLen * 4;
+    } else {
+        maxLen = suffixLen;
+        needed = maxLen * 4 - 2;
+    }
+    if (prefixLen == suffixLen) {
+        needed = 4 * prefixLen;
+    }
+
     int fixBitSize = ceil(log2(this->kmerLength - this->minimiserLength + 1));
     int SKheader = 2 * fixBitSize;
 
-
+    ///START OF THE BINARY SEARCH
+    int start = 0;
+    int end = this->orderedList.size() - 1;
+    bool infoFound = true;
+    int lastPositionWithInformation;
+    int lastStartWithInformation = 0;
     while (start <= end) {
         int middle = (end + start) / 2;
+        if (infoFound) {
+            lastPositionWithInformation = middle;
+            infoFound = false;
+        }
         SuperKmer current = this->orderedList.at(middle); //Current SuperKmer of the list
 
         int currentPrefixLen = current.accessBits(0, fixBitSize); //Current superkmer's prefix length
@@ -81,24 +99,45 @@ int Bucket::isIn(Kmer kmer) {
             if (i >= currentSuffixLen && i >= currentPrefixLen) break;
         }
 
-        int found = ceil(log2(knownInfo));
-        int needed = ceil(log2(withoutMinimiser.getValue()));
+        int found = 4 * i; //ceil(log2(knownInfo));
 
-        uint64_t toCompare = withoutMinimiser.getValue() & (knownInfo >> (found - needed));
+        //We align the values
+        uint64_t toCompare;
+//        cout << "middle : " << middle << " found : " << found << " needed : " << needed << " info : " << knownInfo << endl;
+//        cout << "before : " << withoutMinimiser.getValue() << " " <<((knownInfo >> (found - needed))) << endl;
+//        cout << "string : " << withoutMinimiser.toString() << endl;
+        if (found >= needed) {
+            if (prefixLen < suffixLen) toCompare = withoutMinimiser.getValue() & (knownInfo >> (found - needed - 2));
+            else toCompare = withoutMinimiser.getValue() & (knownInfo >> (found - needed));
+        } else {
+            toCompare = withoutMinimiser.getValue() & (knownInfo << (needed - found));
+        }
 
+//        cout << "We're comparing : " << toCompare << " and : " << maskedSK << endl;
         if (toCompare < maskedSK) {
-            end = middle - 1;
+            end = lastPositionWithInformation - 1;
+            infoFound = true;
             continue;
         }
+
         if (toCompare > maskedSK) {
-            start = middle + 1;
+            start = lastPositionWithInformation + 1;
+            lastStartWithInformation = start;
+            infoFound = true;
             continue;
         }
-        if (toCompare == maskedSK) { //Match
-            if (currentPrefixLen >= prefixLen && currentSuffixLen >= suffixLen) {
+
+        if (toCompare == maskedSK) { //Match or not enough information
+            if (currentPrefixLen >= prefixLen && currentSuffixLen >= suffixLen) { // Match
                 return middle;
             } else { //No info
-                start += 1;
+                if (start < end) {
+                    start += 1;
+                } else { // No info till the end of the linear search
+                    start = lastStartWithInformation;
+                    end = lastPositionWithInformation - 1;
+                    infoFound = true;
+                }
                 continue;
             }
         }
@@ -106,4 +145,3 @@ int Bucket::isIn(Kmer kmer) {
 
     return -1;
 }
-
