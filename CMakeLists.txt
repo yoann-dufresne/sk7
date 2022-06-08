@@ -21,4 +21,3 @@ set(CMAKE_CXX_FLAGS_RELEASE "-Ofast")
 
 add_subdirectory(apps/)
 add_subdirectory(src/)
-#add_subdirectory(UnitTests/)
