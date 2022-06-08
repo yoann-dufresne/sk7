@@ -1,4 +1,4 @@
-#include "headers/SuperKmer.hpp"
+#include "SuperKmer.hpp"
 
 #include <utility>
 

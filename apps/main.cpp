@@ -2,13 +2,13 @@
 #include <unordered_map>
 #include <cmath>
 
-#include "headers/FastaReader.hpp"
-#include "headers/Kmer.hpp"
-#include "headers/exampleHash.hpp"
-#include "headers/Minimiser.hpp"
-#include "headers/utils.hpp"
-#include "headers/SuperKmer.hpp"
-#include "headers/Bucket.hpp"
+#include "FastaReader.hpp"
+#include "Kmer.hpp"
+#include "exampleHash.hpp"
+#include "Minimiser.hpp"
+#include "utils.hpp"
+#include "SuperKmer.hpp"
+#include "Bucket.hpp"
 
 using namespace std;
 

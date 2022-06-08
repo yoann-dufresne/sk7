@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "headers/exampleHash.hpp"
-#include "headers/Minimiser.hpp"
+#include "exampleHash.hpp"
+#include "Minimiser.hpp"
 
 /**
  * An hash function based on the order A < C < T < G

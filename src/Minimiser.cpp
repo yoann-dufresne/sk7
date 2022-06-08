@@ -1,4 +1,4 @@
-#include "headers/Minimiser.hpp"
+#include "Minimiser.hpp"
 
 /**
  * Constructor for the minimiser of a given kmer
