@@ -1,0 +1,3 @@
+[submodule "extern/lest"]
+	path = extern/lest
+	url = git@github.com:martinmoene/lest.git

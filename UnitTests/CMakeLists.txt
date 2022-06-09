@@ -1,19 +1,12 @@
-# specify the C++ standard
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+add_executable(unitTest
+        unitTest.cpp)
 
-set(CMAKE_BUILD_TYPE Debug)
+target_link_libraries(unitTest
+        sk7)
 
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-endif()
-
-set(CMAKE_CXX_FLAGS "-Wall")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -Ofast -fno-omit-frame-pointer")
-set(CMAKE_CXX_FLAGS_RELEASE "-Ofast")
-
-include_directories(${CMAKE_BINARY_DIR})
-
-# add the subdirectory
-add_subdirectory(Minimiser)
-add_subdirectory(Research)
+target_include_directories(unitTest
+        PUBLIC
+        .
+        "${PROJECT_SOURCE_DIR}/extern/lest/include/lest"
+        "${PROJECT_SOURCE_DIR}/src/headers"
+        )

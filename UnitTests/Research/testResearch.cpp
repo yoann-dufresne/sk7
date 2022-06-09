@@ -66,8 +66,6 @@ int main() {
     Kmer toSearch25 = Kmer(0b01111000000010, 7); // CGTAAAT
     Kmer toSearch26 = Kmer(0b001111000000, 6); //AGGAAA
 
-
-
     cout << "On cherche 1 : " << toSearch.toString() << " : " << bucket.isIn(toSearch) << endl;
     cout << "On cherche 2 : " << toSearch2.toString() << " : " << bucket.isIn(toSearch2) << endl;
     cout << "On cherche 3 : " << toSearch3.toString() << " : " << bucket.isIn(toSearch3) << endl;
