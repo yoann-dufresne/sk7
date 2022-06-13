@@ -65,8 +65,8 @@ ushort Kmer::getLength() {
 /**
  * get a subkmer of the original kmer with (0 <= start <= end < k)
  * @param start index of the wanted start of the sub kmer
- * @param end index of the end of the wanted kmer.
- * @return the Kmer[start:end+1]
+ * @param end index of the end of the wanted kmer (included)
+ * @return the Kmer from start to end (both included) of the calling kmer.
  */
 Kmer Kmer::getSubKmer(int start, int end) {
     uint64_t mask = (1 << ((this->length - start) * 2)) - 1;
