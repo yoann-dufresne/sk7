@@ -19,9 +19,11 @@ private:
     std::vector<SuperKmer> orderedList;
 
 public:
-
     Bucket(int minimiserLength, uint64_t minimiserValue, int kmerLength);
     void addToList(SuperKmer superKmer);
-    int isIn(Kmer kmer);
+//    void addKmer(Kmer kmer);
+    bool find(Kmer kmer, int &position);
+
+
 };
 #endif //SK7_BUCKET_HPP

@@ -20,20 +20,20 @@ Bucket::Bucket(int minimiserLength, uint64_t minimiserValue, int kmerLength) {
 }
 
 /**
- * Add a element to the Bucket (for now doesn't consider order)
+ * Add a element to the Bucket WITHOUT considering the order
  * @param superKmer the superkmer to add to the bucket
  */
 void Bucket::addToList(SuperKmer superKmer) {
     this->orderedList.push_back(superKmer);
 }
 
-
 /**
- * Search a element in a bucket
- * @param kmer the Kmer to search
- * @return the position of the kmer in the list if found else -1
+ * Binary search a kmer in the bucket to find it's position or a viable one
+ * @param kmer the kmer to search
+ * @param position a parameter used to store the position found by the search
+ * @return true if the kmer was already in the bucket false otherwise
  */
-int Bucket::isIn(Kmer kmer) {
+bool Bucket::find(Kmer kmer, int &position) {
     ///PREPARATION OF THE SEARCH
     Minimiser kmerMinimiser = Minimiser(alpha, this->minimiserLength, kmer);
     Kmer withoutMinimiser = kmer.removePart(kmerMinimiser.getPos(), this->minimiserLength);
@@ -59,6 +59,7 @@ int Bucket::isIn(Kmer kmer) {
     int fixBitSize = ceil(log2(this->kmerLength - this->minimiserLength + 1));
     int SKheader = 2 * fixBitSize;
 
+
     ///START OF THE BINARY SEARCH
     int start = 0;
     int end = this->orderedList.size() - 1;
@@ -78,8 +79,12 @@ int Bucket::isIn(Kmer kmer) {
         int currentMaxLen = (currentPrefixLen < currentSuffixLen) ? currentSuffixLen : currentPrefixLen;
 
         uint64_t currentValue = current.accessBits(SKheader, SKheader + currentMaxLen * 4); //Valeur du superkmer
-
-        uint64_t maskedSK = (currentValue >> ((currentMaxLen - maxLen) * 4)) & kmerMask;
+        uint64_t maskedSK;
+        if (currentMaxLen < maxLen) {
+            maskedSK = currentValue & (kmerMask >> ((maxLen - currentMaxLen) * 4));
+        } else {
+            maskedSK = (currentValue >> ((currentMaxLen - maxLen) * 4)) & kmerMask;
+        }
 
         uint64_t knownInfo = 0;
         int i = 0;
@@ -99,21 +104,17 @@ int Bucket::isIn(Kmer kmer) {
             if (i >= currentSuffixLen && i >= currentPrefixLen) break;
         }
 
-        int found = 4 * i; //ceil(log2(knownInfo));
+        int found = 4 * i;
 
         //We align the values
         uint64_t toCompare;
-//        cout << "middle : " << middle << " found : " << found << " needed : " << needed << " info : " << knownInfo << endl;
-//        cout << "before : " << withoutMinimiser.getValue() << " " <<((knownInfo >> (found - needed))) << endl;
-//        cout << "string : " << withoutMinimiser.toString() << endl;
         if (found >= needed) {
             if (prefixLen < suffixLen) toCompare = withoutMinimiser.getValue() & (knownInfo >> (found - needed - 2));
             else toCompare = withoutMinimiser.getValue() & (knownInfo >> (found - needed));
         } else {
-            toCompare = withoutMinimiser.getValue() & (knownInfo << (needed - found));
+            toCompare = (withoutMinimiser.getValue() >> (needed - found)) & knownInfo;
         }
 
-//        cout << "We're comparing : " << toCompare << " and : " << maskedSK << endl;
         if (toCompare < maskedSK) {
             end = lastPositionWithInformation - 1;
             infoFound = true;
@@ -129,11 +130,17 @@ int Bucket::isIn(Kmer kmer) {
 
         if (toCompare == maskedSK) { //Match or not enough information
             if (currentPrefixLen >= prefixLen && currentSuffixLen >= suffixLen) { // Match
-                return middle;
+                position = middle;
+                return true;
             } else { //No info
                 if (start < end) {
                     start += 1;
-                } else { // No info till the end of the linear search
+                }
+                if (start == end) { // End of search via linear search
+                    position = start;
+                    return false;
+                }
+                else { // No info till the end of the linear search
                     start = lastStartWithInformation;
                     end = lastPositionWithInformation - 1;
                     infoFound = true;
@@ -143,5 +150,8 @@ int Bucket::isIn(Kmer kmer) {
         }
     }
 
-    return -1;
+    position = (start + end) / 2;
+    return false;
+
+
 }
