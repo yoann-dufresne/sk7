@@ -1,13 +1,7 @@
 #include <iostream>
 
 #include "lest.hpp"
-#include "Kmer.hpp"
-#include "exampleHash.hpp"
-#include "Minimiser.hpp"
-#include "utils.hpp"
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmissing-braces"
+#include "Bucket.hpp"
 
 using namespace std;
 using namespace lest;
@@ -184,8 +178,113 @@ const test utilsTest[] {
         EXPECT(withoutMinimiser2.getValue() == (uint64_t) 0b001000110011);
         EXPECT(withoutMinimiser3.getValue() == (uint64_t) 0b100100100010);
         EXPECT(withoutMinimiser4.getValue() == (uint64_t) 0b011010000000);
+        EXPECT(mask1 == (uint64_t) 0b1111);
+        EXPECT(mask2 == (uint64_t) 0b001100110011);
+        EXPECT(mask3 == (uint64_t) 0b111100110011);
+        EXPECT(mask4 == (uint64_t) 0b111111111100);
 
         }
+};
+
+const test superKmerTest[] {
+     CASE("accessBits") {
+         vector<uint8_t> testVector = {(uint8_t) 0b10001011, (uint8_t) 0b11001101, (uint8_t) 0b01001100};
+         SuperKmer skTest(testVector);
+         EXPECT(skTest.accessBits(0, 24) == (uint64_t) 0b100010111100110101001100);
+         EXPECT(skTest.accessBits(8, 16) == (uint64_t) 0b11001101);
+         EXPECT(skTest.accessBits(5, 10) == (uint64_t) 0b01111);
+         EXPECT(skTest.accessBits(14, 20) == (uint64_t) 0b010100);
+     }
+};
+
+const test bucketTest[] {
+    CASE("isIn") {
+        /// SuperKmer 1 : G|CT
+        uint8_t firstSection1 = 0b01100111; //1, 2, C, G
+        uint8_t secondSection1 = 0b10000000; //T, _, _, _
+        vector<TYPE> tab1 = vector<TYPE>();
+        tab1.push_back(firstSection1);
+        tab1.push_back(secondSection1);
+        SuperKmer SK1(tab1);
+
+        ///SuperKmer 2 : CG|TT
+        uint8_t firstSection2 = 0b10101011; //2, 2, T, G
+        uint8_t secondSection2 = 0b10010000; // T, C, _, _
+        vector<TYPE> tab2 = vector<TYPE>();
+        tab2.push_back(firstSection2);
+        tab2.push_back(secondSection2);
+        SuperKmer SK2(tab2);
+
+        ///SuperKmer 3 : GG|
+        uint8_t firstSection3 = 0b10000011; //2, 0, _, G
+        uint8_t secondSection3 = 0b00110000;//_, G, _, _
+        vector<TYPE> tab3 = vector<TYPE>();
+        tab3.push_back(firstSection3);
+        tab3.push_back(secondSection3);
+        SuperKmer SK3(tab3);
+
+
+        Bucket bucket(3, 0, 5);
+        bucket.addToList(SK1);
+        bucket.addToList(SK2);
+        bucket.addToList(SK3);
+
+        // The bucket contains : G|CT, CG|TT, GG|
+
+        Kmer toSearch = Kmer(0b0000001000, 5); // AAATA
+        Kmer toSearch2 = Kmer(0b1000000001, 5); // TAAAC
+        Kmer toSearch3 = Kmer(0b1001000000, 5); // TCAAA
+        Kmer toSearch4 = Kmer(0b0000000110, 5); // AAACT;
+        Kmer toSearch5 = Kmer(0b1100000010, 5) ; // GAAAT
+        Kmer toSearch6 = Kmer(0b1111000000, 5); // GGAAA
+        Kmer toSearch7 = Kmer(0b0111000000, 5) ;// CGAAA
+        Kmer toSearch8 = Kmer(0b0000001010, 5); // AAATT
+        Kmer toSearch9 = Kmer(0b1100000001, 5); // GAAAC
+        Kmer toSearch10 = Kmer(0b00000010, 4); // AAAT
+        Kmer toSearch11 = Kmer(0b00000001, 4); // AAAC
+        Kmer toSearch12 = Kmer(0b11000000, 4); // GAAA
+        Kmer toSearch13 = Kmer(0b01000000, 4); // CAAA
+        Kmer toSearch14 = Kmer(0b10000000, 4); // TAAA
+        Kmer toSearch15 = Kmer(0b00000000, 4); // AAAA
+        Kmer toSearch16 = Kmer(0b00000001, 4); // AAAC
+        Kmer toSearch17 = Kmer(0b011100000010, 6); // CGAAAT
+        Kmer toSearch18 = Kmer(0b110000000110, 6); // GAAACT
+        Kmer toSearch19 = Kmer(0b110000001010, 6); // GAAATT
+        Kmer toSearch20 = Kmer(0b01110000001010, 7); // CGAAATT
+        Kmer toSearch21 = Kmer(0b111100000010, 6); // GGAAAT
+        Kmer toSearch22 = Kmer(0b110000001000, 6); // GAAATA
+        Kmer toSearch23 = Kmer(0b011100000001010, 8); // CGAAAATT
+        Kmer toSearch24 = Kmer(0b01110000000010, 7); // CGAAAAT
+        Kmer toSearch25 = Kmer(0b01111000000010, 7); // CGTAAAT
+        Kmer toSearch26 = Kmer(0b001111000000, 6); //AGGAAA
+
+        EXPECT(bucket.isIn(toSearch) == -1);
+        EXPECT(bucket.isIn(toSearch2) == -1);
+        EXPECT(bucket.isIn(toSearch3) == -1);
+        EXPECT(bucket.isIn(toSearch4) == 0);
+        EXPECT(bucket.isIn(toSearch5) == 1);
+        EXPECT(bucket.isIn(toSearch6) == 2);
+        EXPECT(bucket.isIn(toSearch7) == 1);
+        EXPECT(bucket.isIn(toSearch8) == 1);
+        EXPECT(bucket.isIn(toSearch9) == 0);
+        EXPECT( bucket.isIn(toSearch10) == 1);
+        EXPECT( bucket.isIn(toSearch11) == 0);
+        EXPECT( bucket.isIn(toSearch12) == 1);
+        EXPECT( bucket.isIn(toSearch13) == -1);
+        EXPECT( bucket.isIn(toSearch14) == -1);
+        EXPECT( bucket.isIn(toSearch15) == -1);
+        EXPECT( bucket.isIn(toSearch16) == 0);
+        EXPECT( bucket.isIn(toSearch17) == 1);
+        EXPECT( bucket.isIn(toSearch18) == 0);
+        EXPECT( bucket.isIn(toSearch19) == 1);
+        EXPECT( bucket.isIn(toSearch20) == 1);
+        EXPECT( bucket.isIn(toSearch21) == -1);
+        EXPECT( bucket.isIn(toSearch22) == -1);
+        EXPECT( bucket.isIn(toSearch23) == -1);
+        EXPECT( bucket.isIn(toSearch24) == -1);
+        EXPECT( bucket.isIn(toSearch25) == -1);
+        EXPECT( bucket.isIn(toSearch26) == -1);
+    }
 };
 
 int main() {
@@ -200,6 +299,20 @@ int main() {
         return failures;
     }
     cout << "*** Passed ***" << endl;
+    cout << "*** Test on utils function(s) ***" << endl;
+    if((failures = run(utilsTest))) {
+        return failures;
+    }
+    cout << "*** Passed ***" << endl;
+    cout << "*** Test on SuperKmer method(s) ***" << endl;
+    if((failures = run(superKmerTest))) {
+        return failures;
+    }
+    cout << "*** Passed ***" << endl;
+    cout << "*** Test on bucket method(s) ***" << endl;
+    if((failures = run(bucketTest))) {
+        return failures;
+    }
+    cout << "*** Passed ***" << endl;
     return 0;
 }
-#pragma clang diagnostic pop

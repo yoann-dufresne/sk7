@@ -56,7 +56,7 @@ int main(int argc, char*argv[]) {
     Kmer toSearch8 = Kmer(0b0000001010, 5); // AAATT
     Kmer toSearch9 = Kmer(0b1100000001, 5); // GAAAC
     Kmer toSearch10 = Kmer(0b00000010, 4); // AAAT
-    Kmer toSearch11 = Kmer(0b00000010, 4); // AAAC
+    Kmer toSearch11 = Kmer(0b00000001, 4); // AAAC
     Kmer toSearch12 = Kmer(0b11000000, 4); // GAAA
     Kmer toSearch13 = Kmer(0b01000000, 4); // CAAA
     Kmer toSearch14 = Kmer(0b10000000, 4); // TAAA
