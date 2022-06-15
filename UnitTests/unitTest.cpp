@@ -288,7 +288,67 @@ const test bucketTest[] {
         EXPECT(not bucket.find(toSearch25, position)); EXPECT(position == 1);
         EXPECT(not bucket.find(toSearch26, position)); EXPECT(position == 2);
 
+    },
+        CASE("addKmer") {
+            /// SuperKmer 1 : G|CT
+            uint8_t firstSection1 = 0b01100111; //1, 2, C, G
+            uint8_t secondSection1 = 0b10000000; //T, _, _, _
+            vector<TYPE> tab1 = vector<TYPE>();
+            tab1.push_back(firstSection1);
+            tab1.push_back(secondSection1);
+            SuperKmer SK1(tab1);
 
+            ///SuperKmer 2 : CG|TT
+            uint8_t firstSection2 = 0b10101011; //2, 2, T, G
+            uint8_t secondSection2 = 0b10010000; // T, C, _, _
+            vector<TYPE> tab2 = vector<TYPE>();
+            tab2.push_back(firstSection2);
+            tab2.push_back(secondSection2);
+            SuperKmer SK2(tab2);
+
+            ///SuperKmer 3 : GG|
+            uint8_t firstSection3 = 0b10000011; //2, 0, _, G
+            uint8_t secondSection3 = 0b00110000;//_, G, _, _
+            vector<TYPE> tab3 = vector<TYPE>();
+            tab3.push_back(firstSection3);
+            tab3.push_back(secondSection3);
+            SuperKmer SK3(tab3);
+
+
+            Bucket bucket(3, 0, 5);
+            bucket.addToList(SK1);
+            bucket.addToList(SK2);
+            bucket.addToList(SK3);
+
+            Kmer toAdd = Kmer(0b0000001000, 5); // AAATA
+            Kmer toAdd2 = Kmer(0b1000000001, 5); // TAAAC
+            Kmer toAdd3 = Kmer(0b1001000000, 5); // TCAAA
+            Kmer toSearch4 = Kmer(0b0000000110, 5); // AAACT;
+            Kmer toSearch5 = Kmer(0b1100000010, 5) ; // GAAAT
+            Kmer toSearch6 = Kmer(0b1111000000, 5); // GGAAA
+            Kmer toSearch7 = Kmer(0b0111000000, 5) ;// CGAAA
+            Kmer toSearch8 = Kmer(0b0000001010, 5); // AAATT
+            Kmer toSearch9 = Kmer(0b1100000001, 5); // GAAAC
+
+            EXPECT(bucket.getListSize() == (uint64_t) 3);
+            bucket.addKmer(toAdd);
+            EXPECT(bucket.getListSize() == (uint64_t) 4);
+            bucket.addKmer(toAdd2);
+            EXPECT(bucket.getListSize() == (uint64_t) 5);
+            bucket.addKmer(toAdd3);
+            EXPECT(bucket.getListSize() == (uint64_t) 6);
+            bucket.addKmer(toAdd);
+            EXPECT(bucket.getListSize() == (uint64_t) 6);
+            int position;
+            EXPECT(bucket.find(toAdd, position) ); EXPECT(position == 3);
+            EXPECT(bucket.find(toAdd2, position)); EXPECT(position == 1);
+            EXPECT(bucket.find(toAdd3, position)); EXPECT(position == 0);
+            EXPECT(bucket.find(toSearch4, position)); EXPECT(position == 2);
+            EXPECT(bucket.find(toSearch5, position)); EXPECT(position == 4);
+            EXPECT(bucket.find(toSearch6, position)); EXPECT(position == 5);
+            EXPECT(bucket.find(toSearch7, position)); EXPECT(position == 4);
+            EXPECT(bucket.find(toSearch8, position)); EXPECT(position == 4);
+            EXPECT(bucket.find(toSearch9, position)); EXPECT(position == 2);
     }
 };
 

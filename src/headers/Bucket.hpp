@@ -23,7 +23,8 @@ public:
     void addToList(SuperKmer superKmer);
     void addKmer(Kmer kmer);
     bool find(Kmer kmer, int &position);
-
+    uint64_t getListSize();
+    void print();
 
 };
 #endif //SK7_BUCKET_HPP
