@@ -261,7 +261,7 @@ const test bucketTest[] {
 
         int position;
 
-        EXPECT(not bucket.find(toSearch, position) ); EXPECT(position == 0);
+        EXPECT(not bucket.find(toSearch, position) ); EXPECT(position == 1);
         EXPECT(not bucket.find(toSearch2, position)); EXPECT(position == 0);
         EXPECT(not bucket.find(toSearch3, position)); EXPECT(position == 0);
         EXPECT(bucket.find(toSearch4, position)); EXPECT(position == 0);
@@ -282,10 +282,10 @@ const test bucketTest[] {
         EXPECT(bucket.find(toSearch19, position)); EXPECT(position == 1);
         EXPECT(bucket.find(toSearch20, position)); EXPECT(position == 1);
         EXPECT(not bucket.find(toSearch21, position)); EXPECT(position == 2);
-        EXPECT(not bucket.find(toSearch22, position)); EXPECT(position == 0);
-        EXPECT(not bucket.find(toSearch23, position)); EXPECT(position == 0);
-        EXPECT(not bucket.find(toSearch24, position)); EXPECT(position == 0);
-        EXPECT(not bucket.find(toSearch25, position)); EXPECT(position == 0);
+        EXPECT(not bucket.find(toSearch22, position)); EXPECT(position == 1);
+        EXPECT(not bucket.find(toSearch23, position)); EXPECT(position == 1);
+        EXPECT(not bucket.find(toSearch24, position)); EXPECT(position == 1);
+        EXPECT(not bucket.find(toSearch25, position)); EXPECT(position == 1);
         EXPECT(not bucket.find(toSearch26, position)); EXPECT(position == 2);
 
 

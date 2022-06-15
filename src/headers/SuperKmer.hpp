@@ -12,6 +12,8 @@ public:
     SuperKmer(std::vector<TYPE> tab);
     std::vector<TYPE> tab;
     uint64_t accessBits(int start, int end);
+    void setBits(const int &start, const int &length, const uint64_t &value);
+    void print();
 };
 
 #endif //SK7_SUPERKMER_HPP

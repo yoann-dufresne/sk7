@@ -21,7 +21,7 @@ private:
 public:
     Bucket(int minimiserLength, uint64_t minimiserValue, int kmerLength);
     void addToList(SuperKmer superKmer);
-//    void addKmer(Kmer kmer);
+    void addKmer(Kmer kmer);
     bool find(Kmer kmer, int &position);
 
 
