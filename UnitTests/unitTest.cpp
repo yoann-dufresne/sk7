@@ -314,7 +314,6 @@ const test bucketTest[] {
             tab3.push_back(secondSection3);
             SuperKmer SK3(tab3);
 
-
             Bucket bucket(3, 0, 5);
             bucket.addToList(SK1);
             bucket.addToList(SK2);
@@ -349,6 +348,77 @@ const test bucketTest[] {
             EXPECT(bucket.find(toSearch7, position)); EXPECT(position == 4);
             EXPECT(bucket.find(toSearch8, position)); EXPECT(position == 4);
             EXPECT(bucket.find(toSearch9, position)); EXPECT(position == 2);
+    },
+    CASE("SKtoKmer") {
+        Bucket bucket = Bucket(3, 0, 5);
+        EXPECT(bucket.SKtoKmer(SuperKmer({0b01101011, 0b01000000})).getValue() == (uint64_t) 0b110000001001);
+        EXPECT(bucket.SKtoKmer(SuperKmer({0b11110110, 0b10110010})).getValue() == (uint64_t) 0b101110000000011000);
+        EXPECT(bucket.SKtoKmer(SuperKmer({0b00101100, 0b00000000})).getValue() == (uint64_t) 0b0000001100);
+        EXPECT(bucket.SKtoKmer(SuperKmer({0b10000010, 0b00100000})).getValue() == (uint64_t) 0b1010000000);
+        EXPECT(bucket.SKtoKmer(SuperKmer({0b01010111, 0b00000000})).getValue() == (uint64_t) 0b1100000001);
+        EXPECT(bucket.SKtoKmer(SuperKmer({0b10101011, 0b10010000})).getValue() == (uint64_t) 0b01110000001010);
+
+    },
+
+    CASE("addSuperKmer") {
+        /// SuperKmer 1 : G|CT
+        uint8_t firstSection1 = 0b01100111; //1, 2, C, G
+        uint8_t secondSection1 = 0b10000000; //T, _, _, _
+        vector<TYPE> tab1 = vector<TYPE>();
+        tab1.push_back(firstSection1);
+        tab1.push_back(secondSection1);
+        SuperKmer SK1(tab1);
+
+        ///SuperKmer 2 : CG|TT
+        uint8_t firstSection2 = 0b10101011; //2, 2, T, G
+        uint8_t secondSection2 = 0b10010000; // T, C, _, _
+        vector<TYPE> tab2 = vector<TYPE>();
+        tab2.push_back(firstSection2);
+        tab2.push_back(secondSection2);
+        SuperKmer SK2(tab2);
+
+        ///SuperKmer 3 : GG|
+        uint8_t firstSection3 = 0b10000011; //2, 0, _, G
+        uint8_t secondSection3 = 0b00110000;//_, G, _, _
+        vector<TYPE> tab3 = vector<TYPE>();
+        tab3.push_back(firstSection3);
+        tab3.push_back(secondSection3);
+        SuperKmer SK3(tab3);
+
+        Bucket bucket(3, 0, 5);
+        bucket.addSuperKmer(SK3);
+        EXPECT(bucket.getListSize() == (uint64_t) 1);
+        bucket.addSuperKmer(SK2);
+        EXPECT(bucket.getListSize() == (uint64_t) 2);
+        bucket.addSuperKmer(SK2);
+        EXPECT(bucket.getListSize() == (uint64_t) 2);
+        bucket.addSuperKmer(SK1);
+        EXPECT(bucket.getListSize() == (uint64_t) 3);
+        bucket.addSuperKmer(SK1);
+        EXPECT(bucket.getListSize() == (uint64_t) 3);
+        bucket.addSuperKmer(SK2);
+        EXPECT(bucket.getListSize() == (uint64_t) 3);
+        bucket.addSuperKmer(SK3);
+        EXPECT(bucket.getListSize() == (uint64_t) 3);
+    },
+    CASE ("Union") {
+        Bucket bucket1 = Bucket(3, 0, 5);
+        Bucket bucket2 = Bucket(3, 0, 5);
+
+        bucket1.addSuperKmer(SuperKmer({0b10101011, 0b10010000}));
+        bucket1.addSuperKmer(SuperKmer({0b01100111, 0b10000000}));
+        bucket1.addSuperKmer(SuperKmer({0b10000011, 0b00110000}));
+//        cout << "bucket1 : " << endl;
+//        bucket1.print();
+
+        bucket2.addSuperKmer(SuperKmer({0b10101011, 0b10010000}));
+        bucket2.addSuperKmer(SuperKmer({0b01010110}));
+        bucket2.addSuperKmer(SuperKmer({0b11111011, 0b10100011}));
+//        cout << "bucket2 : " << endl;
+//        bucket2.print();
+
+        Bucket tester = bucket1 | bucket2;
+//        tester.print();
     }
 };
 
@@ -375,7 +445,7 @@ int main() {
         return failures;
     }
     cout << "*** Passed ***" << endl;
-    cout << "*** Test on bucket method(s) ***" << endl;
+    cout << "*** Test on bucket methods ***" << endl;
     if((failures = run(bucketTest))) {
         return failures;
     }

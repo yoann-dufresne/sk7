@@ -8,6 +8,7 @@
 #define SIZE 8 // For uint8_t
 
 class SuperKmer {
+
 public:
     SuperKmer(std::vector<TYPE> tab);
     std::vector<TYPE> tab;

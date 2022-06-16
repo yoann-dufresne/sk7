@@ -85,7 +85,7 @@ bool Bucket::find(Kmer kmer, int &position) {
         int currentMaxLen = (currentPrefixLen < currentSuffixLen) ? currentSuffixLen : currentPrefixLen;
 
         uint64_t currentValue = current.accessBits(SKheader, SKheader + currentMaxLen * 4); // superkmer's value
-//        if (currentPrefixLen < currentSuffixLen) currentValue >>=2;
+//        //if (currentPrefixLen < currentSuffixLen) currentValue >>=2;
 //        cout << "current sk : " << Kmer(currentValue, currentSuffixLen + currentPrefixLen).toString() << " of value : " << currentValue <<endl;
         uint64_t maskedSK;
 //        cout << "maxLen : " << maxLen << " current maxLen : " << currentMaxLen << endl;
@@ -202,7 +202,7 @@ bool Bucket::find(Kmer kmer, int &position) {
 //    cout << "ending start : " << start << " ending end : " << end << endl;
 //    cout << "last was sup : " << lastWasSuperior << endl;
     if (lastWasSuperior) {
-        position = (start + end) / 2;
+        position = ceil((start + end) / 2.0);
     } else {
         position = (start + end) / 2 + 1;
     }
@@ -221,10 +221,12 @@ void Bucket::addKmer(Kmer kmer) {
     if (find(kmer, position)) { // already in the bucket
         return;
     } else {
+        auto itPos = orderedList.begin() + position;
+        // We build a superKmer from the kmer and put it in the bucket
         Minimiser minimiserKmer = Minimiser(alpha, this->minimiserLength, kmer);
         Kmer withoutMinimiser = kmer.removePart(minimiserKmer.getPos(), minimiserLength);
         interleavedOrder(withoutMinimiser, minimiserKmer.getPos());
-        auto itPos = orderedList.begin() + position;
+
         TYPE prefixLen = minimiserKmer.getPos();
         TYPE suffixLen = kmer.getLength() - minimiserKmer.getPos() - this->minimiserLength;
         int maxLen = (prefixLen < suffixLen) ? suffixLen : prefixLen;
@@ -233,17 +235,128 @@ void Bucket::addKmer(Kmer kmer) {
         toInsert.setBits(0, fixSize, prefixLen);
         toInsert.setBits(fixSize, fixSize, suffixLen);
         toInsert.setBits(2 * fixSize, 4 * maxLen, withoutMinimiser.getValue());
+
         orderedList.insert(itPos, toInsert);
     }
 }
 
+/**
+ * Build a Kmer from a superKmer
+ * @param superKmer the starting superKmer
+ * @return the built Kmer
+ */
+Kmer Bucket::SKtoKmer(SuperKmer superKmer) {
+    int fixBitSize = ceil(log2(kmerLength - minimiserLength + 1));
+    uint64_t currentPrefixLen = superKmer.accessBits(0, fixBitSize); // superkmer's prefix length
+    uint64_t currentSuffixLen = superKmer.accessBits(fixBitSize, 2 * fixBitSize); // superkmer's suffix length
+    uint64_t kmerValue = 0;
+    for (int i = currentPrefixLen - 1; i >= 0; i--) {
+        int readStart = 2 * fixBitSize + i * 4 + 2;
+        kmerValue = (kmerValue << 2) + superKmer.accessBits(readStart, readStart + 2);
+    }
+    kmerValue = (kmerValue << minimiserLength * 2) + minimiser;
+    for (uint64_t i = 0; i < currentSuffixLen; i++) {
+        int readStart = 2 * fixBitSize + i * 4;
+        kmerValue = (kmerValue << 2) + superKmer.accessBits(readStart, readStart + 2);
+    }
+    return Kmer(kmerValue, currentPrefixLen + minimiserLength + currentSuffixLen);
+}
+
+/**
+ * Add a superKmer to a bucket conserving the order
+ * @param superKmer the superKmer to add to the bucket
+ */
+void Bucket::addSuperKmer(const SuperKmer& superKmer) {
+    if (orderedList.empty()) {
+        return addToList(superKmer);
+    }
+    // We build a kmer from the superKmer and search it to find the correct position then add it
+    Kmer toSearchForPos = SKtoKmer(superKmer);
+//    cout << "we testing : " << toSearchForPos.toString() << endl;
+    int position;
+    if (find(toSearchForPos, position)) return; // Already in
+    auto itPos = orderedList.begin() + position;
+    orderedList.insert(itPos, superKmer);
+}
+
+/**
+ * Build a bucket union of two buckets
+ * @param toAdd the bucket to join
+ * @return a new bucket containing every superKmers of the starting bucket in order without no duplicate
+ */
+ // Pour opti -> tours lineaires multiples
+Bucket Bucket::operator|(const Bucket &toAdd) {
+    if (toAdd.minimiser != minimiser || toAdd.kmerLength != kmerLength || toAdd.minimiserLength != minimiserLength) {
+        throw std::runtime_error("Error: incompatible buckets");
+    }
+    Bucket result = Bucket(minimiserLength, minimiser, kmerLength);
+    if (orderedList.size() < toAdd.orderedList.size()) {
+        result.orderedList = std::vector<SuperKmer>(toAdd.orderedList);
+        for (auto &it : orderedList) {
+            result.addSuperKmer(it);
+        }
+        return result;
+    } else {
+        result.orderedList = std::vector<SuperKmer>(orderedList);
+        for (auto &it : toAdd.orderedList) {
+            result.addSuperKmer(it);
+        }
+        return result;
+    }
+}
+
+/**
+ * Getter for the size of the bucket
+ * @return the number of superKmer in the bucket
+ */
 uint64_t Bucket::getListSize() {
     return orderedList.size();
 }
 
+/**
+ * Getter for the superKmer list of the bucket
+ * @return the list of the superKmer in the bucket
+ */
+std::vector<SuperKmer> Bucket::getListCopy() {
+    return std::vector<SuperKmer>(orderedList);
+}
+
+/**
+ * Getter for the minimiser length of the bucket
+ * @return minimiserLength
+ */
+int Bucket::getMinimiserLength() {
+    return minimiserLength;
+}
+
+/**
+ * Getter for the minimiser value of the bucket
+ * @return minimiser
+ */
+uint64_t Bucket::getMinimiser() {
+    return minimiser;
+}
+
+/**
+ * Getter for the kmerLength of the bucket
+ * @return kmerLength
+ */
+int Bucket::getKmerLength() {
+    return minimiserLength;
+}
+
+/**
+ * Print every superKmer of the bucket as a bitset
+ */
 void Bucket::print() {
     cout << "content : " << endl;
     for (auto &it : orderedList) {
         it.print();
     }
 }
+
+Bucket Bucket::operator&(const Bucket &toIntersect) {
+    return Bucket(0, 0, 0);
+}
+
+
