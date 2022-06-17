@@ -401,9 +401,30 @@ const test bucketTest[] {
         bucket.addSuperKmer(SK3);
         EXPECT(bucket.getListSize() == (uint64_t) 3);
     },
+
+    CASE("Compare SK") {
+        SuperKmer SK1 = SuperKmer({0b10101011, 0b10010000});
+        SuperKmer SK2 = SuperKmer({0b01010110});
+        SuperKmer SK3 = SuperKmer({0b11111011, 0b10100011});
+        SuperKmer SK4 = SuperKmer({0b01101011, 0b10000000});
+        SuperKmer SK5 = SuperKmer({0b11101011, 0b10010010});
+        SuperKmer SK6 = SuperKmer({0b01000010});
+        SuperKmer SK7 = SuperKmer({0b00011100});
+
+        Bucket testBucket = Bucket(3, 0, 5);
+        EXPECT(testBucket.compareSK(SK1, SK1) == Bucket::EQUAL);
+        EXPECT(testBucket.compareSK(SK1, SK2) == Bucket::SUPERIOR);
+        EXPECT(testBucket.compareSK(SK1, SK3) == Bucket::INFERIOR);
+        EXPECT(testBucket.compareSK(SK1, SK4) == Bucket::INCOMPARABLE_TOO_MUCH_INFO);
+        EXPECT(testBucket.compareSK(SK1, SK5) == Bucket::INCOMPARABLE_NOT_ENOUGH_INFO);
+        EXPECT(testBucket.compareSK(SK6, SK7) == Bucket::INCOMPARABLE_NOT_ENOUGH_INFO);
+
+    },
+
     CASE ("Union") {
         Bucket bucket1 = Bucket(3, 0, 5);
         Bucket bucket2 = Bucket(3, 0, 5);
+        Bucket bucket3 = Bucket(3, 0, 5);
 
         bucket1.addSuperKmer(SuperKmer({0b10101011, 0b10010000}));
         bucket1.addSuperKmer(SuperKmer({0b01100111, 0b10000000}));
@@ -417,8 +438,21 @@ const test bucketTest[] {
 //        cout << "bucket2 : " << endl;
 //        bucket2.print();
 
-        Bucket tester = bucket1 | bucket2;
-//        tester.print();
+        Bucket NoDuplicate = bucket1 | bucket2;
+//        NoDuplicate.print();
+        EXPECT(NoDuplicate.getListSize() == (uint64_t) 5);
+
+        bucket3.addSuperKmer(SuperKmer({0b11101011, 0b10010010}));
+        bucket3.addSuperKmer(SuperKmer({0b01010110}));
+        bucket3.addSuperKmer(SuperKmer({0b11111011, 0b10100011}));
+        bucket3.addSuperKmer(SuperKmer({0b00101100, 0b01000000}));
+//        cout << "bucket 3 : " << endl;
+//        bucket3.print();
+
+        Bucket Incomparable = bucket1 | bucket3;
+//        Incomparable.print();
+        EXPECT(Incomparable.getListSize() == (uint64_t) 7);
+
     }
 };
 

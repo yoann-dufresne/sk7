@@ -68,11 +68,28 @@ void SuperKmer::setBits(const int &start, const int &length, const uint64_t &val
     }
 }
 
-void SuperKmer::print() {
+void SuperKmer::print(const int &fixBitSize) {
     cout << "SK print : ";
     for (ulong i = 0; i < tab.size(); i++) {
         cout << "\t" << bitset<8>(tab[i]);
     }
-    cout << endl;
+    int prefixLen = getPrefixLen(fixBitSize);
+    int suffixLen = getSuffixLen(fixBitSize);
+    uint64_t value = getValue(fixBitSize, 4*((prefixLen < suffixLen)?suffixLen:prefixLen));
+    cout << " --> " << "prefixLen = " << prefixLen << " suffixLen = " << suffixLen << " : "
+    << ((suffixLen == 0)?"_":"") + Kmer(value, prefixLen + suffixLen).toString() << endl;
+
+}
+
+int SuperKmer::getPrefixLen(const int &fixBitSize) {
+    return accessBits(0, fixBitSize);
+}
+
+int SuperKmer::getSuffixLen(const int &fixBitSize) {
+    return accessBits(fixBitSize, 2 * fixBitSize);
+}
+
+uint64_t SuperKmer::getValue(const int &fixBitSize, const int &bitsToRead) {
+    return accessBits(2*fixBitSize, 2*fixBitSize + bitsToRead);
 }
 

@@ -247,19 +247,19 @@ void Bucket::addKmer(Kmer kmer) {
  */
 Kmer Bucket::SKtoKmer(SuperKmer superKmer) {
     int fixBitSize = ceil(log2(kmerLength - minimiserLength + 1));
-    uint64_t currentPrefixLen = superKmer.accessBits(0, fixBitSize); // superkmer's prefix length
-    uint64_t currentSuffixLen = superKmer.accessBits(fixBitSize, 2 * fixBitSize); // superkmer's suffix length
+    uint64_t PrefixLen = superKmer.accessBits(0, fixBitSize); // superkmer's prefix length
+    uint64_t SuffixLen = superKmer.accessBits(fixBitSize, 2 * fixBitSize); // superkmer's suffix length
     uint64_t kmerValue = 0;
-    for (int i = currentPrefixLen - 1; i >= 0; i--) {
+    for (int i = PrefixLen - 1; i >= 0; i--) {
         int readStart = 2 * fixBitSize + i * 4 + 2;
         kmerValue = (kmerValue << 2) + superKmer.accessBits(readStart, readStart + 2);
     }
     kmerValue = (kmerValue << minimiserLength * 2) + minimiser;
-    for (uint64_t i = 0; i < currentSuffixLen; i++) {
+    for (uint64_t i = 0; i < SuffixLen; i++) {
         int readStart = 2 * fixBitSize + i * 4;
         kmerValue = (kmerValue << 2) + superKmer.accessBits(readStart, readStart + 2);
     }
-    return Kmer(kmerValue, currentPrefixLen + minimiserLength + currentSuffixLen);
+    return Kmer(kmerValue, PrefixLen + minimiserLength + SuffixLen);
 }
 
 /**
@@ -284,25 +284,63 @@ void Bucket::addSuperKmer(const SuperKmer& superKmer) {
  * @param toAdd the bucket to join
  * @return a new bucket containing every superKmers of the starting bucket in order without no duplicate
  */
- // Pour opti -> tours lineaires multiples
 Bucket Bucket::operator|(const Bucket &toAdd) {
     if (toAdd.minimiser != minimiser || toAdd.kmerLength != kmerLength || toAdd.minimiserLength != minimiserLength) {
         throw std::runtime_error("Error: incompatible buckets");
     }
     Bucket result = Bucket(minimiserLength, minimiser, kmerLength);
-    if (orderedList.size() < toAdd.orderedList.size()) {
-        result.orderedList = std::vector<SuperKmer>(toAdd.orderedList);
-        for (auto &it : orderedList) {
-            result.addSuperKmer(it);
+//    if (orderedList.size() < toAdd.orderedList.size()) {
+//        result.orderedList = std::vector<SuperKmer>(toAdd.orderedList);
+//        for (auto &it : orderedList) {
+//            result.addSuperKmer(it);
+//        }
+//        return result;
+//    } else {
+//        result.orderedList = std::vector<SuperKmer>(orderedList);
+//        for (auto &it : toAdd.orderedList) {
+//            result.addSuperKmer(it);
+//        }
+//        return result;
+//    }
+    uint64_t i = 0; // loop index for the current Bucket
+    uint64_t j = 0; // loop index for toAdd
+    while (i < orderedList.size() && j < toAdd.orderedList.size()) {
+        switch (compareSK(orderedList.at(i), toAdd.orderedList.at(j))) {
+            case Bucket::SUPERIOR :
+                result.addToList(toAdd.orderedList.at(j));
+                j++;
+                break;
+            case Bucket::INFERIOR :
+                result.addToList(orderedList.at(i));
+                i++;
+                break;
+            case Bucket::EQUAL :
+                result.addToList(orderedList.at(i));
+                i++;
+                j++;
+                break;
+            case Bucket::INCOMPARABLE_TOO_MUCH_INFO:
+//                cout << "well" << endl;
+                result.addToList(toAdd.orderedList.at(j));
+                j++;
+                break;
+            case Bucket::INCOMPARABLE_NOT_ENOUGH_INFO:
+//                cout << "problem" << endl;
+                result.addToList(orderedList.at(i));
+                i++;
+                break;
         }
-        return result;
-    } else {
-        result.orderedList = std::vector<SuperKmer>(orderedList);
-        for (auto &it : toAdd.orderedList) {
-            result.addSuperKmer(it);
-        }
-        return result;
     }
+    if (i == orderedList.size()) { // End of this, add the rest of toAdd
+        for (; j < toAdd.orderedList.size(); j++ ) {
+            result.addToList(toAdd.orderedList.at(j));
+        }
+    } else { // End of toAdd, add the rest of this
+        for (; i < orderedList.size(); i++ ) {
+            result.addToList(orderedList.at(i));
+        }
+    }
+    return result;
 }
 
 /**
@@ -351,12 +389,90 @@ int Bucket::getKmerLength() {
 void Bucket::print() {
     cout << "content : " << endl;
     for (auto &it : orderedList) {
-        it.print();
+        it.print(ceil(log2(kmerLength - minimiserLength + 1)));
     }
 }
 
 Bucket Bucket::operator&(const Bucket &toIntersect) {
     return Bucket(0, 0, 0);
 }
+
+/**
+ * Create a mask to represent holes in the SuperKmer (ex : |_C_T -> 00110011)
+ * @param prefixLen the length of the SuperKmer's prefix
+ * @param suffixLen the length of the SuperKmer's suffix
+ * @return the built mask
+ */
+uint64_t Bucket::buildSKMask(const int &prefixLen, const int &suffixLen) {
+    int i = 0;
+    uint64_t knownInfo = 0;
+    while (i < suffixLen || i < prefixLen) { //Build the mask from superkmer for known information
+        if(i < suffixLen) {
+            knownInfo = (knownInfo << 2) + 0b11;
+        } else {
+            knownInfo <<=2;
+        }
+        if (i < prefixLen) {
+            knownInfo = (knownInfo << 2) + 0b11;
+        } else {
+            knownInfo <<=2;
+        }
+        i++;
+    }
+    return knownInfo;
+}
+
+/**
+ * Compare two SuperKmers
+ * @param superKmer1 the first SuperKmer to compare
+ * @param superKmer2 the second SuperKmer to compare
+ * @return a logical value in {SUPERIOR, INFERIOR, EQUAL, INCOMPARABLE}
+ */
+Bucket::logic Bucket::compareSK(SuperKmer superKmer1, SuperKmer superKmer2) {
+//    cout << "--- COMPARE ---" << endl;
+    int fixBitSize = ceil(log2(kmerLength - minimiserLength + 1));
+
+    int prefixLen1 = superKmer1.getPrefixLen(fixBitSize);
+    int suffixLen1 = superKmer1.getSuffixLen(fixBitSize);
+    int maxLen1 = (prefixLen1 < suffixLen1)? suffixLen1:prefixLen1;
+    uint64_t value1 = superKmer1.getValue(fixBitSize, 4 * maxLen1);
+    uint64_t mask1 = buildSKMask(prefixLen1, suffixLen1);
+//    cout << "value 1 = " << value1 << " mask 1 = " << mask1 << endl;
+
+    int prefixLen2 = superKmer2.getPrefixLen(fixBitSize);
+    int suffixLen2 = superKmer2.getSuffixLen(fixBitSize);
+    int maxLen2 = (prefixLen2 < suffixLen2)? suffixLen2:prefixLen2;
+    uint64_t value2 = superKmer2.getValue(fixBitSize, 4*maxLen2);
+    uint64_t mask2 = buildSKMask(prefixLen2, suffixLen2);
+
+    if (maxLen1 < maxLen2) { // We align the values
+        value2 >>= (maxLen2 - maxLen1) * 4;
+        mask2 >>= (maxLen2 - maxLen1) * 4;
+    } else {
+        value1 >>= (maxLen1 - maxLen2) * 4;
+        mask1 >>= (maxLen1 - maxLen2) * 4;
+    }
+
+//    cout << "maxLen1 = " << maxLen1 << " maxLen2 = " << maxLen2 << endl;
+//    cout << "value 1 = " << value1 << " mask 1 = " << mask1 << endl;
+//    cout << "value 2 = " << value2 << " mask 2 = " << mask2 << endl;
+//    cout << "\tcomparison : " << (value1 & mask2) << " and " << (value2 & mask1) << endl;
+    if ((value1 & mask2) < (value2 & mask1)) {
+        return Bucket::INFERIOR;
+    } else if ((value1 & mask2) > (value2 & mask1)) {
+        return Bucket::SUPERIOR;
+    } else { // (value1 & mask2) == (value2 & mask1)
+        if (prefixLen1 == prefixLen2 && suffixLen1 == suffixLen2) { // True equality
+            return Bucket::EQUAL;
+        } else { // Incomparable
+            if (prefixLen1 + suffixLen1 > prefixLen2 + suffixLen2) {
+                return Bucket::INCOMPARABLE_TOO_MUCH_INFO;
+            } else {
+                return Bucket::INCOMPARABLE_NOT_ENOUGH_INFO;
+            }
+        }
+    }
+}
+
 
 

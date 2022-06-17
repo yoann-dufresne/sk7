@@ -10,9 +10,12 @@
 #include "exampleHash.hpp"
 #include "utils.hpp"
 
+
+
 class Bucket {
 
 private:
+    uint64_t buildSKMask(const int &prefixLen, const int &suffixLen);
     int minimiserLength;
     uint64_t minimiser;
     int kmerLength;
@@ -40,8 +43,13 @@ public:
     Bucket operator&(const Bucket &toIntersect); // Intersection
     Bucket operator^(const Bucket &toXor); // symmetrical difference
 
-    /// Misc.
+
+    /// Intern functions
     Kmer SKtoKmer(SuperKmer superKmer);
+    enum logic {SUPERIOR, INFERIOR, EQUAL, INCOMPARABLE_TOO_MUCH_INFO, INCOMPARABLE_NOT_ENOUGH_INFO};
+    logic compareSK(SuperKmer superKmer1, SuperKmer superKmer2);
+
+    /// Misc.
     void print();
 
 };
