@@ -194,11 +194,29 @@ const test superKmerTest[] {
          EXPECT(skTest.accessBits(8, 16) == (uint64_t) 0b11001101);
          EXPECT(skTest.accessBits(5, 10) == (uint64_t) 0b01111);
          EXPECT(skTest.accessBits(14, 20) == (uint64_t) 0b010100);
+     },
+     CASE("setBits") {
+         SuperKmer SKTest = SuperKmer({0});
+         SKTest.setBits(0, 2, 0b11);
+         SKTest.setBits(2, 2, 0b10);
+         SKTest.setBits(4, 4, 0b1001);
+         SKTest.setBits(8, 8, 0b10010110);
+         EXPECT(SKTest.accessBits(0, 16) == (uint64_t) 0b1110100110010110);
+     },
+     CASE("cut") {
+         SuperKmer SK = SuperKmer({0b10011101, 0b00100000});
+         std::vector<SuperKmer> cut = SK.cut(1, 2, 2);
+         EXPECT(cut.at(0).getValue(2) == (uint64_t) 0b00010010);
+         EXPECT(cut.at(1).getValue(2) == (uint64_t) 0b1101);
+         SK = SuperKmer({0b01101001, 0b01000000});
+         cut = SK.cut(0, 0, 2);
+         EXPECT(cut.at(0).getValue(2) == (uint64_t) 0b1001);
+         EXPECT(cut.at(1).getValue(2) == (uint64_t) 0b10000100);
+
      }
 };
 
 const test bucketTest[] {
-
     CASE("find") {
         /// SuperKmer 1 : G|CT
         uint8_t firstSection1 = 0b01100111; //1, 2, C, G
@@ -261,7 +279,7 @@ const test bucketTest[] {
 
         int position;
 
-        EXPECT(not bucket.find(toSearch, position) ); EXPECT(position == 1);
+        EXPECT(not bucket.find(toSearch, position)); EXPECT(position == 1);
         EXPECT(not bucket.find(toSearch2, position)); EXPECT(position == 0);
         EXPECT(not bucket.find(toSearch3, position)); EXPECT(position == 0);
         EXPECT(bucket.find(toSearch4, position)); EXPECT(position == 0);
@@ -289,65 +307,103 @@ const test bucketTest[] {
         EXPECT(not bucket.find(toSearch26, position)); EXPECT(position == 2);
 
     },
-        CASE("addKmer") {
-            /// SuperKmer 1 : G|CT
-            uint8_t firstSection1 = 0b01100111; //1, 2, C, G
-            uint8_t secondSection1 = 0b10000000; //T, _, _, _
-            vector<TYPE> tab1 = vector<TYPE>();
-            tab1.push_back(firstSection1);
-            tab1.push_back(secondSection1);
-            SuperKmer SK1(tab1);
+    CASE("isSorted") {
+        /// SuperKmer 1 : G|CT
+        uint8_t firstSection1 = 0b01100111; //1, 2, C, G
+        uint8_t secondSection1 = 0b10000000; //T, _, _, _
+        vector<TYPE> tab1 = vector<TYPE>();
+        tab1.push_back(firstSection1);
+        tab1.push_back(secondSection1);
+        SuperKmer SK1(tab1);
 
-            ///SuperKmer 2 : CG|TT
-            uint8_t firstSection2 = 0b10101011; //2, 2, T, G
-            uint8_t secondSection2 = 0b10010000; // T, C, _, _
-            vector<TYPE> tab2 = vector<TYPE>();
-            tab2.push_back(firstSection2);
-            tab2.push_back(secondSection2);
-            SuperKmer SK2(tab2);
+        ///SuperKmer 2 : CG|TT
+        uint8_t firstSection2 = 0b10101011; //2, 2, T, G
+        uint8_t secondSection2 = 0b10010000; // T, C, _, _
+        vector<TYPE> tab2 = vector<TYPE>();
+        tab2.push_back(firstSection2);
+        tab2.push_back(secondSection2);
+        SuperKmer SK2(tab2);
 
-            ///SuperKmer 3 : GG|
-            uint8_t firstSection3 = 0b10000011; //2, 0, _, G
-            uint8_t secondSection3 = 0b00110000;//_, G, _, _
-            vector<TYPE> tab3 = vector<TYPE>();
-            tab3.push_back(firstSection3);
-            tab3.push_back(secondSection3);
-            SuperKmer SK3(tab3);
+        ///SuperKmer 3 : GG|
+        uint8_t firstSection3 = 0b10000011; //2, 0, _, G
+        uint8_t secondSection3 = 0b00110000;//_, G, _, _
+        vector<TYPE> tab3 = vector<TYPE>();
+        tab3.push_back(firstSection3);
+        tab3.push_back(secondSection3);
+        SuperKmer SK3(tab3);
 
-            Bucket bucket(3, 0, 5);
-            bucket.addToList(SK1);
-            bucket.addToList(SK2);
-            bucket.addToList(SK3);
 
-            Kmer toAdd = Kmer(0b0000001000, 5); // AAATA
-            Kmer toAdd2 = Kmer(0b1000000001, 5); // TAAAC
-            Kmer toAdd3 = Kmer(0b1001000000, 5); // TCAAA
-            Kmer toSearch4 = Kmer(0b0000000110, 5); // AAACT;
-            Kmer toSearch5 = Kmer(0b1100000010, 5) ; // GAAAT
-            Kmer toSearch6 = Kmer(0b1111000000, 5); // GGAAA
-            Kmer toSearch7 = Kmer(0b0111000000, 5) ;// CGAAA
-            Kmer toSearch8 = Kmer(0b0000001010, 5); // AAATT
-            Kmer toSearch9 = Kmer(0b1100000001, 5); // GAAAC
+        Bucket bucket(3, 0, 5);
+        bucket.addToList(SK1);
+        bucket.addToList(SK2);
+        bucket.addToList(SK3);
 
-            EXPECT(bucket.getListSize() == (uint64_t) 3);
-            bucket.addKmer(toAdd);
-            EXPECT(bucket.getListSize() == (uint64_t) 4);
-            bucket.addKmer(toAdd2);
-            EXPECT(bucket.getListSize() == (uint64_t) 5);
-            bucket.addKmer(toAdd3);
-            EXPECT(bucket.getListSize() == (uint64_t) 6);
-            bucket.addKmer(toAdd);
-            EXPECT(bucket.getListSize() == (uint64_t) 6);
-            int position;
-            EXPECT(bucket.find(toAdd, position) ); EXPECT(position == 3);
-            EXPECT(bucket.find(toAdd2, position)); EXPECT(position == 1);
-            EXPECT(bucket.find(toAdd3, position)); EXPECT(position == 0);
-            EXPECT(bucket.find(toSearch4, position)); EXPECT(position == 2);
-            EXPECT(bucket.find(toSearch5, position)); EXPECT(position == 4);
-            EXPECT(bucket.find(toSearch6, position)); EXPECT(position == 5);
-            EXPECT(bucket.find(toSearch7, position)); EXPECT(position == 4);
-            EXPECT(bucket.find(toSearch8, position)); EXPECT(position == 4);
-            EXPECT(bucket.find(toSearch9, position)); EXPECT(position == 2);
+        EXPECT(bucket.isSorted());
+    }
+        ,
+    CASE("addKmer") {
+        /// SuperKmer 1 : G|CT
+        uint8_t firstSection1 = 0b01100111; //1, 2, C, G
+        uint8_t secondSection1 = 0b10000000; //T, _, _, _
+        vector<TYPE> tab1 = vector<TYPE>();
+        tab1.push_back(firstSection1);
+        tab1.push_back(secondSection1);
+        SuperKmer SK1(tab1);
+
+        ///SuperKmer 2 : CG|TT
+        uint8_t firstSection2 = 0b10101011; //2, 2, T, G
+        uint8_t secondSection2 = 0b10010000; // T, C, _, _
+        vector<TYPE> tab2 = vector<TYPE>();
+        tab2.push_back(firstSection2);
+        tab2.push_back(secondSection2);
+        SuperKmer SK2(tab2);
+
+        ///SuperKmer 3 : GG|
+        uint8_t firstSection3 = 0b10000011; //2, 0, _, G
+        uint8_t secondSection3 = 0b00110000;//_, G, _, _
+        vector<TYPE> tab3 = vector<TYPE>();
+        tab3.push_back(firstSection3);
+        tab3.push_back(secondSection3);
+        SuperKmer SK3(tab3);
+
+        Bucket bucket(3, 0, 5);
+        bucket.addToList(SK1);
+        bucket.addToList(SK2);
+        bucket.addToList(SK3);
+
+        Kmer toAdd = Kmer(0b0000001000, 5); // AAATA
+        Kmer toAdd2 = Kmer(0b1000000001, 5); // TAAAC
+        Kmer toAdd3 = Kmer(0b1001000000, 5); // TCAAA
+        Kmer toSearch4 = Kmer(0b0000000110, 5); // AAACT;
+        Kmer toSearch5 = Kmer(0b1100000010, 5) ; // GAAAT
+        Kmer toSearch6 = Kmer(0b1111000000, 5); // GGAAA
+        Kmer toSearch7 = Kmer(0b0111000000, 5) ;// CGAAA
+        Kmer toSearch8 = Kmer(0b0000001010, 5); // AAATT
+        Kmer toSearch9 = Kmer(0b1100000001, 5); // GAAAC
+
+        EXPECT(bucket.getListSize() == (uint64_t) 3);
+        bucket.addKmer(toAdd);
+        EXPECT(bucket.getListSize() == (uint64_t) 4);
+        bucket.addKmer(toAdd2);
+        EXPECT(bucket.getListSize() == (uint64_t) 5);
+        bucket.addKmer(toAdd3);
+        EXPECT(bucket.getListSize() == (uint64_t) 6);
+        bucket.addKmer(toAdd);
+        EXPECT(bucket.getListSize() == (uint64_t) 6);
+
+        EXPECT(bucket.isSorted());
+
+
+        int position;
+        EXPECT(bucket.find(toAdd, position) ); EXPECT(position == 3);
+        EXPECT(bucket.find(toAdd2, position)); EXPECT(position == 1);
+        EXPECT(bucket.find(toAdd3, position)); EXPECT(position == 0);
+        EXPECT(bucket.find(toSearch4, position)); EXPECT(position == 2);
+        EXPECT(bucket.find(toSearch5, position)); EXPECT(position == 4);
+        EXPECT(bucket.find(toSearch6, position)); EXPECT(position == 5);
+        EXPECT(bucket.find(toSearch7, position)); EXPECT(position == 4);
+        EXPECT(bucket.find(toSearch8, position)); EXPECT(position == 4);
+        EXPECT(bucket.find(toSearch9, position)); EXPECT(position == 2);
     },
     CASE("SKtoKmer") {
         Bucket bucket = Bucket(3, 0, 5);
@@ -400,6 +456,8 @@ const test bucketTest[] {
         EXPECT(bucket.getListSize() == (uint64_t) 3);
         bucket.addSuperKmer(SK3);
         EXPECT(bucket.getListSize() == (uint64_t) 3);
+
+        EXPECT(bucket.isSorted());
     },
 
     CASE("Compare SK") {
@@ -415,45 +473,143 @@ const test bucketTest[] {
         EXPECT(testBucket.compareSK(SK1, SK1) == Bucket::EQUAL);
         EXPECT(testBucket.compareSK(SK1, SK2) == Bucket::SUPERIOR);
         EXPECT(testBucket.compareSK(SK1, SK3) == Bucket::INFERIOR);
-        EXPECT(testBucket.compareSK(SK1, SK4) == Bucket::INCOMPARABLE_TOO_MUCH_INFO);
-        EXPECT(testBucket.compareSK(SK1, SK5) == Bucket::INCOMPARABLE_NOT_ENOUGH_INFO);
-        EXPECT(testBucket.compareSK(SK6, SK7) == Bucket::INCOMPARABLE_NOT_ENOUGH_INFO);
+        EXPECT(testBucket.compareSK(SK1, SK4) == Bucket::ENCOMPASSING);
+        EXPECT(testBucket.compareSK(SK1, SK5) == Bucket::ENCOMPASSED);
+        EXPECT(testBucket.compareSK(SK6, SK7) == Bucket::INCOMPARABLE);
 
     },
 
-    CASE ("Union") {
-        Bucket bucket1 = Bucket(3, 0, 5);
-        Bucket bucket2 = Bucket(3, 0, 5);
-        Bucket bucket3 = Bucket(3, 0, 5);
+    CASE("findNextOkPosition") {
+            Bucket bucket = Bucket(3, 0, 5);
+            bucket.addSuperKmer(SuperKmer({0b11101011, 0b10010010}));
+            bucket.addSuperKmer(SuperKmer({0b01010110}));
+            bucket.addSuperKmer(SuperKmer({0b11111011, 0b10100011}));
+            bucket.addSuperKmer(SuperKmer({0b00101100, 0b01000000}));
+            bucket.addSuperKmer(SuperKmer({0b01100111, 0b10000000}));
+            bucket.addSuperKmer(SuperKmer({0b10000011, 0b00110000}));
 
-        bucket1.addSuperKmer(SuperKmer({0b10101011, 0b10010000}));
-        bucket1.addSuperKmer(SuperKmer({0b01100111, 0b10000000}));
-        bucket1.addSuperKmer(SuperKmer({0b10000011, 0b00110000}));
-//        cout << "bucket1 : " << endl;
-//        bucket1.print();
+            bucket.print();
 
-        bucket2.addSuperKmer(SuperKmer({0b10101011, 0b10010000}));
-        bucket2.addSuperKmer(SuperKmer({0b01010110}));
-        bucket2.addSuperKmer(SuperKmer({0b11111011, 0b10100011}));
-//        cout << "bucket2 : " << endl;
-//        bucket2.print();
+            EXPECT(bucket.findNextOkPosition(SuperKmer({0b01011101}), bucket.getListCopy(), 2) == (uint64_t) 4);
+            EXPECT(bucket.findNextOkPosition(SuperKmer({0b10000001, 0b00100000}), bucket.getListCopy(), 0) == (uint64_t) 0);
+            EXPECT(bucket.findNextOkPosition(SuperKmer({0b10101011, 0b00100000}), bucket.getListCopy(), 1) == (uint64_t) 2);
+            EXPECT(bucket.findNextOkPosition(SuperKmer({0b00101100, 0b11000000}), bucket.getListCopy(), 1) == (uint64_t) 6);
 
-        Bucket NoDuplicate = bucket1 | bucket2;
-//        NoDuplicate.print();
-        EXPECT(NoDuplicate.getListSize() == (uint64_t) 5);
+    },
 
-        bucket3.addSuperKmer(SuperKmer({0b11101011, 0b10010010}));
-        bucket3.addSuperKmer(SuperKmer({0b01010110}));
-        bucket3.addSuperKmer(SuperKmer({0b11111011, 0b10100011}));
-        bucket3.addSuperKmer(SuperKmer({0b00101100, 0b01000000}));
-//        cout << "bucket 3 : " << endl;
-//        bucket3.print();
-
-        Bucket Incomparable = bucket1 | bucket3;
-//        Incomparable.print();
-        EXPECT(Incomparable.getListSize() == (uint64_t) 7);
-
-    }
+//    CASE ("Union") {
+//        Bucket bucket1 = Bucket(3, 0, 5);
+//        Bucket bucket2 = Bucket(3, 0, 5);
+//        Bucket bucket3 = Bucket(3, 0, 5);
+//
+//        bucket1.addSuperKmer(SuperKmer({0b10101011, 0b10010000}));
+//        bucket1.addSuperKmer(SuperKmer({0b01100111, 0b10000000}));
+//        bucket1.addSuperKmer(SuperKmer({0b10000011, 0b00110000}));
+////        cout << "bucket1 : " << endl;
+////        bucket1.print();
+//
+//        bucket2.addSuperKmer(SuperKmer({0b10101011, 0b10010000}));
+//        bucket2.addSuperKmer(SuperKmer({0b01010110}));
+//        bucket2.addSuperKmer(SuperKmer({0b11111011, 0b10100011}));
+////        cout << "bucket2 : " << endl;
+////        bucket2.print();
+//
+//        Bucket NoDuplicate = bucket1 | bucket2;
+////        NoDuplicate.print();
+//        EXPECT(NoDuplicate.getListSize() == (uint64_t) 5);
+//
+//        bucket3.addSuperKmer(SuperKmer({0b11101011, 0b10010010}));
+//        bucket3.addSuperKmer(SuperKmer({0b01010110}));
+//        bucket3.addSuperKmer(SuperKmer({0b11111011, 0b10100011}));
+//        bucket3.addSuperKmer(SuperKmer({0b00101100, 0b01000000}));
+////        cout << "bucket 3 : " << endl;
+////        bucket3.print();
+//
+//        Bucket Incomparable = bucket1 | bucket3;
+////        Incomparable.print();
+//        EXPECT(Incomparable.getListSize() == (uint64_t) 7);
+//
+//    },
+//    CASE("Intersection") {
+//        Bucket bucket1 = Bucket(3, 0, 5);
+//        Bucket bucket2 = Bucket(3, 0, 5);
+//        Bucket bucket3 = Bucket(3, 0, 5);
+//
+//        bucket1.addSuperKmer(SuperKmer({0b10101011, 0b10010000}));
+//        bucket1.addSuperKmer(SuperKmer({0b01100111, 0b10000000}));
+//        bucket1.addSuperKmer(SuperKmer({0b10000011, 0b00110000}));
+////        cout << "bucket1 : " << endl;
+////        bucket1.print();
+//
+//        bucket2.addSuperKmer(SuperKmer({0b10101011, 0b10010000}));
+//        bucket2.addSuperKmer(SuperKmer({0b01010110}));
+//        bucket2.addSuperKmer(SuperKmer({0b11111011, 0b10100011}));
+////        cout << "bucket2 : " << endl;
+////        bucket2.print();
+//
+//        Bucket notEmpty = bucket1 & bucket2;
+////        notEmpty.print();
+//        EXPECT(notEmpty.getListSize() == (uint64_t) 1);
+//
+//        bucket3.addSuperKmer(SuperKmer({0b11101011, 0b10010010}));
+//        bucket3.addSuperKmer(SuperKmer({0b01010110}));
+//        bucket3.addSuperKmer(SuperKmer({0b11111011, 0b10100011}));
+//        bucket3.addSuperKmer(SuperKmer({0b00101100, 0b01000000}));
+////        cout << "bucket 3 : " << endl;
+////        bucket3.print();
+//
+//        Bucket empty = bucket1 & bucket3;
+////        empty.print();
+//        EXPECT(empty.getListSize() == (uint64_t) 0);
+//
+//        bucket3.addSuperKmer(SuperKmer({0b10000011, 0b00110000}));
+//        bucket3.addSuperKmer(SuperKmer({0b11111011, 0b11100011}));
+////        cout << "bucket 3 : " << endl;
+////        bucket3.print();
+//        empty = bucket1 & bucket3;
+////        empty.print();
+//        EXPECT(empty.getListSize() == (uint64_t) 1);
+//
+//    },
+//    CASE("Symmetrical difference : ") {
+//        Bucket bucket1 = Bucket(3, 0, 5);
+//        Bucket bucket2 = Bucket(3, 0, 5);
+//        Bucket bucket3 = Bucket(3, 0, 5);
+//
+//        bucket1.addSuperKmer(SuperKmer({0b10101011, 0b10010000}));
+//        bucket1.addSuperKmer(SuperKmer({0b01100111, 0b10000000}));
+//        bucket1.addSuperKmer(SuperKmer({0b10000011, 0b00110000}));
+////        cout << "bucket1 : " << endl;
+////        bucket1.print();
+//
+//        bucket2.addSuperKmer(SuperKmer({0b10101011, 0b10010000}));
+//        bucket2.addSuperKmer(SuperKmer({0b01010110}));
+//        bucket2.addSuperKmer(SuperKmer({0b11111011, 0b10100011}));
+////        cout << "bucket2 : " << endl;
+////        bucket2.print();
+//
+//        Bucket xor1 = bucket1 ^ bucket2;
+////        xor1.print();
+//        EXPECT(xor1.getListSize() == (uint64_t) 4);
+//
+//        bucket3.addSuperKmer(SuperKmer({0b11101011, 0b10010010}));
+//        bucket3.addSuperKmer(SuperKmer({0b01010110}));
+//        bucket3.addSuperKmer(SuperKmer({0b11111011, 0b10100011}));
+//        bucket3.addSuperKmer(SuperKmer({0b00101100, 0b01000000}));
+////        cout << "bucket 3 : " << endl;
+////        bucket3.print();
+//
+//        Bucket xor2 = bucket1 ^ bucket3;
+////        xor2.print();
+//        EXPECT(xor2.getListSize() == (uint64_t) 7);
+//
+//        bucket3.addSuperKmer(SuperKmer({0b10000011, 0b00110000}));
+////        cout << "bucket 3 : " << endl;
+////        bucket3.print();
+//        xor2 = bucket1 ^ bucket3;
+////        xor2.print();
+//        EXPECT(xor2.getListSize() == (uint64_t) 6);
+//    }
 };
 
 
