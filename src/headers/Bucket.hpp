@@ -48,7 +48,7 @@ public:
     Kmer SKtoKmer(SuperKmer superKmer);
     enum logic {SUPERIOR, INFERIOR, EQUAL, INCOMPARABLE, ENCOMPASSING, ENCOMPASSED, OVERLAPPING};
     logic compareSK(SuperKmer superKmer1, SuperKmer superKmer2);
-    uint64_t findNextOkPosition(SuperKmer superKmer, std::vector<SuperKmer> list, uint64_t startingPosition);
+    uint64_t findNextOkPosition(const SuperKmer& superKmer, std::vector<SuperKmer> list, uint64_t startingPosition);
 
 
     /// Misc.

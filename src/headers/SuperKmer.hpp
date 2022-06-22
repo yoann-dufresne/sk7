@@ -6,6 +6,7 @@
 
 #include "Kmer.hpp"
 
+
 #define TYPE uint8_t
 #define SIZE 8 // For uint8_t
 
@@ -32,10 +33,11 @@ public:
     std::vector<SuperKmer> cut(const int &commonPartStart, const int &commonPartEnd, const int &fixBitSize);
 
     /// Operator
+    bool operator==(SuperKmer toCompare);
     SuperKmer operator&(SuperKmer toIntersect); // Intersection
 
     /// Misc.
-    void print(const int &fixBitSize);
+    void print();
 
 };
 

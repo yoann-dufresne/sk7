@@ -1,8 +1,16 @@
-#ifndef SK7_KMER_H
-#define SK7_KMER_H
+#ifndef SK7_KMER_HPP
+#define SK7_KMER_HPP
 
 #include <cinttypes>
 #include <string>
+#include <cmath>
+
+namespace sk7 {
+    extern int k;
+    extern int m;
+    extern int fixBitSize;
+    void initLib(int _k, int _m);
+}
 
 class Kmer {
 
@@ -20,4 +28,4 @@ public:
 };
 
 
-#endif //SK7_KMER_H
+#endif //SK7_KMER_HPP

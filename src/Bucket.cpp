@@ -388,7 +388,7 @@ Bucket::logic Bucket::compareSK(SuperKmer superKmer1, SuperKmer superKmer2) {
  * @param startingPosition the initial position in the list
  * @return the index of a certain position in the list
  */
-uint64_t Bucket::findNextOkPosition(SuperKmer superKmer, std::vector<SuperKmer> list, uint64_t startingPosition) {
+uint64_t Bucket::findNextOkPosition(const SuperKmer& superKmer, std::vector<SuperKmer> list, uint64_t startingPosition) {
     uint64_t current = startingPosition;
     for (; current < list.size(); current++) {
         switch (compareSK(superKmer, list.at(current))) {
@@ -513,7 +513,9 @@ Bucket Bucket::operator&(const Bucket &toIntersect) {
                 j++;
                 break;
             case Bucket::OVERLAPPING:
-
+                result.addToList(orderedList.at(i) & toIntersect.orderedList.at(j));
+                i++;
+                j++;
                 break;
         }
     }
@@ -580,15 +582,15 @@ Bucket Bucket::operator^(const Bucket &toXor) {
 bool Bucket::isSorted() {
     for (uint64_t i = 0; i < orderedList.size() - 1; i++) {
         switch (compareSK(orderedList.at(i), orderedList.at(i + 1))) {
-            case EQUAL:
-            case SUPERIOR:
-            case ENCOMPASSING:
-            case ENCOMPASSED:
-            case OVERLAPPING:
+            case Bucket::EQUAL:
+            case Bucket::SUPERIOR:
+            case Bucket::ENCOMPASSING:
+            case Bucket::ENCOMPASSED:
+            case Bucket::OVERLAPPING:
                 return false;
-            case INFERIOR:
+            case Bucket::INFERIOR:
                 break;
-            case INCOMPARABLE:
+            case Bucket::INCOMPARABLE:
                 uint64_t j = i;
                 while (j < orderedList.size() - 1) {
                     switch (compareSK(orderedList.at(j), orderedList.at(j + 1))) {
@@ -619,6 +621,6 @@ bool Bucket::isSorted() {
 void Bucket::print() {
     cout << "content : " << endl;
     for (auto &it : orderedList) {
-        it.print(ceil(log2(kmerLength - minimiserLength + 1)));
+        it.print();
     }
 }

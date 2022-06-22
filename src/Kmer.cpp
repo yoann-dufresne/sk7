@@ -1,6 +1,25 @@
 #include "Kmer.hpp"
 #include <string>
 
+/**
+ * A namespace used to store variables that we want to share across the classes
+ */
+namespace sk7 {
+    int k;
+    int m;
+    int fixBitSize;
+
+    /**
+     * Initialise the global parameters of the library
+     * @param _k the size of the Kmers
+     * @param _m the size of the Minimisers
+     */
+    void initLib(int _k, int _m) {
+        k = _k;
+        m = _m;
+        fixBitSize = ceil(log2(k - m + 1));
+        }
+}
 
 /**
  * Constructor from value

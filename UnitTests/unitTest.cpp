@@ -214,6 +214,38 @@ const test superKmerTest[] {
          EXPECT(cut.at(1).getValue(2) == (uint64_t) 0b10000100);
 
      }
+     ,
+     CASE("Intersection") {
+         SuperKmer SK1 = SuperKmer({0b10010111, 0b00100000});
+         SuperKmer SK2 = SuperKmer({0b01100111, 0b00000000});
+         bool equal = (SK1 & SK2) == SuperKmer({0b01010111});
+         EXPECT(equal);
+
+         SuperKmer SK3 = SuperKmer({0b01100110, 0b11000000});
+         SuperKmer SK4 = SuperKmer({0b10010100, 0b00100000});
+         equal = (SK3 & SK4) == SuperKmer({0b00010100});
+         EXPECT(equal);
+
+         SuperKmer SK5 = SuperKmer({0b10011000, 0b00100000});
+         SuperKmer SK6 = SuperKmer();
+         equal = (SK5 & SK6) == SuperKmer();
+         EXPECT(equal);
+
+         SuperKmer SK7 = SuperKmer({0b10100110, 0b10100000});
+         SuperKmer SK8 = SuperKmer({0b10101110, 0b10100000});
+         equal = (SK7 & SK8) == SuperKmer({0b10000010, 0b00100000});
+         EXPECT(equal);
+
+         SuperKmer SK9 = SuperKmer({0b10000010, 0b00110000});
+         SuperKmer SK10 = SuperKmer({0b00100100, 0b00000000});
+         equal = (SK9 & SK10) == SuperKmer();
+         EXPECT(equal);
+
+         SuperKmer SK11 = SuperKmer({0b10100111, 0b11100000});
+         SuperKmer SK12 = SuperKmer({0b10100111, 0b1101000});
+         equal = (SK11 & SK12) == SuperKmer({0b10010111, 0b00100000});
+         EXPECT(equal);
+     }
 };
 
 const test bucketTest[] {
@@ -488,7 +520,7 @@ const test bucketTest[] {
             bucket.addSuperKmer(SuperKmer({0b01100111, 0b10000000}));
             bucket.addSuperKmer(SuperKmer({0b10000011, 0b00110000}));
 
-            bucket.print();
+//            bucket.print();
 
             EXPECT(bucket.findNextOkPosition(SuperKmer({0b01011101}), bucket.getListCopy(), 2) == (uint64_t) 4);
             EXPECT(bucket.findNextOkPosition(SuperKmer({0b10000001, 0b00100000}), bucket.getListCopy(), 0) == (uint64_t) 0);
@@ -615,6 +647,7 @@ const test bucketTest[] {
 
 int main() {
     int failures(0);
+    sk7::initLib(5, 3);
     cout << "*** Test on minimiser order ***" << endl;
     if ((failures = run(minimiser))) {
         return failures;

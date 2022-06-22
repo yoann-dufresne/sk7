@@ -6,12 +6,12 @@
 
 using namespace std;
 
-
 /**
  * Default constructor for a SuperKmer
  */
 SuperKmer::SuperKmer() {
     this->tab = std::vector<TYPE>();
+    tab.push_back(0);
 }
 
 /**
@@ -58,7 +58,7 @@ uint64_t SuperKmer::accessBits(int start, int end) {
  */
 void SuperKmer::setBits(const int &start, const int &length, const uint64_t &value) {
     ulong section = start / SIZE; // the part of the vector to read in
-    while(section >= tab.size()) {
+    while(section >= tab.size()) { // create missing section of the vector
         tab.push_back(0);
     }
     int position = start % SIZE; // the position of the bit to read
@@ -69,7 +69,7 @@ void SuperKmer::setBits(const int &start, const int &length, const uint64_t &val
         tab.at(section) |= (currentBit << (SIZE - 1 - position)); // put the new one
         mask >>= 1;
         if (++position == SIZE) { // we arrive at the end of the section of the vector
-            if ((ulong) ++section == tab.size()) { // Make a new section of the tab
+            if ((ulong) ++section == tab.size() && i != length - 1) { // Make a new section of the tab
                 tab.push_back(0);
             }
             position = 0;
@@ -149,28 +149,36 @@ std::vector<SuperKmer> SuperKmer::cut(const int &commonPartStart, const int &com
     return std::vector<SuperKmer>({part1, part2});
 }
 
-void SuperKmer::print(const int &fixBitSize) {
+void SuperKmer::print() {
+    if (tab.empty()) {
+        cout << "Empty SK" << endl;
+        return;
+    }
     cout << "SK print : ";
     for (ulong i = 0; i < tab.size(); i++) {
-        cout << "\t" << bitset<8>(tab[i]);
+        cout << "\t" << bitset<SIZE>(tab[i]);
     }
-    int prefixLen = getPrefixLen(fixBitSize);
-    int suffixLen = getSuffixLen(fixBitSize);
-    uint64_t value = getValue(fixBitSize);
+    int prefixLen = getPrefixLen(sk7::fixBitSize);
+    int suffixLen = getSuffixLen(sk7::fixBitSize);
+    uint64_t value = getValue(sk7::fixBitSize);
     std::string nucleo = Kmer(value, prefixLen + suffixLen).toString();
     if (suffixLen == 0) nucleo = '_' + nucleo;
     int i = 0;
     while(i < (int) nucleo.length()) {
-        if(i > 2 * suffixLen) {
+        if(i >= 2 * suffixLen) {
             nucleo.at(i) = '_';
         }
-        if (i + 1 > 2 * prefixLen) {
-            nucleo.at(i + 1) = '_';
+        try {
+            if (i + 1 >= 2 * prefixLen) {
+                nucleo.at(i + 1) = '_';
+            }
+        } catch (...){
+            nucleo += '_';
         }
         i += 2;
     }
 
-    cout << " --> " << "prefixLen = " << prefixLen << " suffixLen = " << suffixLen << " : "
+    cout << " --> " << "prefixLen = " << prefixLen << ", suffixLen = " << suffixLen << " : "
     << nucleo << endl;
 
 }
@@ -205,13 +213,128 @@ uint64_t SuperKmer::getValue(const int &fixBitSize) {
 }
 
 /**
+ * Check if two SuperKmers are equal
+ * @param toCompare the SuperKmer to compare
+ * @return true if the two SuperKmer are equal, else false
+ */
+bool SuperKmer::operator==(const SuperKmer toCompare) {
+    if (tab.size() != toCompare.tab.size()) {
+        return false;
+    }
+    for (uint64_t i = 0; i < tab.size(); i++) {
+        if (tab.at(i) != toCompare.tab.at(i)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+
+/**
  * Intersect two superKmers
  * @param toIntersect the SuperKmer to intersect
  * @return a SuperKmer representing the intersection between the two sets of Kmer represented by the two SuperKmers
  */
 SuperKmer SuperKmer::operator&(SuperKmer toIntersect) {
     SuperKmer result = SuperKmer();
-//    int prefixLen = getPrefixLen();
+    int prefixLen = getPrefixLen(sk7::fixBitSize);
+    int suffixLen = getSuffixLen(sk7::fixBitSize);
+    int maxLen = max(prefixLen, suffixLen);
+    uint64_t value = getValue(sk7::fixBitSize);
+//    cout << "value : " << value << endl;
+
+    int prefixLenIntersect = toIntersect.getPrefixLen(sk7::fixBitSize);
+    int suffixLenIntersect = toIntersect.getSuffixLen(sk7::fixBitSize);
+    int maxLenIntersect = max(prefixLenIntersect, suffixLenIntersect);
+    uint64_t valueIntersect = toIntersect.getValue(sk7::fixBitSize);
+//    cout << "valueIntersect = " << valueIntersect << endl;
+
+    if (maxLen < maxLenIntersect) { // aligning the values
+        valueIntersect >>= 4 * (maxLenIntersect - maxLen);
+    } else {
+        value >>= 4 * (maxLen - maxLenIntersect);
+    }
+
+    // Separation of the prefix and suffix
+    uint64_t prefixMask = 0b00;
+    uint64_t suffixMask = 0b00;
+    for (int i = 0; i < 2*min(maxLen, maxLenIntersect); i++) {
+        if (i % 2 == 0) {
+            prefixMask <<= 2;
+            suffixMask = (suffixMask << 2) + 0b11;
+        } else {
+            prefixMask = (prefixMask << 2) + 0b11;
+            suffixMask <<= 2;
+        }
+    }
+
+//    cout << "prefix mask : " << prefixMask << " suffix mask : " << suffixMask << endl;
+    uint64_t prefixValue = value & prefixMask;
+    uint64_t suffixValue = value & suffixMask;
+    uint64_t prefixValueIntersect = valueIntersect & prefixMask;
+    uint64_t suffixValueIntersect = valueIntersect & suffixMask;
+
+//    cout << "prefix val : " << prefixValue << " suffix val : " << suffixValue << endl;
+//    cout << "prefix val inter : " << prefixValueIntersect << " suffix val inter : " << suffixValueIntersect <<endl;
+
+    uint64_t prefixComparison = prefixValue ^ prefixValueIntersect;
+    uint64_t suffixComparison = suffixValue ^ suffixValueIntersect;
+//    cout << "pref comp : " << prefixComparison << endl;
+//    cout << "suff comp : " << suffixComparison << endl;
+    // Find the leftmost different nucleotide
+    int shiftsPrefix = 0;
+    while (prefixComparison != 0) { // Finding leftmost 1 in the xor
+        prefixComparison >>= 1;
+        shiftsPrefix++;
+    }
+
+    int shiftsSuffix = 0;
+    while (suffixComparison != 0) { // Finding leftmost 1 in the xor
+        suffixComparison >>= 1;
+        shiftsSuffix++;
+    }
+
+    int leftmost1IndexPrefix = 64 - shiftsPrefix;
+    int leftmost1IndexSuffix = 64 - shiftsSuffix;
+
+//    cout << "left 1 pref = " << leftmost1IndexPrefix << " left 1 suff : " << leftmost1IndexSuffix << endl;
+
+    int startOfMeaningfulIndex = 64 - min(maxLen, maxLenIntersect) * 4;
+
+    int firstDiffIndexPrefix = leftmost1IndexPrefix - startOfMeaningfulIndex;
+    int firstDiffNucleotidePrefix = min({firstDiffIndexPrefix / 4,  prefixLen,  prefixLenIntersect});
+
+    int firstDiffIndexSuffix = leftmost1IndexSuffix - startOfMeaningfulIndex;
+    int firstDiffNucleotideSuffix = min({firstDiffIndexSuffix / 4,  suffixLen,  suffixLenIntersect});
+
+    result.setBits(0, sk7::fixBitSize, firstDiffNucleotidePrefix);
+    result.setBits(sk7::fixBitSize,  sk7::fixBitSize, firstDiffNucleotideSuffix);
+
+//    cout << "1st diff pref = " << firstDiffNucleotidePrefix << " suff : " << firstDiffNucleotideSuffix << endl;
+
+    prefixMask = 0;
+    suffixMask = 0;
+    for (int i = 0; i < min(maxLen, maxLenIntersect); i++) {
+        if (i >= firstDiffNucleotideSuffix) {
+            suffixMask <<= 4;
+        } else {
+            suffixMask = (suffixMask << 4) + 0b1100;
+        }
+        if (i >= firstDiffNucleotidePrefix) {
+            prefixMask <<= 4;
+        } else {
+            prefixMask = (prefixMask << 4) + 0b1100;
+        }
+    }
+    prefixMask >>= 2;
+//    cout << "new mask pref : " << prefixMask << " suffix : " << suffixMask << endl;
+    uint64_t final_value = (((value & prefixMask) + (value & suffixMask)) >> (4*(maxLen - max(firstDiffNucleotidePrefix,  firstDiffNucleotideSuffix))));
+//    cout << "f value : " << final_value << " size : " << 4*max(firstDiffNucleotidePrefix, firstDiffNucleotideSuffix) << endl;
+    result.setBits(2*sk7::fixBitSize, 4*max(firstDiffNucleotidePrefix, firstDiffNucleotideSuffix),
+                   final_value);
+
+//    result.print();
     return result;
 }
 
