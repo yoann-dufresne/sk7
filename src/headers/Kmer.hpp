@@ -18,13 +18,26 @@ protected:
     uint64_t value;
 
 public:
+    /// Attributes
     ushort length;
-    uint64_t getValue();
+
+    /// Constructor
     Kmer(uint64_t value, ushort length);
-    std::string toString();
+
+    /// Getter
+    uint64_t getValue();
     ushort getLength();
+
+    /// Utils
     Kmer getSubKmer(int start, int end);
     Kmer removePart(int pos, int fragLength);
+
+    /// Operator
+    bool operator<(const Kmer &toCompare) const;
+
+    /// Misc.
+    std::string toString();
+
 };
 
 

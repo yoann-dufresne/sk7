@@ -21,12 +21,9 @@ private:
     int kmerLength;
     std::vector<SuperKmer> orderedList;
 
-    /// Intern function
-    uint64_t buildSKMask(const int &prefixLen, const int &suffixLen);
-
 public:
     /// Constructor
-    Bucket(int minimiserLength, uint64_t minimiserValue, int kmerLength);
+    Bucket(uint64_t minimiserValue);
 
     /// Add or request methods
     void addToList(SuperKmer superKmer);
@@ -39,20 +36,18 @@ public:
     std::vector<SuperKmer> getListCopy();
 
     /// Operator overloading
-    Bucket operator|(const Bucket &toAdd); // Union
-    Bucket operator&(const Bucket &toIntersect); // Intersection
-    Bucket operator^(const Bucket &toXor); // Symmetrical difference
+    Bucket operator|(const Bucket &toAdd); // Union todo : with new compare
+    Bucket operator&(Bucket &toIntersect); // Intersection todo : with new compare
+    Bucket operator^(const Bucket &toXor); // Symmetrical difference todo : with new compare
 
 
     /// Intern functions
     Kmer SKtoKmer(SuperKmer superKmer);
-    enum logic {SUPERIOR, INFERIOR, EQUAL, INCOMPARABLE, ENCOMPASSING, ENCOMPASSED, OVERLAPPING};
-    logic compareSK(SuperKmer superKmer1, SuperKmer superKmer2);
     uint64_t findNextOkPosition(const SuperKmer& superKmer, std::vector<SuperKmer> list, uint64_t startingPosition);
 
 
     /// Misc.
-    bool isSorted();
+    bool isSorted(); // todo : with new compare
     void print();
 
 };

@@ -107,3 +107,12 @@ Kmer Kmer::removePart(int pos, int fragLength) {
     uint64_t suffix = this->value & mask;
     return Kmer(((this->value >> ((this->length - pos) * 2)) << (suffixLen * 2)) + suffix, this->length - fragLength);
 }
+
+/**
+ * Compare the value of two Kmers
+ * @param toCompare the Kmer to compare with
+ * @return this.value < toCompare.value
+ */
+bool Kmer::operator<(const Kmer &toCompare) const {
+    return this->value < toCompare.value;
+}

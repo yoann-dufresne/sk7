@@ -3,6 +3,7 @@
 
 #include <cinttypes>
 #include <vector>
+#include <set>
 
 #include "Kmer.hpp"
 
@@ -15,6 +16,7 @@ class SuperKmer {
 public:
     /// Attributes
     std::vector<TYPE> tab;
+    enum logic {SUPERIOR, INFERIOR, EQUAL, INCOMPARABLE, ENCOMPASSING, ENCOMPASSED};
 
     /// Constructor
     SuperKmer(std::vector<TYPE> tab);
@@ -31,13 +33,17 @@ public:
 
     /// Storage
     std::vector<SuperKmer> cut(const int &commonPartStart, const int &commonPartEnd, const int &fixBitSize);
+    static logic compareSK(SuperKmer superKmer1, SuperKmer superKmer2); // TODO : nucleotide per nucleotide to make a tab
+    uint64_t buildSKMask(const int &prefixLen, const int &suffixLen);
 
     /// Operator
-    bool operator==(SuperKmer toCompare);
+    bool operator==(const SuperKmer &toCompare) const;
     SuperKmer operator&(SuperKmer toIntersect); // Intersection
+    std::vector<SuperKmer> operator^(SuperKmer &toXor); // Xor
 
     /// Misc.
     void print();
+    std::vector<SuperKmer> split();
 
 };
 

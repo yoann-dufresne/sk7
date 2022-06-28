@@ -7,16 +7,13 @@ using namespace std;
 
 /**
  * Initialise a Bucket
- * @param minimiserLength the length of the minimiser linked to the bucket
  * @param minimiserValue the value of the minimiser
- * @param orderedList the list of superKmer in the bucket
- * @param kmerLength the length of the kmer used to create the superkmer
  */
-Bucket::Bucket(int minimiserLength, uint64_t minimiserValue, int kmerLength) {
-    this->minimiserLength = minimiserLength;
+Bucket::Bucket(uint64_t minimiserValue) {
+    this->minimiserLength = sk7::m;
     this->minimiser = minimiserValue;
     this->orderedList = std::vector<SuperKmer>();
-    this->kmerLength = kmerLength;
+    this->kmerLength = sk7::k;
 }
 
 /**
@@ -60,8 +57,7 @@ bool Bucket::find(Kmer kmer, int &position) {
         needed = 4 * prefixLen;
     }
 
-    int fixBitSize = ceil(log2(this->kmerLength - this->minimiserLength + 1));
-    int SKheader = 2 * fixBitSize;
+    int SKheader = 2 * sk7::fixBitSize;
 
 
     ///START OF THE BINARY SEARCH
@@ -80,8 +76,8 @@ bool Bucket::find(Kmer kmer, int &position) {
         }
         SuperKmer current = this->orderedList.at(middle); //Current SuperKmer of the list
 
-        int currentPrefixLen = current.accessBits(0, fixBitSize); //Current superkmer's prefix length
-        int currentSuffixLen = current.accessBits(fixBitSize, SKheader); //Current superkmer's suffix length
+        int currentPrefixLen = current.accessBits(0, sk7::fixBitSize); //Current superkmer's prefix length
+        int currentSuffixLen = current.accessBits(sk7::fixBitSize, SKheader); //Current superkmer's suffix length
         int currentMaxLen = (currentPrefixLen < currentSuffixLen) ? currentSuffixLen : currentPrefixLen;
 
         uint64_t currentValue = current.accessBits(SKheader, SKheader + currentMaxLen * 4); // superkmer's value
@@ -128,7 +124,7 @@ bool Bucket::find(Kmer kmer, int &position) {
 //        cout << "known info : " << knownInfo << endl;
 
 
-        //We align the values
+        /// We align the values
 //        cout << "found : " << found << " needed : " << needed << endl;
 //        cout << "prefixLen : " << prefixLen << " suffixLen : " << suffixLen << endl;
         uint64_t toCompare;
@@ -249,17 +245,16 @@ void Bucket::addKmer(Kmer kmer) {
  * @return the built Kmer
  */
 Kmer Bucket::SKtoKmer(SuperKmer superKmer) {
-    int fixBitSize = ceil(log2(kmerLength - minimiserLength + 1));
-    uint64_t PrefixLen = superKmer.accessBits(0, fixBitSize); // superkmer's prefix length
-    uint64_t SuffixLen = superKmer.accessBits(fixBitSize, 2 * fixBitSize); // superkmer's suffix length
+    uint64_t PrefixLen = superKmer.accessBits(0, sk7::fixBitSize); // superkmer's prefix length
+    uint64_t SuffixLen = superKmer.accessBits(sk7::fixBitSize, 2 * sk7::fixBitSize); // superkmer's suffix length
     uint64_t kmerValue = 0;
     for (int i = PrefixLen - 1; i >= 0; i--) {
-        int readStart = 2 * fixBitSize + i * 4 + 2;
+        int readStart = 2 * sk7::fixBitSize + i * 4 + 2;
         kmerValue = (kmerValue << 2) + superKmer.accessBits(readStart, readStart + 2);
     }
     kmerValue = (kmerValue << minimiserLength * 2) + minimiser;
     for (uint64_t i = 0; i < SuffixLen; i++) {
-        int readStart = 2 * fixBitSize + i * 4;
+        int readStart = 2 * sk7::fixBitSize + i * 4;
         kmerValue = (kmerValue << 2) + superKmer.accessBits(readStart, readStart + 2);
     }
     return Kmer(kmerValue, PrefixLen + minimiserLength + SuffixLen);
@@ -302,86 +297,6 @@ std::vector<SuperKmer> Bucket::getListCopy() {
 
 
 /**
- * Create a mask to represent holes in the SuperKmer (ex : |_C_T -> 00110011)
- * @param prefixLen the length of the SuperKmer's prefix
- * @param suffixLen the length of the SuperKmer's suffix
- * @return the built mask
- */
-uint64_t Bucket::buildSKMask(const int &prefixLen, const int &suffixLen) {
-    int i = 0;
-    uint64_t knownInfo = 0;
-    while (i < suffixLen || i < prefixLen) { //Build the mask from superkmer for known information
-        if(i < suffixLen) {
-            knownInfo = (knownInfo << 2) + 0b11;
-        } else {
-            knownInfo <<=2;
-        }
-        if (i < prefixLen) {
-            knownInfo = (knownInfo << 2) + 0b11;
-        } else {
-            knownInfo <<=2;
-        }
-        i++;
-    }
-    return knownInfo;
-}
-
-/**
- * Compare two SuperKmers
- * @param superKmer1 the first SuperKmer to compare
- * @param superKmer2 the second SuperKmer to compare
- * @return a logical value in {SUPERIOR, INFERIOR, EQUAL, INCOMPARABLE}
- */
-Bucket::logic Bucket::compareSK(SuperKmer superKmer1, SuperKmer superKmer2) {
-    int fixBitSize = ceil(log2(kmerLength - minimiserLength + 1));
-
-    int prefixLen1 = superKmer1.getPrefixLen(fixBitSize);
-    int suffixLen1 = superKmer1.getSuffixLen(fixBitSize);
-    int maxLen1 = (prefixLen1 < suffixLen1)? suffixLen1:prefixLen1;
-    uint64_t value1 = superKmer1.getValue(fixBitSize);
-    uint64_t mask1 = buildSKMask(prefixLen1, suffixLen1);
-
-    int prefixLen2 = superKmer2.getPrefixLen(fixBitSize);
-    int suffixLen2 = superKmer2.getSuffixLen(fixBitSize);
-    int maxLen2 = (prefixLen2 < suffixLen2)? suffixLen2:prefixLen2;
-    uint64_t value2 = superKmer2.getValue(fixBitSize);
-    uint64_t mask2 = buildSKMask(prefixLen2, suffixLen2);
-
-    if (maxLen1 < maxLen2) { // We align the values
-        value2 >>= (maxLen2 - maxLen1) * 4;
-        mask2 >>= (maxLen2 - maxLen1) * 4;
-    } else {
-        value1 >>= (maxLen1 - maxLen2) * 4;
-        mask1 >>= (maxLen1 - maxLen2) * 4;
-    }
-
-
-    if ((value1 & mask2) < (value2 & mask1)) {
-        return Bucket::INFERIOR;
-    } else if ((value1 & mask2) > (value2 & mask1)) {
-        return Bucket::SUPERIOR;
-    } else { // (value1 & mask2) == (value2 & mask1)
-        if (prefixLen1 == prefixLen2 && suffixLen1 == suffixLen2) { // True equality
-            return Bucket::EQUAL;
-        } else { // Incomparable
-            if ((prefixLen1 > 0 && prefixLen2 == 0 && suffixLen1 == 0 && suffixLen2 > 0)
-                || (prefixLen2 > 0 && prefixLen1 == 0 && suffixLen2 == 0 && suffixLen1 > 0)) { // Fully incomparable
-                return Bucket::INCOMPARABLE;
-            }
-            else if (prefixLen1 >= prefixLen2 && suffixLen1 >= suffixLen2) { // 1 encompass 2
-                return Bucket::ENCOMPASSING;
-            }
-            else if (prefixLen2 >= prefixLen1 && suffixLen2 >= suffixLen1) { // 2 encompass 1
-                return Bucket::ENCOMPASSED;
-            }
-            else { // Common part
-                return Bucket::OVERLAPPING;
-            }
-        }
-    }
-}
-
-/**
  * For a given SuperKmer and a given list, linearly find the next position where it could be inserted in the list
  * @param superKmer the SuperKmer to position
  * @param list the list to insert the SuperKmer in
@@ -391,15 +306,15 @@ Bucket::logic Bucket::compareSK(SuperKmer superKmer1, SuperKmer superKmer2) {
 uint64_t Bucket::findNextOkPosition(const SuperKmer& superKmer, std::vector<SuperKmer> list, uint64_t startingPosition) {
     uint64_t current = startingPosition;
     for (; current < list.size(); current++) {
-        switch (compareSK(superKmer, list.at(current))) {
-            case Bucket::EQUAL:
-            case Bucket::ENCOMPASSING:
-            case Bucket::ENCOMPASSED:
-            case Bucket::INFERIOR:
+        switch (SuperKmer::compareSK(superKmer, list.at(current))) {
+            case SuperKmer::EQUAL:
+            case SuperKmer::ENCOMPASSING:
+            case SuperKmer::ENCOMPASSED:
+            case SuperKmer::INFERIOR:
                 return current;
-            case Bucket::SUPERIOR:
-            case Bucket::INCOMPARABLE:
-            case Bucket::OVERLAPPING:
+            case SuperKmer::SUPERIOR:
+            case SuperKmer::INCOMPARABLE:
+//            case SuperKmer::OVERLAPPING:
                 break;
         }
     }
@@ -415,31 +330,31 @@ Bucket Bucket::operator|(const Bucket &toAdd) {
     if (toAdd.minimiser != minimiser || toAdd.kmerLength != kmerLength || toAdd.minimiserLength != minimiserLength) {
         throw std::runtime_error("Error: incompatible buckets");
     }
-    Bucket result = Bucket(minimiserLength, minimiser, kmerLength);
+    Bucket result = Bucket(minimiser);
     uint64_t i = 0; // loop index for the current Bucket
     uint64_t j = 0; // loop index for toAdd
     while (i < orderedList.size() && j < toAdd.orderedList.size()) {
-        switch (compareSK(orderedList.at(i), toAdd.orderedList.at(j))) {
-            case Bucket::SUPERIOR:
+        switch (SuperKmer::compareSK(orderedList.at(i), toAdd.orderedList.at(j))) {
+            case SuperKmer::SUPERIOR:
                 result.addToList(toAdd.orderedList.at(j));
                 j++;
                 break;
-            case Bucket::INFERIOR:
+            case SuperKmer::INFERIOR:
                 result.addToList(orderedList.at(i));
                 i++;
                 break;
-            case Bucket::EQUAL:
-            case Bucket::ENCOMPASSING:
+            case SuperKmer::EQUAL:
+            case SuperKmer::ENCOMPASSING:
                 result.addToList(orderedList.at(i));
                 i++;
                 j++;
                 break;
-            case Bucket::ENCOMPASSED:
+            case SuperKmer::ENCOMPASSED:
                 result.addToList(orderedList.at(j));
                 i++;
                 j++;
                 break;
-            case Bucket::INCOMPARABLE:
+            case SuperKmer::INCOMPARABLE:
                 // We find the one at its place
             {
                 uint64_t firstI = findNextOkPosition(orderedList.at(i), toAdd.orderedList, j);
@@ -454,12 +369,6 @@ Bucket Bucket::operator|(const Bucket &toAdd) {
             }
                 break;
 
-            case Bucket::OVERLAPPING:
-                result.addToList(orderedList.at(i));
-                result.addToList(orderedList.at(j));
-                i++;
-                j++;
-                break;
         }
     }
     if (i == orderedList.size()) { // End of this, add the rest of toAdd
@@ -479,44 +388,57 @@ Bucket Bucket::operator|(const Bucket &toAdd) {
  * @param toIntersect the bucket to intersect
  * @return the intersection of the two Buckets
  */
-Bucket Bucket::operator&(const Bucket &toIntersect) {
+Bucket Bucket::operator&(Bucket &toIntersect) {
     if (toIntersect.minimiser != minimiser || toIntersect.kmerLength != kmerLength || toIntersect.minimiserLength != minimiserLength) {
         throw std::runtime_error("Error: incompatible buckets");
     }
-    Bucket result = Bucket(minimiserLength, minimiser, kmerLength);
+    Bucket result = Bucket(minimiser);
     uint64_t i = 0; // loop index for the current Bucket
     uint64_t j = 0; // loop index for toIntersect
+    SuperKmer inter;
     while (i < orderedList.size() && j < toIntersect.orderedList.size()) {
-        switch (compareSK(orderedList.at(i), toIntersect.orderedList.at(j))) {
-            case Bucket::SUPERIOR :
+        cout << "\tOn compare : " << endl;
+        cout << "\t\t"; orderedList.at(i).print();
+        cout << "\t\t"; toIntersect.orderedList.at(j).print();
+        cout << "\t\t" << SuperKmer::compareSK(orderedList.at(i), toIntersect.orderedList.at(j)) << endl;
+        switch (SuperKmer::compareSK(orderedList.at(i), toIntersect.orderedList.at(j))) {
+            case SuperKmer::SUPERIOR :
+                inter = orderedList.at(i) & toIntersect.orderedList.at(j);
+                if (inter != SuperKmer()) {
+                    result.addToList(inter);
+                }
                 j++;
                 break;
-            case Bucket::INFERIOR :
+            case SuperKmer::INFERIOR :
+                inter = orderedList.at(i) & toIntersect.orderedList.at(j);
+                if (inter != SuperKmer()) {
+                    result.addToList(inter);
+                }
                 i++;
                 break;
-            case Bucket::EQUAL :
+            case SuperKmer::EQUAL :
                 result.addToList(orderedList.at(i));
                 i++;
                 j++;
                 break;
-            case Bucket::INCOMPARABLE:
+            case SuperKmer::INCOMPARABLE:
                 j++;
                 break;
-            case Bucket::ENCOMPASSING:
+            case SuperKmer::ENCOMPASSING:
                 result.addToList(toIntersect.orderedList.at(j));
                 j++;
                 i++;
                 break;
-            case Bucket::ENCOMPASSED:
+            case SuperKmer::ENCOMPASSED:
                 result.addToList(orderedList.at(i));
                 i++;
                 j++;
                 break;
-            case Bucket::OVERLAPPING:
-                result.addToList(orderedList.at(i) & toIntersect.orderedList.at(j));
-                i++;
-                j++;
-                break;
+//            case SuperKmer::OVERLAPPING:
+//                result.addToList(orderedList.at(i) & toIntersect.orderedList.at(j));
+//                i++;
+//                j++;
+//                break;
         }
     }
 
@@ -534,33 +456,33 @@ Bucket Bucket::operator^(const Bucket &toXor) {
     if (toXor.minimiser != minimiser || toXor.kmerLength != kmerLength || toXor.minimiserLength != minimiserLength) {
         throw std::runtime_error("Error: incompatible buckets");
     }
-    Bucket result = Bucket(minimiserLength, minimiser, kmerLength);
+    Bucket result = Bucket(minimiser);
     uint64_t i = 0; // loop index for the current Bucket
     uint64_t j = 0; // loop index for toXor
     while (i < orderedList.size() && j < toXor.orderedList.size()) {
-        switch (compareSK(orderedList.at(i), toXor.orderedList.at(j))) {
-            case Bucket::SUPERIOR :
+        switch (SuperKmer::compareSK(orderedList.at(i), toXor.orderedList.at(j))) {
+            case SuperKmer::SUPERIOR :
                 result.addToList(toXor.orderedList.at(j));
                 j++;
                 break;
-            case Bucket::INFERIOR :
+            case SuperKmer::INFERIOR :
                 result.addToList(orderedList.at(i));
                 i++;
                 break;
-            case Bucket::EQUAL :
+            case SuperKmer::EQUAL :
                 i++;
                 j++;
                 break;
-            case Bucket::INCOMPARABLE:
+            case SuperKmer::INCOMPARABLE:
                 result.addToList(toXor.orderedList.at(j));
                 j++;
                 break;
-            case Bucket::ENCOMPASSING:
+            case SuperKmer::ENCOMPASSING:
                 break;
-            case Bucket::ENCOMPASSED:
+            case SuperKmer::ENCOMPASSED:
                 break;
-            case Bucket::OVERLAPPING:
-                break;
+//            case SuperKmer::OVERLAPPING:
+//                break;
         }
     }
     if (i == orderedList.size()) { // End of this, add the rest of toXor
@@ -581,28 +503,26 @@ Bucket Bucket::operator^(const Bucket &toXor) {
  */
 bool Bucket::isSorted() {
     for (uint64_t i = 0; i < orderedList.size() - 1; i++) {
-        switch (compareSK(orderedList.at(i), orderedList.at(i + 1))) {
-            case Bucket::EQUAL:
-            case Bucket::SUPERIOR:
-            case Bucket::ENCOMPASSING:
-            case Bucket::ENCOMPASSED:
-            case Bucket::OVERLAPPING:
+        switch (SuperKmer::compareSK(orderedList.at(i), orderedList.at(i + 1))) {
+            case SuperKmer::EQUAL:
+            case SuperKmer::SUPERIOR:
+            case SuperKmer::ENCOMPASSING:
+            case SuperKmer::ENCOMPASSED:
                 return false;
-            case Bucket::INFERIOR:
+            case SuperKmer::INFERIOR:
                 break;
-            case Bucket::INCOMPARABLE:
+            case SuperKmer::INCOMPARABLE:
                 uint64_t j = i;
                 while (j < orderedList.size() - 1) {
-                    switch (compareSK(orderedList.at(j), orderedList.at(j + 1))) {
-                        case Bucket::SUPERIOR:
-                        case Bucket::EQUAL:
-                        case Bucket::ENCOMPASSING:
-                        case Bucket::ENCOMPASSED:
-                        case Bucket::OVERLAPPING:
+                    switch (SuperKmer::compareSK(orderedList.at(j), orderedList.at(j + 1))) {
+                        case SuperKmer::SUPERIOR:
+                        case SuperKmer::EQUAL:
+                        case SuperKmer::ENCOMPASSING:
+                        case SuperKmer::ENCOMPASSED:
                             return false;
-                        case Bucket::INFERIOR:
+                        case SuperKmer::INFERIOR:
                             break;
-                        case Bucket::INCOMPARABLE:
+                        case SuperKmer::INCOMPARABLE:
                             j++;
                             continue;
                     }
