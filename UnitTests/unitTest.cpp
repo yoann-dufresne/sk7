@@ -203,36 +203,20 @@ const test superKmerTest[] {
          SKTest.setBits(8, 8, 0b10010110);
          EXPECT(SKTest.accessBits(0, 16) == (uint64_t) 0b1110100110010110);
      },
-     CASE("cut") {
-         SuperKmer SK = SuperKmer({0b10011101, 0b00100000});
-         std::vector<SuperKmer> cut = SK.cut(1, 2, 2);
-         EXPECT(cut.at(0).getValue(2) == (uint64_t) 0b00010010);
-         EXPECT(cut.at(1).getValue(2) == (uint64_t) 0b1101);
-         SK = SuperKmer({0b01101001, 0b01000000});
-         cut = SK.cut(0, 0, 2);
-         EXPECT(cut.at(0).getValue(2) == (uint64_t) 0b1001);
-         EXPECT(cut.at(1).getValue(2) == (uint64_t) 0b10000100);
-
-     },
-
-//     CASE("Compare SK") {
-//         SuperKmer SK1 = SuperKmer({0b10101011, 0b10010000});
-//         SuperKmer SK2 = SuperKmer({0b01010110});
-//         SuperKmer SK3 = SuperKmer({0b11111011, 0b10100011});
-//         SuperKmer SK4 = SuperKmer({0b01101011, 0b10000000});
-//         SuperKmer SK5 = SuperKmer({0b11101011, 0b10010010});
-//         SuperKmer SK6 = SuperKmer({0b01000010});
-//         SuperKmer SK7 = SuperKmer({0b00011100});
-//
-//         Bucket testBucket = Bucket(0);
-//         EXPECT(SuperKmer::compareSK(SK1, SK1) == SuperKmer::EQUAL);
-//         EXPECT(SuperKmer::compareSK(SK1, SK2) == SuperKmer::SUPERIOR);
-//         EXPECT(SuperKmer::compareSK(SK1, SK3) == SuperKmer::INFERIOR);
-//         EXPECT(SuperKmer::compareSK(SK1, SK4) == SuperKmer::ENCOMPASSING);
-//         EXPECT(SuperKmer::compareSK(SK1, SK5) == SuperKmer::ENCOMPASSED);
-//         EXPECT(SuperKmer::compareSK(SK6, SK7) == SuperKmer::INCOMPARABLE);
+//     CASE("cut") {
+//         SuperKmer SK = SuperKmer({0b10011101, 0b00100000});
+//         std::vector<SuperKmer> cut = SK.cut(1, 2, 2);
+//         EXPECT(cut.at(0).getValue() == (uint64_t) 0b00010010);
+//         EXPECT(cut.at(1).getValue() == (uint64_t) 0b1101);
+//         SK = SuperKmer({0b01101001, 0b01000000});
+//         cut = SK.cut(0, 0, 2);
+//         EXPECT(cut.at(0).getValue() == (uint64_t) 0b1001);
+//         EXPECT(cut.at(1).getValue() == (uint64_t) 0b10000100);
 //
 //     },
+
+
+
      CASE("Intersection") {
 
          SuperKmer SK1 = SuperKmer({0b10010111, 0b00100000});
@@ -270,36 +254,71 @@ const test superKmerTest[] {
          equal = (SK13 & SK14) == SuperKmer({0b00010100});
          EXPECT(equal);
      },
-//     CASE("split") {
-//         SuperKmer SK1 = SuperKmer({0b10101011, 0b10010000});
-//         SuperKmer SK2 = SuperKmer({0b01010110});
-//         SuperKmer SK4 = SuperKmer({0b01101011, 0b10000000});
-//
-//         std::vector<SuperKmer> split1 = SK1.split();
-//         EXPECT(split1.size() == (uint64_t) 3);
-//         bool equal = split1.at(0) == SuperKmer({0b10000011, 0b00010000});
-//         EXPECT(equal);
-//         equal = split1.at(1) == SuperKmer({0b01011011}) ;
-//         EXPECT(equal);
-//         equal = split1.at(2) == SuperKmer({0b00101000, 0b10000000});
-//         EXPECT(equal);
-//         cout << " -----------2---------"<< endl; SK2.print();
-//         std::vector<SuperKmer> split2 = SK2.split();
-//         EXPECT(split2.size() == (uint64_t) 1);
-//         equal = split2.at(0) == SK2;
-//         EXPECT(equal);
-//
-//         cout << "----------4---------" << endl;
-//         SK4.print();
-//         std::vector<SuperKmer> split4 = SK4.split();
-//         split4.at(0).print();
-//         split4.at(1).print();
-//         EXPECT(split4.size() == (uint64_t) 2);
-//         equal = split4.at(0) == SuperKmer({0b01011011});
-//         EXPECT(equal);
-//         equal = split4.at(1) == SuperKmer({0b00101000, 0b10000000});
-//         EXPECT(equal);
-//     }
+     CASE("split") {
+         SuperKmer SK1 = SuperKmer({0b10101011, 0b10010000});
+         SuperKmer SK2 = SuperKmer({0b01010110});
+         SuperKmer SK4 = SuperKmer({0b01101011, 0b10000000});
+         SuperKmer SK6 = SuperKmer({0b10000010, 0b00100000});
+         SuperKmer SK7 = SuperKmer({0b00101100, 0b00000000});
+
+         std::vector<SuperKmer> split1 = SK1.split();
+         EXPECT(split1.size() == (uint64_t) 3);
+         bool equal = split1.at(0) == SuperKmer({0b10000011, 0b00010000});
+         EXPECT(equal);
+         equal = split1.at(1) == SuperKmer({0b01011011}) ;
+         EXPECT(equal);
+         equal = split1.at(2) == SuperKmer({0b00101000, 0b10000000});
+         EXPECT(equal);
+
+         std::vector<SuperKmer> split2 = SK2.split();
+         EXPECT(split2.size() == (uint64_t) 1);
+         equal = split2.at(0) == SK2;
+         EXPECT(equal);
+
+         std::vector<SuperKmer> split4 = SK4.split();
+         EXPECT(split4.size() == (uint64_t) 2);
+         equal = split4.at(0) == SuperKmer({0b01011011});
+         EXPECT(equal);
+         equal = split4.at(1) == SuperKmer({0b00101000, 0b10000000});
+         EXPECT(equal);
+
+         std::vector<SuperKmer> split6 = SK6.split();
+         EXPECT(split6.size() == (uint64_t) 1);
+         equal = split6.at(0) == SK6;
+         EXPECT(equal);
+
+         std::vector<SuperKmer> split7 = SK7.split();
+         EXPECT(split7.size() == (uint64_t) 1);
+         equal = split7.at(0) == SK7;
+         EXPECT(equal);
+     },
+     CASE("nonInterleaved value") {
+        SuperKmer SK1 = SuperKmer({0b10101011, 0b10010000});
+        std::vector<SuperKmer> split = SK1.split();
+        EXPECT(split.at(0).nonInterleavedKmerValue() == (uint64_t) 0b0111000000);
+        EXPECT(split.at(1).nonInterleavedKmerValue() == (uint64_t) 0b1100000010);
+        EXPECT(split.at(2).nonInterleavedKmerValue() == (uint64_t) 0b0000001010);
+
+     },
+     CASE("Compare SK per Kmer included") {
+         SuperKmer SK1 = SuperKmer({0b10101011, 0b10010000});
+         SuperKmer SK2 = SuperKmer({0b01010110});
+         SuperKmer SK4 = SuperKmer({0b01101011, 0b10000000});
+         SuperKmer SK6 = SuperKmer({0b10000010, 0b00100000});
+         SuperKmer SK7 = SuperKmer({0b00101100, 0b00000000});
+
+
+         std::vector<SuperKmer::logic> expected = {SuperKmer::EQUAL, SuperKmer::EQUAL, SuperKmer::EQUAL};
+         EXPECT(SuperKmer::compareSK(SK1, SK1) == expected);
+         expected = {SuperKmer::INCOMPARABLE, SuperKmer::SUPERIOR, SuperKmer::INCOMPARABLE};
+         EXPECT(SuperKmer::compareSK(SK1, SK2) == expected);
+         expected = {SuperKmer::INCOMPARABLE, SuperKmer::EQUAL, SuperKmer::EQUAL};
+         EXPECT(SuperKmer::compareSK(SK1, SK4) == expected);
+         expected = {SuperKmer::INFERIOR, SuperKmer::INCOMPARABLE, SuperKmer::INCOMPARABLE};
+         EXPECT(SuperKmer::compareSK(SK1, SK6) == expected);
+         expected = {SuperKmer::INCOMPARABLE, SuperKmer::INCOMPARABLE, SuperKmer::INFERIOR};
+         EXPECT(SuperKmer::compareSK(SK1, SK7) == expected);
+     }
 };
 
 const test bucketTest[] {
@@ -393,40 +412,40 @@ const test bucketTest[] {
         EXPECT(not bucket.find(toSearch26, position)); EXPECT(position == 2);
 
     },
-//    CASE("isSorted") {
-//        /// SuperKmer 1 : G|CT
-//        uint8_t firstSection1 = 0b01100111; //1, 2, C, G
-//        uint8_t secondSection1 = 0b10000000; //T, _, _, _
-//        vector<TYPE> tab1 = vector<TYPE>();
-//        tab1.push_back(firstSection1);
-//        tab1.push_back(secondSection1);
-//        SuperKmer SK1(tab1);
-//
-//        ///SuperKmer 2 : CG|TT
-//        uint8_t firstSection2 = 0b10101011; //2, 2, T, G
-//        uint8_t secondSection2 = 0b10010000; // T, C, _, _
-//        vector<TYPE> tab2 = vector<TYPE>();
-//        tab2.push_back(firstSection2);
-//        tab2.push_back(secondSection2);
-//        SuperKmer SK2(tab2);
-//
-//        ///SuperKmer 3 : GG|
-//        uint8_t firstSection3 = 0b10000011; //2, 0, _, G
-//        uint8_t secondSection3 = 0b00110000;//_, G, _, _
-//        vector<TYPE> tab3 = vector<TYPE>();
-//        tab3.push_back(firstSection3);
-//        tab3.push_back(secondSection3);
-//        SuperKmer SK3(tab3);
-//
-//
-//        Bucket bucket(0);
-//        bucket.addToList(SK1);
-//        bucket.addToList(SK2);
-//        bucket.addToList(SK3);
-//
-//        EXPECT(bucket.isSorted());
-//    }
-//        ,
+    CASE("isSorted") {
+        /// SuperKmer 1 : G|CT
+        uint8_t firstSection1 = 0b01100111; //1, 2, C, G
+        uint8_t secondSection1 = 0b10000000; //T, _, _, _
+        vector<TYPE> tab1 = vector<TYPE>();
+        tab1.push_back(firstSection1);
+        tab1.push_back(secondSection1);
+        SuperKmer SK1(tab1);
+
+        ///SuperKmer 2 : CG|TT
+        uint8_t firstSection2 = 0b10101011; //2, 2, T, G
+        uint8_t secondSection2 = 0b10010000; // T, C, _, _
+        vector<TYPE> tab2 = vector<TYPE>();
+        tab2.push_back(firstSection2);
+        tab2.push_back(secondSection2);
+        SuperKmer SK2(tab2);
+
+        ///SuperKmer 3 : GG|
+        uint8_t firstSection3 = 0b10000011; //2, 0, _, G
+        uint8_t secondSection3 = 0b00110000;//_, G, _, _
+        vector<TYPE> tab3 = vector<TYPE>();
+        tab3.push_back(firstSection3);
+        tab3.push_back(secondSection3);
+        SuperKmer SK3(tab3);
+
+
+        Bucket bucket(0);
+        bucket.addToList(SK1);
+        bucket.addToList(SK2);
+        bucket.addToList(SK3);
+
+        EXPECT(bucket.isSorted());
+    }
+        ,
     CASE("addKmer") {
         /// SuperKmer 1 : G|CT
         uint8_t firstSection1 = 0b01100111; //1, 2, C, G
@@ -558,11 +577,11 @@ const test bucketTest[] {
             bucket.addSuperKmer(SuperKmer({0b10000011, 0b00110000}));
 
 //            bucket.print();
-
-            EXPECT(bucket.findNextOkPosition(SuperKmer({0b01011101}), bucket.getListCopy(), 2) == (uint64_t) 4);
-            EXPECT(bucket.findNextOkPosition(SuperKmer({0b10000001, 0b00100000}), bucket.getListCopy(), 0) == (uint64_t) 0);
-            EXPECT(bucket.findNextOkPosition(SuperKmer({0b10101011, 0b00100000}), bucket.getListCopy(), 1) == (uint64_t) 2);
-            EXPECT(bucket.findNextOkPosition(SuperKmer({0b00101100, 0b11000000}), bucket.getListCopy(), 1) == (uint64_t) 6);
+//
+//            EXPECT(bucket.findNextOkPosition(SuperKmer({0b01011101}), bucket.getListCopy(), 2) == (uint64_t) 4);
+//            EXPECT(bucket.findNextOkPosition(SuperKmer({0b10000001, 0b00100000}), bucket.getListCopy(), 0) == (uint64_t) 0);
+//            EXPECT(bucket.findNextOkPosition(SuperKmer({0b10101011, 0b00100000}), bucket.getListCopy(), 1) == (uint64_t) 2);
+//            EXPECT(bucket.findNextOkPosition(SuperKmer({0b00101100, 0b11000000}), bucket.getListCopy(), 1) == (uint64_t) 6);
 
     },
 

@@ -38,8 +38,7 @@ public:
     /// Operator overloading
     Bucket operator|(const Bucket &toAdd); // Union todo : with new compare
     Bucket operator&(Bucket &toIntersect); // Intersection todo : with new compare
-    Bucket operator^(const Bucket &toXor); // Symmetrical difference todo : with new compare
-
+    Bucket operator^(const Bucket &toXor); // Symmetrical difference todo : union - intersection
 
     /// Intern functions
     Kmer SKtoKmer(SuperKmer superKmer);

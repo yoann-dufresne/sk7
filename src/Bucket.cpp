@@ -57,8 +57,6 @@ bool Bucket::find(Kmer kmer, int &position) {
         needed = 4 * prefixLen;
     }
 
-    int SKheader = 2 * sk7::fixBitSize;
-
 
     ///START OF THE BINARY SEARCH
     int start = 0;
@@ -76,11 +74,11 @@ bool Bucket::find(Kmer kmer, int &position) {
         }
         SuperKmer current = this->orderedList.at(middle); //Current SuperKmer of the list
 
-        int currentPrefixLen = current.accessBits(0, sk7::fixBitSize); //Current superkmer's prefix length
-        int currentSuffixLen = current.accessBits(sk7::fixBitSize, SKheader); //Current superkmer's suffix length
-        int currentMaxLen = (currentPrefixLen < currentSuffixLen) ? currentSuffixLen : currentPrefixLen;
+        int currentPrefixLen = current.getPrefixLen(); //Current superkmer's prefix length
+        int currentSuffixLen = current.getSuffixLen(); //Current superkmer's suffix length
+        int currentMaxLen = max(currentPrefixLen, currentSuffixLen);
 
-        uint64_t currentValue = current.accessBits(SKheader, SKheader + currentMaxLen * 4); // superkmer's value
+        uint64_t currentValue = current.getValue(); // superkmer's value
 //        //if (currentPrefixLen < currentSuffixLen) currentValue >>=2;
 //        cout << "current sk : " << Kmer(currentValue, currentSuffixLen + currentPrefixLen).toString() << " of value : " << currentValue <<endl;
         uint64_t maskedSK;
@@ -245,15 +243,15 @@ void Bucket::addKmer(Kmer kmer) {
  * @return the built Kmer
  */
 Kmer Bucket::SKtoKmer(SuperKmer superKmer) {
-    uint64_t PrefixLen = superKmer.accessBits(0, sk7::fixBitSize); // superkmer's prefix length
-    uint64_t SuffixLen = superKmer.accessBits(sk7::fixBitSize, 2 * sk7::fixBitSize); // superkmer's suffix length
+    int PrefixLen = superKmer.getPrefixLen(); // superkmer's prefix length
+    int SuffixLen = superKmer.getSuffixLen(); // superkmer's suffix length
     uint64_t kmerValue = 0;
     for (int i = PrefixLen - 1; i >= 0; i--) {
         int readStart = 2 * sk7::fixBitSize + i * 4 + 2;
         kmerValue = (kmerValue << 2) + superKmer.accessBits(readStart, readStart + 2);
     }
     kmerValue = (kmerValue << minimiserLength * 2) + minimiser;
-    for (uint64_t i = 0; i < SuffixLen; i++) {
+    for (int i = 0; i < SuffixLen; i++) {
         int readStart = 2 * sk7::fixBitSize + i * 4;
         kmerValue = (kmerValue << 2) + superKmer.accessBits(readStart, readStart + 2);
     }
@@ -305,19 +303,16 @@ std::vector<SuperKmer> Bucket::getListCopy() {
  */
 uint64_t Bucket::findNextOkPosition(const SuperKmer& superKmer, std::vector<SuperKmer> list, uint64_t startingPosition) {
     uint64_t current = startingPosition;
-    for (; current < list.size(); current++) {
-        switch (SuperKmer::compareSK(superKmer, list.at(current))) {
-            case SuperKmer::EQUAL:
-            case SuperKmer::ENCOMPASSING:
-            case SuperKmer::ENCOMPASSED:
-            case SuperKmer::INFERIOR:
-                return current;
-            case SuperKmer::SUPERIOR:
-            case SuperKmer::INCOMPARABLE:
-//            case SuperKmer::OVERLAPPING:
-                break;
-        }
-    }
+//    for (; current < list.size(); current++) {
+//        switch (SuperKmer::compareSKPerNucleotides(superKmer, list.at(current))) {
+//            case SuperKmer::EQUAL:
+//            case SuperKmer::INFERIOR:
+//                return current;
+//            case SuperKmer::SUPERIOR:
+//            case SuperKmer::INCOMPARABLE:
+//                break;
+//        }
+//    }
     return current;
 }
 
@@ -331,55 +326,45 @@ Bucket Bucket::operator|(const Bucket &toAdd) {
         throw std::runtime_error("Error: incompatible buckets");
     }
     Bucket result = Bucket(minimiser);
-    uint64_t i = 0; // loop index for the current Bucket
-    uint64_t j = 0; // loop index for toAdd
-    while (i < orderedList.size() && j < toAdd.orderedList.size()) {
-        switch (SuperKmer::compareSK(orderedList.at(i), toAdd.orderedList.at(j))) {
-            case SuperKmer::SUPERIOR:
-                result.addToList(toAdd.orderedList.at(j));
-                j++;
-                break;
-            case SuperKmer::INFERIOR:
-                result.addToList(orderedList.at(i));
-                i++;
-                break;
-            case SuperKmer::EQUAL:
-            case SuperKmer::ENCOMPASSING:
-                result.addToList(orderedList.at(i));
-                i++;
-                j++;
-                break;
-            case SuperKmer::ENCOMPASSED:
-                result.addToList(orderedList.at(j));
-                i++;
-                j++;
-                break;
-            case SuperKmer::INCOMPARABLE:
-                // We find the one at its place
-            {
-                uint64_t firstI = findNextOkPosition(orderedList.at(i), toAdd.orderedList, j);
-                uint64_t firstJ = findNextOkPosition(toAdd.orderedList.at(j), orderedList, i);
-                if (firstI < firstJ) {
-                    result.addToList(orderedList.at(i));
-                    i++;
-                } else {
-                    result.addToList(toAdd.orderedList.at(j));
-                    j++;
-                }
-            }
-                break;
-
-        }
-    }
-    if (i == orderedList.size()) { // End of this, add the rest of toAdd
-        for (; j < toAdd.orderedList.size(); j++ ) {
-            result.addToList(toAdd.orderedList.at(j));
-        }
-    } else { // End of toXor, add the rest of this
-        for (; i < orderedList.size(); i++ ) {
-            result.addToList(orderedList.at(i));
-        }
-    }
+//    uint64_t i = 0; // loop index for the current Bucket
+//    uint64_t j = 0; // loop index for toAdd
+//    while (i < orderedList.size() && j < toAdd.orderedList.size()) {
+//        switch (SuperKmer::compareSKPerNucleotides(orderedList.at(i), toAdd.orderedList.at(j))) {
+//            case SuperKmer::SUPERIOR:
+//                result.addToList(toAdd.orderedList.at(j));
+//                j++;
+//                break;
+//            case SuperKmer::INFERIOR:
+//                result.addToList(orderedList.at(i));
+//                i++;
+//                break;
+//            case SuperKmer::EQUAL:
+//            case SuperKmer::INCOMPARABLE:
+//                // We find the one at its place
+//            {
+//                uint64_t firstI = findNextOkPosition(orderedList.at(i), toAdd.orderedList, j);
+//                uint64_t firstJ = findNextOkPosition(toAdd.orderedList.at(j), orderedList, i);
+//                if (firstI < firstJ) {
+//                    result.addToList(orderedList.at(i));
+//                    i++;
+//                } else {
+//                    result.addToList(toAdd.orderedList.at(j));
+//                    j++;
+//                }
+//            }
+//                break;
+//
+//        }
+//    }
+//    if (i == orderedList.size()) { // End of this, add the rest of toAdd
+//        for (; j < toAdd.orderedList.size(); j++ ) {
+//            result.addToList(toAdd.orderedList.at(j));
+//        }
+//    } else { // End of toXor, add the rest of this
+//        for (; i < orderedList.size(); i++ ) {
+//            result.addToList(orderedList.at(i));
+//        }
+//    }
     return result;
 }
 
@@ -393,54 +378,39 @@ Bucket Bucket::operator&(Bucket &toIntersect) {
         throw std::runtime_error("Error: incompatible buckets");
     }
     Bucket result = Bucket(minimiser);
-    uint64_t i = 0; // loop index for the current Bucket
-    uint64_t j = 0; // loop index for toIntersect
-    SuperKmer inter;
-    while (i < orderedList.size() && j < toIntersect.orderedList.size()) {
-        cout << "\tOn compare : " << endl;
-        cout << "\t\t"; orderedList.at(i).print();
-        cout << "\t\t"; toIntersect.orderedList.at(j).print();
-        cout << "\t\t" << SuperKmer::compareSK(orderedList.at(i), toIntersect.orderedList.at(j)) << endl;
-        switch (SuperKmer::compareSK(orderedList.at(i), toIntersect.orderedList.at(j))) {
-            case SuperKmer::SUPERIOR :
-                inter = orderedList.at(i) & toIntersect.orderedList.at(j);
-                if (inter != SuperKmer()) {
-                    result.addToList(inter);
-                }
-                j++;
-                break;
-            case SuperKmer::INFERIOR :
-                inter = orderedList.at(i) & toIntersect.orderedList.at(j);
-                if (inter != SuperKmer()) {
-                    result.addToList(inter);
-                }
-                i++;
-                break;
-            case SuperKmer::EQUAL :
-                result.addToList(orderedList.at(i));
-                i++;
-                j++;
-                break;
-            case SuperKmer::INCOMPARABLE:
-                j++;
-                break;
-            case SuperKmer::ENCOMPASSING:
-                result.addToList(toIntersect.orderedList.at(j));
-                j++;
-                i++;
-                break;
-            case SuperKmer::ENCOMPASSED:
-                result.addToList(orderedList.at(i));
-                i++;
-                j++;
-                break;
-//            case SuperKmer::OVERLAPPING:
-//                result.addToList(orderedList.at(i) & toIntersect.orderedList.at(j));
+//    uint64_t i = 0; // loop index for the current Bucket
+//    uint64_t j = 0; // loop index for toIntersect
+//    SuperKmer inter;
+//    while (i < orderedList.size() && j < toIntersect.orderedList.size()) {
+//        cout << "\tOn compare : " << endl;
+//        cout << "\t\t"; orderedList.at(i).print();
+//        cout << "\t\t"; toIntersect.orderedList.at(j).print();
+//        cout << "\t\t" << SuperKmer::compareSKPerNucleotides(orderedList.at(i), toIntersect.orderedList.at(j)) << endl;
+//        switch (SuperKmer::compareSKPerNucleotides(orderedList.at(i), toIntersect.orderedList.at(j))) {
+//            case SuperKmer::SUPERIOR :
+//                inter = orderedList.at(i) & toIntersect.orderedList.at(j);
+//                if (inter != SuperKmer()) {
+//                    result.addToList(inter);
+//                }
+//                j++;
+//                break;
+//            case SuperKmer::INFERIOR :
+//                inter = orderedList.at(i) & toIntersect.orderedList.at(j);
+//                if (inter != SuperKmer()) {
+//                    result.addToList(inter);
+//                }
+//                i++;
+//                break;
+//            case SuperKmer::EQUAL :
+//                result.addToList(orderedList.at(i));
 //                i++;
 //                j++;
 //                break;
-        }
-    }
+//            case SuperKmer::INCOMPARABLE:
+//                j++;
+//                break;
+//        }
+//    }
 
     return result;
 }
@@ -457,43 +427,38 @@ Bucket Bucket::operator^(const Bucket &toXor) {
         throw std::runtime_error("Error: incompatible buckets");
     }
     Bucket result = Bucket(minimiser);
-    uint64_t i = 0; // loop index for the current Bucket
-    uint64_t j = 0; // loop index for toXor
-    while (i < orderedList.size() && j < toXor.orderedList.size()) {
-        switch (SuperKmer::compareSK(orderedList.at(i), toXor.orderedList.at(j))) {
-            case SuperKmer::SUPERIOR :
-                result.addToList(toXor.orderedList.at(j));
-                j++;
-                break;
-            case SuperKmer::INFERIOR :
-                result.addToList(orderedList.at(i));
-                i++;
-                break;
-            case SuperKmer::EQUAL :
-                i++;
-                j++;
-                break;
-            case SuperKmer::INCOMPARABLE:
-                result.addToList(toXor.orderedList.at(j));
-                j++;
-                break;
-            case SuperKmer::ENCOMPASSING:
-                break;
-            case SuperKmer::ENCOMPASSED:
-                break;
-//            case SuperKmer::OVERLAPPING:
+//    uint64_t i = 0; // loop index for the current Bucket
+//    uint64_t j = 0; // loop index for toXor
+//    while (i < orderedList.size() && j < toXor.orderedList.size()) {
+//        switch (SuperKmer::compareSKPerNucleotides(orderedList.at(i), toXor.orderedList.at(j))) {
+//            case SuperKmer::SUPERIOR :
+//                result.addToList(toXor.orderedList.at(j));
+//                j++;
 //                break;
-        }
-    }
-    if (i == orderedList.size()) { // End of this, add the rest of toXor
-        for (; j < toXor.orderedList.size(); j++) {
-            result.addToList(toXor.orderedList.at(j));
-        }
-    } else { // End of toXor, add the rest of this
-        for (; i < orderedList.size(); i++) {
-            result.addToList(orderedList.at(i));
-        }
-    }
+//            case SuperKmer::INFERIOR :
+//                result.addToList(orderedList.at(i));
+//                i++;
+//                break;
+//            case SuperKmer::EQUAL :
+//                i++;
+//                j++;
+//                break;
+//            case SuperKmer::INCOMPARABLE:
+//                result.addToList(toXor.orderedList.at(j));
+//                j++;
+//                break;
+//
+//        }
+//    }
+//    if (i == orderedList.size()) { // End of this, add the rest of toXor
+//        for (; j < toXor.orderedList.size(); j++) {
+//            result.addToList(toXor.orderedList.at(j));
+//        }
+//    } else { // End of toXor, add the rest of this
+//        for (; i < orderedList.size(); i++) {
+//            result.addToList(orderedList.at(i));
+//        }
+//    }
     return result;
 }
 
@@ -503,31 +468,16 @@ Bucket Bucket::operator^(const Bucket &toXor) {
  */
 bool Bucket::isSorted() {
     for (uint64_t i = 0; i < orderedList.size() - 1; i++) {
-        switch (SuperKmer::compareSK(orderedList.at(i), orderedList.at(i + 1))) {
-            case SuperKmer::EQUAL:
-            case SuperKmer::SUPERIOR:
-            case SuperKmer::ENCOMPASSING:
-            case SuperKmer::ENCOMPASSED:
-                return false;
-            case SuperKmer::INFERIOR:
-                break;
-            case SuperKmer::INCOMPARABLE:
-                uint64_t j = i;
-                while (j < orderedList.size() - 1) {
-                    switch (SuperKmer::compareSK(orderedList.at(j), orderedList.at(j + 1))) {
-                        case SuperKmer::SUPERIOR:
-                        case SuperKmer::EQUAL:
-                        case SuperKmer::ENCOMPASSING:
-                        case SuperKmer::ENCOMPASSED:
-                            return false;
-                        case SuperKmer::INFERIOR:
-                            break;
-                        case SuperKmer::INCOMPARABLE:
-                            j++;
-                            continue;
-                    }
+        std::vector<SuperKmer::logic> comparison = SuperKmer::compareSK(orderedList.at(i), orderedList.at(i + 1));
+        for (auto & logicalValue : comparison) {
+            switch (logicalValue) {
+                case SuperKmer::SUPERIOR:
+                case SuperKmer::EQUAL:
+                    return false;
+                case SuperKmer::INFERIOR:
+                case SuperKmer::INCOMPARABLE:
                     break;
-                }
+            }
         }
     }
     return true;
