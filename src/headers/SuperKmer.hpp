@@ -23,30 +23,30 @@ public:
     SuperKmer();
 
     /// Access and modification
-    uint64_t accessBits(int start, int end);
+    uint64_t accessBits(int start, int end) const;
     void setBits(const int &start, const int &length, const uint64_t &value);
 
     /// Getter
-    uint64_t getValue();
-    int getPrefixLen();
-    int getSuffixLen();
+    uint64_t getValue() const;
+    int getPrefixLen() const;
+    int getSuffixLen() const;
 
     /// Storage
     std::vector<SuperKmer> cut(const int &commonPartStart, const int &commonPartEnd, const int &fixBitSize); // To redo to cut specific part
     static std::vector<logic> compareSK(SuperKmer& superKmer1, SuperKmer& superKmer2);
-    uint64_t buildSKMask(const int &prefixLen, const int &suffixLen);
+    uint64_t buildSKMask(const int &prefixLen, const int &suffixLen) const;
 
     /// Operator
     bool operator==(const SuperKmer &toCompare) const;
     SuperKmer operator&(SuperKmer toIntersect); // Intersection
-    std::vector<SuperKmer> operator^(SuperKmer &toXor); // Xor
+    SuperKmer operator|(SuperKmer toUnite); // Union
 
     /// Intern methods
-    std::vector<SuperKmer> split();
+    std::vector<SuperKmer> split() const;
     uint64_t nonInterleavedKmerValue();
 
     /// Misc.
-    void print();
+    void print() const;
 
 };
 

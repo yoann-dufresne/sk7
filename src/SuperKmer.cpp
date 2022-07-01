@@ -28,7 +28,7 @@ SuperKmer::SuperKmer(std::vector<TYPE> tab) {
  * @param end the ending position of the read (excluded)
  * @return the value of the read bits
  */
-uint64_t SuperKmer::accessBits(int start, int end) {
+uint64_t SuperKmer::accessBits(int start, int end) const {
     uint64_t result = 0;
     int reads = end - start; // number if bits to read
     int section = start / SIZE; // the part of the vector to read in
@@ -156,7 +156,7 @@ std::vector<SuperKmer> SuperKmer::cut(const int &commonPartStart, const int &com
  * @param suffixLen the length of the SuperKmer's suffix
  * @return the built mask
  */
-uint64_t SuperKmer::buildSKMask(const int &prefixLen, const int &suffixLen) {
+uint64_t SuperKmer::buildSKMask(const int &prefixLen, const int &suffixLen) const {
     int i = 0;
     uint64_t knownInfo = 0;
     while (i < suffixLen || i < prefixLen) { //Build the mask from superkmer for known information
@@ -178,7 +178,7 @@ uint64_t SuperKmer::buildSKMask(const int &prefixLen, const int &suffixLen) {
 /**
  * Print a SuperKmer
  */
-void SuperKmer::print() {
+void SuperKmer::print() const {
     if (tab.empty()) {
         cout << "Empty SK" << endl;
         return;
@@ -231,7 +231,7 @@ void SuperKmer::print() {
  * Access the length of the prefix
  * @return the length of the prefix
  */
-int SuperKmer::getPrefixLen() {
+int SuperKmer::getPrefixLen() const {
     return accessBits(0, sk7::fixBitSize);
 }
 
@@ -239,7 +239,7 @@ int SuperKmer::getPrefixLen() {
  * Access the length of the suffix
  * @return the length of the suffix
  */
-int SuperKmer::getSuffixLen() {
+int SuperKmer::getSuffixLen() const {
     return accessBits(sk7::fixBitSize, 2 * sk7::fixBitSize);
 }
 
@@ -247,7 +247,7 @@ int SuperKmer::getSuffixLen() {
  * Access the value of the SuperKmer
  * @return the value of the SuperKmer
  */
-uint64_t SuperKmer::getValue() {
+uint64_t SuperKmer::getValue() const {
     int suffixLen = getSuffixLen();
     int prefixLen = getPrefixLen();
     return accessBits(2*sk7::fixBitSize, 2*sk7::fixBitSize + max(prefixLen, suffixLen) * 4);
@@ -349,6 +349,10 @@ SuperKmer SuperKmer::operator&(SuperKmer toIntersect) {
     int firstDiffIndexSuffix = leftmost1IndexSuffix - startOfMeaningfulIndex;
     int firstDiffNucleotideSuffix = min({firstDiffIndexSuffix / 4,  suffixLen,  suffixLenIntersect});
 
+    if (firstDiffNucleotideSuffix + firstDiffNucleotidePrefix + sk7::m < sk7::k) {
+        return SuperKmer();
+    }
+
     result.setBits(0, sk7::fixBitSize, firstDiffNucleotidePrefix);
     result.setBits(sk7::fixBitSize,  sk7::fixBitSize, firstDiffNucleotideSuffix);
 
@@ -381,13 +385,30 @@ SuperKmer SuperKmer::operator&(SuperKmer toIntersect) {
 }
 
 /**
+ * Unite two compatible SuperKmers
+ * @param toUnite the SuperKmer to unite
+ * @return the union of the two SuperKmers
+ */
+SuperKmer SuperKmer::operator|(SuperKmer toUnite) {
+    SuperKmer result = SuperKmer();
+    int newPrefixLen = max(getPrefixLen(), toUnite.getPrefixLen());
+    result.setBits(0,  sk7::fixBitSize, newPrefixLen);
+    int newSuffixLen = max(getSuffixLen(), toUnite.getSuffixLen());
+    result.setBits(sk7::fixBitSize,  sk7::fixBitSize, newSuffixLen);
+    result.setBits(2*sk7::fixBitSize, 4*max(newPrefixLen, newSuffixLen),  getValue() | toUnite.getValue());
+    return result;
+}
+
+
+/**
  * Translate a SuperKmer to a list of SuperKmers that represent each a single Kmer
  * @return the list of interleaved Kmers represented by the SuperKmer
  */
-std::vector<SuperKmer> SuperKmer::split() {
+std::vector<SuperKmer> SuperKmer::split() const {
     std::vector<SuperKmer> result = vector<SuperKmer>();
     int prefixLen = getPrefixLen();
     int suffixLen = getSuffixLen();
+
 
     if (prefixLen + sk7::m > sk7::k || suffixLen + sk7::m > sk7::k || prefixLen + suffixLen + sk7::m < sk7::k) {
         throw runtime_error("Incoherent SuperKmer with set k and m");
@@ -508,46 +529,18 @@ vector<SuperKmer::logic> SuperKmer::compareSK(SuperKmer& superKmer1, SuperKmer& 
  * @return the value of the non-interleaved Kmer found
  */
 uint64_t SuperKmer::nonInterleavedKmerValue() {
-    int PrefixLen = getPrefixLen(); // superkmer's prefix length
-    int SuffixLen = getSuffixLen(); // superkmer's suffix length
+    int prefixLen = getPrefixLen(); // superkmer's prefix length
+    int suffixLen = getSuffixLen(); // superkmer's suffix length
     uint64_t kmerValue = 0;
-    for (int i = PrefixLen - 1; i >= 0; i--) {
+    for (int i = prefixLen - 1; i >= 0; i--) {
         int readStart = 2 * sk7::fixBitSize + i * 4 + 2;
         kmerValue = (kmerValue << 2) + accessBits(readStart, readStart + 2);
     }
     kmerValue = (kmerValue << sk7::m * 2); // make space for the minimiser
-    for (int i = 0; i < SuffixLen; i++) {
+    for (int i = 0; i < suffixLen; i++) {
         int readStart = 2 * sk7::fixBitSize + i * 4;
         kmerValue = (kmerValue << 2) + accessBits(readStart, readStart + 2);
     }
     return kmerValue;
 }
-
-/**
- * Build the symmetrical difference of two SuperKmers
- * @param toXor the SuperKmer to xor with
- * @return the symmetrical difference as a SuperKmer
- */
-//std::vector<SuperKmer> SuperKmer::operator^(SuperKmer &toXor) {
-//    std::vector<SuperKmer> result = std::vector<SuperKmer>();
-//
-//    std::vector<SuperKmer> allKmers = split();
-//    std::vector<SuperKmer> allKmersToXor = toXor.split();
-//
-//    for (auto &it : allKmers) {
-//        it.print();
-//        if (not std::count(allKmersToXor.begin(), allKmersToXor.end(), it)) {
-//            result.push_back(it);
-//        }
-//    }
-//
-//    for (auto &it : allKmersToXor) {
-//        it.print();
-//        if (not std::count(allKmers.begin(), allKmers.end(), it)) {
-//            result.push_back(it);
-//        }
-//    }
-//
-//    return result;
-//}
 

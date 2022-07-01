@@ -46,7 +46,7 @@ public:
 
 
     /// Misc.
-    bool isSorted(); // todo : with new compare
+    bool isSorted();
     void print();
 
 };

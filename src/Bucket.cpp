@@ -31,30 +31,32 @@ void Bucket::addToList(SuperKmer superKmer) {
  * @return true if the kmer was already in the bucket false otherwise
  */
 bool Bucket::find(Kmer kmer, int &position) {
-//    cout << endl << endl;
+    if (orderedList.empty()) {
+        position = 0;
+        return false;
+    }
+//    cout << endl << endl << "------------------------------" << endl;
 //    cout << "searching : " << kmer.toString()  << endl;
     ///PREPARATION OF THE SEARCH
-    Minimiser kmerMinimiser = Minimiser(alpha, this->minimiserLength, kmer);
-    Kmer withoutMinimiser = kmer.removePart(kmerMinimiser.getPos(), this->minimiserLength);
+    Minimiser kmerMinimiser = Minimiser(alpha, sk7::m, kmer);
+    Kmer withoutMinimiser = kmer.removePart(kmerMinimiser.getPos(), sk7::m);
 
     uint64_t kmerMask = interleavedOrder(withoutMinimiser, kmerMinimiser.getPos());
-//    cout << "striped & interleaved : " << withoutMinimiser.toString() << " of value : " << withoutMinimiser.getValue() << endl;
+//    cout << "striped and interleaved: " << withoutMinimiser.toString() << " of value : " << withoutMinimiser.getValue() << endl;
 //    cout << "mask = " << kmerMask << endl;
 
     int prefixLen = kmerMinimiser.getPos();
-    int suffixLen = kmer.getLength() - kmerMinimiser.getPos() - this->minimiserLength;
+    int suffixLen = kmer.getLength() - kmerMinimiser.getPos() - sk7::m;
     int maxLen;
 
+
     int needed; // number of bits to compare
-    if (prefixLen > suffixLen) {
+    if (prefixLen >= suffixLen) {
         maxLen = prefixLen;
         needed = maxLen * 4;
     } else {
         maxLen = suffixLen;
         needed = maxLen * 4 - 2;
-    }
-    if (prefixLen == suffixLen) {
-        needed = 4 * prefixLen;
     }
 
 
@@ -76,11 +78,11 @@ bool Bucket::find(Kmer kmer, int &position) {
 
         int currentPrefixLen = current.getPrefixLen(); //Current superkmer's prefix length
         int currentSuffixLen = current.getSuffixLen(); //Current superkmer's suffix length
+
         int currentMaxLen = max(currentPrefixLen, currentSuffixLen);
 
         uint64_t currentValue = current.getValue(); // superkmer's value
-//        //if (currentPrefixLen < currentSuffixLen) currentValue >>=2;
-//        cout << "current sk : " << Kmer(currentValue, currentSuffixLen + currentPrefixLen).toString() << " of value : " << currentValue <<endl;
+//        cout << "current sk : "; current.print();
         uint64_t maskedSK;
 //        cout << "maxLen : " << maxLen << " current maxLen : " << currentMaxLen << endl;
 
@@ -115,7 +117,6 @@ bool Bucket::find(Kmer kmer, int &position) {
         if (currentPrefixLen < currentSuffixLen) {
             found = 4 * i - 2;
             knownInfo >>= 2;
-//   //         maskedSK >>= 2; //could be used to remove excess 0b00
         } else {
             found = 4 * i;
         }
@@ -128,8 +129,8 @@ bool Bucket::find(Kmer kmer, int &position) {
         uint64_t toCompare;
         if (found == needed) {
             if (prefixLen < suffixLen) {
-                toCompare = (withoutMinimiser.getValue() >> 2) & knownInfo;
-                maskedSK >>=2;
+                toCompare = ((withoutMinimiser.getValue() >> 2) & knownInfo) << 2;
+//               // maskedSK >>= 2;
             }
             else toCompare = withoutMinimiser.getValue() & knownInfo;
         }
@@ -138,19 +139,21 @@ bool Bucket::find(Kmer kmer, int &position) {
             else toCompare = withoutMinimiser.getValue() & (knownInfo >> ((found - needed)));
 //            /*maskedSK >>= (found - needed);*/
         } else { // (found < needed)
-            if (prefixLen < suffixLen) {
-//                cout << "init value : " << withoutMinimiser.getValue() << " shifted : " << (withoutMinimiser.getValue() >> (needed - found)) << endl;
-                toCompare = (withoutMinimiser.getValue() >> (needed - found)) & knownInfo;
-            }
-            else {
-//                cout << "init value : " << withoutMinimiser.getValue() << " shifted : " << (withoutMinimiser.getValue() >> (needed - found)) << endl;
-                toCompare = (withoutMinimiser.getValue() >> (needed - found)) & knownInfo;
-            }
-            if (currentPrefixLen < currentSuffixLen) maskedSK >>=2;
+//            cout << "init value : " << withoutMinimiser.getValue() << " shifted : " << (((withoutMinimiser.getValue() >> (needed - found)) & knownInfo)) << endl;
+            toCompare = ((withoutMinimiser.getValue() >> (needed - found)) & knownInfo);
+//            if (currentPrefixLen < currentSuffixLen) maskedSK >>=2;
 
         }
 
-//        cout << "toCompare : " << toCompare << " maskedSK : " << maskedSK << endl;
+//        cout << "before toCompare : " << toCompare << " maskedSK : " << maskedSK << endl;
+        toCompare = reorderValue(toCompare,  prefixLen, suffixLen);
+        maskedSK = reorderValue(maskedSK, min(prefixLen, currentPrefixLen), min(suffixLen, currentSuffixLen));
+//        cout << "After reordered toCompare : " << toCompare << " maskedSK : " << maskedSK << endl;
+
+        if (currentPrefixLen < prefixLen || currentSuffixLen < suffixLen) {
+            goto noInfo;
+        }
+
         if (toCompare < maskedSK) {
 //            cout << "before " << endl << endl;
             start = lastStartWithInformation;
@@ -174,16 +177,13 @@ bool Bucket::find(Kmer kmer, int &position) {
                 position = middle;
                 return true;
             } else { //No info
+                noInfo:
 //                cout << "no info" << endl << endl;
                 if (start < end) {
                     start += 1;
                     continue;
                 }
                 if (start == end) { // End of search via linear search
-                    position = start;
-                    return false;
-                }
-                else { // No info till the end of the linear search
                     start = lastStartWithInformation;
                     end = lastPositionWithInformation - 1;
                     infoFound = true;
@@ -200,7 +200,6 @@ bool Bucket::find(Kmer kmer, int &position) {
     } else {
         position = (start + end) / 2 + 1;
     }
-//    position = (start + end) / 2;
     return false;
 
 
@@ -211,27 +210,27 @@ bool Bucket::find(Kmer kmer, int &position) {
  * @param kmer the kmer to add to the bucket
  */
 void Bucket::addKmer(Kmer kmer) {
-    if (kmer.length != kmerLength) {
+    if (kmer.length != sk7::k) {
         return;
     }
     int position;
     if (find(kmer, position)) { // already in the bucket
         return;
     } else {
+//        cout << "position find = " << position << endl;
         auto itPos = orderedList.begin() + position;
         // We build a superKmer from the kmer and put it in the bucket
-        Minimiser minimiserKmer = Minimiser(alpha, this->minimiserLength, kmer);
-        Kmer withoutMinimiser = kmer.removePart(minimiserKmer.getPos(), minimiserLength);
+        Minimiser minimiserKmer = Minimiser(alpha, sk7::m, kmer);
+        Kmer withoutMinimiser = kmer.removePart(minimiserKmer.getPos(), sk7::m);
         interleavedOrder(withoutMinimiser, minimiserKmer.getPos());
 
         TYPE prefixLen = minimiserKmer.getPos();
-        TYPE suffixLen = kmer.getLength() - minimiserKmer.getPos() - this->minimiserLength;
-        int maxLen = (prefixLen < suffixLen) ? suffixLen : prefixLen;
-        int fixSize = ceil(log2(kmerLength - minimiserLength + 1));
-        SuperKmer toInsert({0});
-        toInsert.setBits(0, fixSize, prefixLen);
-        toInsert.setBits(fixSize, fixSize, suffixLen);
-        toInsert.setBits(2 * fixSize, 4 * maxLen, withoutMinimiser.getValue());
+        TYPE suffixLen = kmer.getLength() - minimiserKmer.getPos() - sk7::m;
+        int maxLen = max(suffixLen, prefixLen);
+        SuperKmer toInsert = SuperKmer();
+        toInsert.setBits(0, sk7::fixBitSize, prefixLen);
+        toInsert.setBits(sk7::fixBitSize, sk7::fixBitSize, suffixLen);
+        toInsert.setBits(2 * sk7::fixBitSize, 4 * maxLen, withoutMinimiser.getValue());
 
         orderedList.insert(itPos, toInsert);
     }
@@ -263,15 +262,15 @@ Kmer Bucket::SKtoKmer(SuperKmer superKmer) {
  * @param superKmer the superKmer to add to the bucket
  */
 void Bucket::addSuperKmer(const SuperKmer& superKmer) {
+//    cout << "SK is : \t"; superKmer.print();
     if (orderedList.empty()) {
         return addToList(superKmer);
     }
-    // We build a kmer from the superKmer and search it to find the correct position then add it
-    Kmer toSearchForPos = SKtoKmer(superKmer);
-    int position;
-    if (find(toSearchForPos, position)) return; // Already in
-    auto itPos = orderedList.begin() + position;
-    orderedList.insert(itPos, superKmer);
+    // We add each Kmer in the SuperKmer separately for now
+    for (auto &kmer : superKmer.split()) {
+//        cout << "We adding : " << SKtoKmer(kmer).toString() << endl;
+        addKmer(SKtoKmer(kmer));
+    }
 }
 
 
@@ -378,39 +377,19 @@ Bucket Bucket::operator&(Bucket &toIntersect) {
         throw std::runtime_error("Error: incompatible buckets");
     }
     Bucket result = Bucket(minimiser);
-//    uint64_t i = 0; // loop index for the current Bucket
-//    uint64_t j = 0; // loop index for toIntersect
-//    SuperKmer inter;
-//    while (i < orderedList.size() && j < toIntersect.orderedList.size()) {
-//        cout << "\tOn compare : " << endl;
-//        cout << "\t\t"; orderedList.at(i).print();
-//        cout << "\t\t"; toIntersect.orderedList.at(j).print();
-//        cout << "\t\t" << SuperKmer::compareSKPerNucleotides(orderedList.at(i), toIntersect.orderedList.at(j)) << endl;
-//        switch (SuperKmer::compareSKPerNucleotides(orderedList.at(i), toIntersect.orderedList.at(j))) {
-//            case SuperKmer::SUPERIOR :
-//                inter = orderedList.at(i) & toIntersect.orderedList.at(j);
-//                if (inter != SuperKmer()) {
-//                    result.addToList(inter);
-//                }
-//                j++;
-//                break;
-//            case SuperKmer::INFERIOR :
-//                inter = orderedList.at(i) & toIntersect.orderedList.at(j);
-//                if (inter != SuperKmer()) {
-//                    result.addToList(inter);
-//                }
-//                i++;
-//                break;
-//            case SuperKmer::EQUAL :
-//                result.addToList(orderedList.at(i));
-//                i++;
-//                j++;
-//                break;
-//            case SuperKmer::INCOMPARABLE:
-//                j++;
-//                break;
-//        }
-//    }
+    uint64_t i = 0; // loop index for the current Bucket
+    SuperKmer inter;
+    while (i < orderedList.size()) {
+        SuperKmer current = orderedList.at(i);
+        inter = SuperKmer();
+        for (uint64_t j = 0; j < toIntersect.getListSize(); j++) {
+            inter = inter | (current & toIntersect.orderedList.at(j));
+        }
+        if (inter != SuperKmer()) {
+            result.addToList(inter);
+        }
+        i++;
+    }
 
     return result;
 }
@@ -469,13 +448,33 @@ Bucket Bucket::operator^(const Bucket &toXor) {
 bool Bucket::isSorted() {
     for (uint64_t i = 0; i < orderedList.size() - 1; i++) {
         std::vector<SuperKmer::logic> comparison = SuperKmer::compareSK(orderedList.at(i), orderedList.at(i + 1));
-        for (auto & logicalValue : comparison) {
+        for (auto &logicalValue : comparison) {
             switch (logicalValue) {
                 case SuperKmer::SUPERIOR:
                 case SuperKmer::EQUAL:
+                    cout << "not sorted in position : " << i << ", " << i + 1 << " with : " << endl;
+                    orderedList.at(i).print();
+                    orderedList.at(i + 1).print();
                     return false;
                 case SuperKmer::INFERIOR:
+                    break;
                 case SuperKmer::INCOMPARABLE:
+                    for (uint64_t k = i + 2; k < orderedList.size(); k++) {
+                        std::vector<SuperKmer::logic> linearSearch = SuperKmer::compareSK(orderedList.at(i), orderedList.at(k));
+                        for (auto &logicalValueBis : linearSearch) {
+                            switch (logicalValueBis) {
+                                case SuperKmer::SUPERIOR:
+                                case SuperKmer::EQUAL:
+                                    cout << "not sorted in position : " << i << ", " << k << " with : " << endl;
+                                    orderedList.at(i).print();
+                                    orderedList.at(k).print();
+                                    return false;
+                                case SuperKmer::INFERIOR:
+                                case SuperKmer::INCOMPARABLE:
+                                    break;
+                            }
+                        }
+                    }
                     break;
             }
         }

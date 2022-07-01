@@ -54,3 +54,37 @@ uint64_t interleavedOrder(Kmer &kmer, int minimiserPos) {
     return mask;
 
 }
+
+using namespace std;
+
+/**
+ * Reorder the value corresponding to an interleaved Kmer or SuperKmer
+ * @param value the value to reorder
+ * @param prefixLen the length (in nucleotides) of the considered object's prefix
+ * @param suffixLen the length (in nucleotides) of the considered object's suffix
+ * @return the value in order (ex: |CTGC (01101101) -> |CTCG (01100111))
+ */
+uint64_t reorderValue(uint64_t value, const int &prefixLen, const int &suffixLen) {
+    uint64_t kmerValue = 0;
+    int maxLen;
+    if (prefixLen < suffixLen) {
+        maxLen = suffixLen;
+//        value <<= 2;
+    } else {
+        maxLen = prefixLen;
+    }
+
+    for(int i = 0; i < prefixLen; i++) {
+//        cout << "lu = " << (0b11 & (value >> (4 * (maxLen - prefixLen + i)))) << endl;
+        kmerValue = (kmerValue << 2) + (0b11 & (value >> (4 * (maxLen - prefixLen + i)))); // next prefix read
+    }
+    kmerValue <<= 2*(maxLen - prefixLen);
+
+    for (int i = 0; i < suffixLen; i++) {
+//        cout << "read = " << (0b11 & (value >> (4 * (maxLen - i) - 2))) << endl;
+        kmerValue = (kmerValue << 2) + (0b11 & (value >> (4 * (maxLen - i) - 2))); // next suffix read
+    }
+    kmerValue <<= 2*(maxLen - suffixLen);
+
+    return kmerValue;
+}
