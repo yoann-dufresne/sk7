@@ -395,7 +395,16 @@ SuperKmer SuperKmer::operator|(SuperKmer toUnite) {
     result.setBits(0,  sk7::fixBitSize, newPrefixLen);
     int newSuffixLen = max(getSuffixLen(), toUnite.getSuffixLen());
     result.setBits(sk7::fixBitSize,  sk7::fixBitSize, newSuffixLen);
-    result.setBits(2*sk7::fixBitSize, 4*max(newPrefixLen, newSuffixLen),  getValue() | toUnite.getValue());
+
+    uint64_t value;
+    int diff = max(getPrefixLen(), getSuffixLen()) - max(toUnite.getSuffixLen(), toUnite.getPrefixLen());
+    if (diff > 0) {
+        value = getValue() | (toUnite.getValue() << 4 * diff);
+    } else {
+        value = (getValue() << 4 * diff) | (toUnite.getValue());
+    }
+
+    result.setBits(2*sk7::fixBitSize, 4*max(newPrefixLen, newSuffixLen),  value);
     return result;
 }
 
