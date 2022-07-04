@@ -324,12 +324,16 @@ const test superKmerTest[] {
 
         std::vector<SuperKmer::logic> expected = {SuperKmer::EQUAL, SuperKmer::EQUAL, SuperKmer::EQUAL};
         EXPECT(SuperKmer::compareSK(SK1, SK1) == expected);
+
         expected = {SuperKmer::INCOMPARABLE, SuperKmer::SUPERIOR, SuperKmer::INCOMPARABLE};
         EXPECT(SuperKmer::compareSK(SK1, SK2) == expected);
+
         expected = {SuperKmer::INCOMPARABLE, SuperKmer::EQUAL, SuperKmer::EQUAL};
         EXPECT(SuperKmer::compareSK(SK1, SK4) == expected);
-        expected = {SuperKmer::INFERIOR, SuperKmer::INCOMPARABLE, SuperKmer::INCOMPARABLE};
+
+        expected = {SuperKmer::SUPERIOR, SuperKmer::INCOMPARABLE, SuperKmer::INCOMPARABLE};
         EXPECT(SuperKmer::compareSK(SK1, SK6) == expected);
+
         expected = {SuperKmer::INCOMPARABLE, SuperKmer::INCOMPARABLE, SuperKmer::INFERIOR};
         EXPECT(SuperKmer::compareSK(SK1, SK7) == expected);
      }
@@ -383,7 +387,7 @@ const test bucketTest[] {
 
         EXPECT(not bucket.find(toSearch, position)); EXPECT(position == 1);
         EXPECT(not bucket.find(toSearch2, position)); EXPECT(position == 0);
-        EXPECT(not bucket.find(toSearch3, position)); EXPECT(position == 2);
+        EXPECT(not bucket.find(toSearch3, position)); EXPECT(position == 0);
         EXPECT(bucket.find(toSearch4, position)); EXPECT(position == 0);
         EXPECT(bucket.find(toSearch5, position)); EXPECT(position == 1);
         EXPECT(bucket.find(toSearch6, position)); EXPECT(position == 2);
@@ -476,18 +480,19 @@ const test bucketTest[] {
         bucket.addKmer(toAdd);
         EXPECT(bucket.getListSize() == (uint64_t) 6);
 
+
         EXPECT(bucket.isSorted());
 
         int position;
-        EXPECT(bucket.find(toAdd, position) ); EXPECT(position == 2);
-        EXPECT(bucket.find(toAdd2, position)); EXPECT(position == 0);
-        EXPECT(bucket.find(toAdd3, position)); EXPECT(position == 4);
-        EXPECT(bucket.find(toSearch4, position)); EXPECT(position == 1);
-        EXPECT(bucket.find(toSearch5, position)); EXPECT(position == 3);
+        EXPECT(bucket.find(toAdd, position) ); EXPECT(position == 3);
+        EXPECT(bucket.find(toAdd2, position)); EXPECT(position == 1);
+        EXPECT(bucket.find(toAdd3, position)); EXPECT(position == 0);
+        EXPECT(bucket.find(toSearch4, position)); EXPECT(position == 2);
+        EXPECT(bucket.find(toSearch5, position)); EXPECT(position == 4);
         EXPECT(bucket.find(toSearch6, position)); EXPECT(position == 5);
-        EXPECT(bucket.find(toSearch7, position)); EXPECT(position == 3);
-        EXPECT(bucket.find(toSearch8, position)); EXPECT(position == 3);
-        EXPECT(bucket.find(toSearch9, position)); EXPECT(position == 1);
+        EXPECT(bucket.find(toSearch7, position)); EXPECT(position == 4);
+        EXPECT(bucket.find(toSearch8, position)); EXPECT(position == 4);
+        EXPECT(bucket.find(toSearch9, position)); EXPECT(position == 2);
     },
     CASE("SKtoKmer") {
         Bucket bucket = Bucket(0);
@@ -545,24 +550,19 @@ const test bucketTest[] {
     },
 
 
-//
-//    CASE("findNextOkPosition") {
-//        Bucket bucket = Bucket(0);
-//        bucket.addSuperKmer(SuperKmer({0b11101011, 0b10010010}));
-//        bucket.addSuperKmer(SuperKmer({0b01010110}));
-//        bucket.addSuperKmer(SuperKmer({0b11111011, 0b10100011}));
-//        bucket.addSuperKmer(SuperKmer({0b00101100, 0b01000000}));
-//        bucket.addSuperKmer(SuperKmer({0b01100111, 0b10000000}));
-//        bucket.addSuperKmer(SuperKmer({0b10000011, 0b00110000}));
-//
-//        bucket.print();
-//
-//        EXPECT(bucket.findNextOkPosition(SuperKmer({0b01011101}), bucket.getListCopy(), 2) == (uint64_t) 4);
-//        EXPECT(bucket.findNextOkPosition(SuperKmer({0b10000001, 0b00100000}), bucket.getListCopy(), 0) == (uint64_t) 0);
-//        EXPECT(bucket.findNextOkPosition(SuperKmer({0b10101011, 0b00100000}), bucket.getListCopy(), 1) == (uint64_t) 2);
-//        EXPECT(bucket.findNextOkPosition(SuperKmer({0b00101100, 0b11000000}), bucket.getListCopy(), 1) == (uint64_t) 6);
-//
-//    },
+
+    CASE("findNextOkPosition") {
+        Bucket bucket = Bucket(0);
+        bucket.addSuperKmer(SuperKmer({0b01010110}));
+        bucket.addSuperKmer(SuperKmer({0b00101100, 0b01000000}));
+        bucket.addSuperKmer(SuperKmer({0b01100111, 0b10000000}));
+        bucket.addSuperKmer(SuperKmer({0b10000011, 0b00110000}));
+
+        EXPECT(bucket.findNextOkPosition(SuperKmer({0b01011101}), bucket.getListCopy(), 0) == (uint64_t) 4);
+        EXPECT(bucket.findNextOkPosition(SuperKmer({0b10000001, 0b00100000}), bucket.getListCopy(), 0) == (uint64_t) 1);
+        EXPECT(bucket.findNextOkPosition(SuperKmer({0b00101100, 0b11000000}), bucket.getListCopy(), 1) == (uint64_t) 5);
+
+    },
 
 //    CASE ("Union") {
 //        Bucket bucket1 = Bucket(0);

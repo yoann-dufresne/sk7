@@ -129,8 +129,8 @@ bool Bucket::find(Kmer kmer, int &position) {
         uint64_t toCompare;
         if (found == needed) {
             if (prefixLen < suffixLen) {
-                toCompare = ((withoutMinimiser.getValue() >> 2) & knownInfo) << 2;
-//               // maskedSK >>= 2;
+                toCompare = ((withoutMinimiser.getValue() >> 2) & knownInfo) /*<< 2*/;
+                maskedSK >>= 2;
             }
             else toCompare = withoutMinimiser.getValue() & knownInfo;
         }
@@ -146,9 +146,6 @@ bool Bucket::find(Kmer kmer, int &position) {
         }
 
 //        cout << "before toCompare : " << toCompare << " maskedSK : " << maskedSK << endl;
-        toCompare = reorderValue(toCompare,  prefixLen, suffixLen);
-        maskedSK = reorderValue(maskedSK, min(prefixLen, currentPrefixLen), min(suffixLen, currentSuffixLen));
-//        cout << "After reordered toCompare : " << toCompare << " maskedSK : " << maskedSK << endl;
 
         if (currentPrefixLen < prefixLen || currentSuffixLen < suffixLen) {
             goto noInfo;
@@ -294,25 +291,32 @@ std::vector<SuperKmer> Bucket::getListCopy() {
 
 
 /**
- * For a given SuperKmer and a given list, linearly find the next position where it could be inserted in the list
- * @param superKmer the SuperKmer to position
+ * For a given SuperKmer, given list and starting position, linearly find the next position where it could be inserted in the list
+ * @param superKmer the SuperKmer to position with only one Kmer in it
  * @param list the list to insert the SuperKmer in
  * @param startingPosition the initial position in the list
  * @return the index of a certain position in the list
  */
-uint64_t Bucket::findNextOkPosition(const SuperKmer& superKmer, std::vector<SuperKmer> list, uint64_t startingPosition) {
+uint64_t Bucket::findNextOkPosition(SuperKmer superKmer, std::vector<SuperKmer> list, uint64_t startingPosition) {
     uint64_t current = startingPosition;
-//    for (; current < list.size(); current++) {
-//        switch (SuperKmer::compareSKPerNucleotides(superKmer, list.at(current))) {
-//            case SuperKmer::EQUAL:
-//            case SuperKmer::INFERIOR:
-//                return current;
-//            case SuperKmer::SUPERIOR:
-//            case SuperKmer::INCOMPARABLE:
-//                break;
-//        }
-//    }
-    return current;
+    uint64_t res = current;
+    for (; current < list.size(); current++) {
+//        orderedList.at(current).print();
+        std::vector<SuperKmer::logic> comparison = SuperKmer::compareSK(superKmer, orderedList.at(current));
+        for (auto &logicalValue : comparison) {
+            switch (logicalValue) {
+                case SuperKmer::EQUAL:
+                case SuperKmer::INFERIOR:
+                    return current;
+                case SuperKmer::SUPERIOR:
+                    res = current;
+                    break;
+                case SuperKmer::INCOMPARABLE:
+                    break;
+            }
+        }
+    }
+    return res + 1;
 }
 
 /**

@@ -496,8 +496,8 @@ vector<SuperKmer::logic> SuperKmer::compareSK(SuperKmer& superKmer1, SuperKmer& 
             continue;
         } else { // Same minimiser position
 
-            uint64_t value1 = unpacked1.at(i).nonInterleavedKmerValue();
-            uint64_t value2 = unpacked2.at(j).nonInterleavedKmerValue();
+            uint64_t value1 = unpacked1.at(i).getValue();
+            uint64_t value2 = unpacked2.at(j).getValue();
 
             if (value1 == value2) {
                 result.push_back(SuperKmer::EQUAL);

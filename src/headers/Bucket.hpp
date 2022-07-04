@@ -37,12 +37,12 @@ public:
 
     /// Operator overloading
     Bucket operator|(const Bucket &toAdd); // Union todo : with new compare
-    Bucket operator&(Bucket &toIntersect); // Intersection todo : with new compare
+    Bucket operator&(Bucket &toIntersect); // Intersection
     Bucket operator^(const Bucket &toXor); // Symmetrical difference todo : union - intersection
 
     /// Intern functions
     Kmer SKtoKmer(SuperKmer superKmer);
-    uint64_t findNextOkPosition(const SuperKmer& superKmer, std::vector<SuperKmer> list, uint64_t startingPosition);
+    uint64_t findNextOkPosition(SuperKmer superKmer, std::vector<SuperKmer> list, uint64_t startingPosition);
 
 
     /// Misc.
