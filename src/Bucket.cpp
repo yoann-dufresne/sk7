@@ -329,45 +329,11 @@ Bucket Bucket::operator|(const Bucket &toAdd) {
         throw std::runtime_error("Error: incompatible buckets");
     }
     Bucket result = Bucket(minimiser);
-//    uint64_t i = 0; // loop index for the current Bucket
-//    uint64_t j = 0; // loop index for toAdd
-//    while (i < orderedList.size() && j < toAdd.orderedList.size()) {
-//        switch (SuperKmer::compareSKPerNucleotides(orderedList.at(i), toAdd.orderedList.at(j))) {
-//            case SuperKmer::SUPERIOR:
-//                result.addToList(toAdd.orderedList.at(j));
-//                j++;
-//                break;
-//            case SuperKmer::INFERIOR:
-//                result.addToList(orderedList.at(i));
-//                i++;
-//                break;
-//            case SuperKmer::EQUAL:
-//            case SuperKmer::INCOMPARABLE:
-//                // We find the one at its place
-//            {
-//                uint64_t firstI = findNextOkPosition(orderedList.at(i), toAdd.orderedList, j);
-//                uint64_t firstJ = findNextOkPosition(toAdd.orderedList.at(j), orderedList, i);
-//                if (firstI < firstJ) {
-//                    result.addToList(orderedList.at(i));
-//                    i++;
-//                } else {
-//                    result.addToList(toAdd.orderedList.at(j));
-//                    j++;
-//                }
-//            }
-//                break;
-//
-//        }
-//    }
-//    if (i == orderedList.size()) { // End of this, add the rest of toAdd
-//        for (; j < toAdd.orderedList.size(); j++ ) {
-//            result.addToList(toAdd.orderedList.at(j));
-//        }
-//    } else { // End of toXor, add the rest of this
-//        for (; i < orderedList.size(); i++ ) {
-//            result.addToList(orderedList.at(i));
-//        }
-//    }
+    uint64_t i = 0; // loop index for the current Bucket
+    uint64_t j = 0; // loop index for toAdd
+    while (i < orderedList.size() && j < toAdd.orderedList.size()) {
+        break;
+    }
     return result;
 }
 
@@ -380,19 +346,54 @@ Bucket Bucket::operator&(Bucket &toIntersect) {
     if (toIntersect.minimiser != minimiser || toIntersect.kmerLength != kmerLength || toIntersect.minimiserLength != minimiserLength) {
         throw std::runtime_error("Error: incompatible buckets");
     }
-    Bucket result = Bucket(minimiser);
-    uint64_t i = 0; // loop index for the current Bucket
-    SuperKmer inter;
-    while (i < orderedList.size()) {
-        SuperKmer current = orderedList.at(i);
-        inter = SuperKmer();
-        for (uint64_t j = 0; j < toIntersect.getListSize(); j++) {
-            inter = inter | (current & toIntersect.orderedList.at(j));
+    uint64_t nbColumn = sk7::k - sk7::m + 1;
+    Bucket result = Bucket(minimiser); // the final bucket
+
+//    std::vector<SuperKmer> currentSK = std::vector<SuperKmer>(nbColumn, SuperKmer()); // The current lowest SuperKmer
+
+    std::vector<std::vector<SuperKmer>> allSplit = std::vector<std::vector<SuperKmer>>(); // the matrix of Kmers of the first bucket
+    std::vector<std::vector<SuperKmer>> allSplitToIntersect = std::vector<std::vector<SuperKmer>>(); // the matrix of Kmers of the second bucket
+
+    std::vector<uint64_t> idx = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the first matrix
+    std::vector<uint64_t> idxToIntersect = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the second matrix
+
+    for (auto &it : orderedList) { // Create a matrix of Kmer
+        allSplit.push_back(it.split());
+    }
+    for (auto &it : toIntersect.orderedList) { // Create a matrix of Kmer
+        allSplitToIntersect.push_back(it.split());
+    }
+
+    for(uint64_t j = 0; j < nbColumn; j++) { // find the first Kmer of the column
+        idx.at(j) = nextKmerIndex(0, j, allSplit);
+    }
+
+    for(uint64_t j = 0; j < nbColumn; j++) { // find the first Kmer of the column
+        idxToIntersect.at(j) = nextKmerIndex(0, j, allSplitToIntersect);
+    }
+
+
+    for (uint64_t j = 0; j < nbColumn; j++) {
+
+        while (idx.at(j) < orderedList.size() && idxToIntersect.at(j) < toIntersect.orderedList.size()) {
+
+//            cout << "idx[j] = " << idx.at(j) << " idxToIntersect.at(j) = " << idxToIntersect.at(j) << endl;
+
+            uint64_t currentSKValue = allSplit.at(idx.at(j)).at(j).getValue();
+            uint64_t currentSKValueToIntersect = allSplitToIntersect.at(idxToIntersect.at(j)).at(j).getValue();
+
+            if (currentSKValue < currentSKValueToIntersect) {
+                idx.at(j) = nextKmerIndex(idx.at(j) + 1, j, allSplit);
+            }
+            else if (currentSKValue == currentSKValueToIntersect) {
+                result.addToList(allSplit.at(idx.at(j)).at(j));
+                idx.at(j) = nextKmerIndex(idx.at(j) + 1, j, allSplit);
+                idxToIntersect.at(j) = nextKmerIndex(idxToIntersect.at(j) + 1, j, allSplitToIntersect);
+            }
+            else {
+                idxToIntersect.at(j) = nextKmerIndex(idxToIntersect.at(j) + 1, j, allSplitToIntersect);
+            }
         }
-        if (inter != SuperKmer()) {
-            result.addToList(inter);
-        }
-        i++;
     }
 
     return result;
@@ -447,39 +448,17 @@ Bucket Bucket::operator^(const Bucket &toXor) {
 
 /**
  * Check if the bucket is sorted
- * @return true if the bucket is sorted else false
+ * @return true if the bucket is sorted with no duplicate else false
  */
 bool Bucket::isSorted() {
-    for (uint64_t i = 0; i < orderedList.size() - 1; i++) {
-        std::vector<SuperKmer::logic> comparison = SuperKmer::compareSK(orderedList.at(i), orderedList.at(i + 1));
-        for (auto &logicalValue : comparison) {
-            switch (logicalValue) {
-                case SuperKmer::SUPERIOR:
-                case SuperKmer::EQUAL:
-                    cout << "not sorted in position : " << i << ", " << i + 1 << " with : " << endl;
-                    orderedList.at(i).print();
-                    orderedList.at(i + 1).print();
-                    return false;
-                case SuperKmer::INFERIOR:
-                    break;
-                case SuperKmer::INCOMPARABLE:
-                    for (uint64_t k = i + 2; k < orderedList.size(); k++) {
-                        std::vector<SuperKmer::logic> linearSearch = SuperKmer::compareSK(orderedList.at(i), orderedList.at(k));
-                        for (auto &logicalValueBis : linearSearch) {
-                            switch (logicalValueBis) {
-                                case SuperKmer::SUPERIOR:
-                                case SuperKmer::EQUAL:
-                                    cout << "not sorted in position : " << i << ", " << k << " with : " << endl;
-                                    orderedList.at(i).print();
-                                    orderedList.at(k).print();
-                                    return false;
-                                case SuperKmer::INFERIOR:
-                                case SuperKmer::INCOMPARABLE:
-                                    break;
-                            }
-                        }
-                    }
-                    break;
+    std::vector<uint64_t> currentKmers = std::vector<uint64_t>(sk7::k - sk7::m + 1, 0);
+    for (uint64_t i = 0; i < orderedList.size(); i++) {
+        std::vector<SuperKmer> current = orderedList.at(i).split();
+        for (int j = 0; j < sk7::k - sk7::m + 1; j++) {
+            if (currentKmers.at(j) >= current.at(j).getValue() && current.at(j) != SuperKmer()) {
+                return false;
+            } else if (current.at(j) != SuperKmer()) {
+                currentKmers.at(j) = current.at(j).getValue();
             }
         }
     }
@@ -496,4 +475,21 @@ void Bucket::print() {
     for (auto &it : orderedList) {
         it.print();
     }
+}
+
+/**
+ * Find the index of the next non null kmer in a list of split SuperKmer
+ * @param current the starting index in the list
+ * @param column the column (linked to the minimiser position) to look in
+ * @param splitList the considered list
+ * @return the index of the next non null kmer in splitList
+ */
+uint64_t Bucket::nextKmerIndex(const uint64_t &current, const uint64_t &column, std::vector<std::vector<SuperKmer>> splitList) {
+    uint64_t i = current;
+    for(; i < splitList.size(); i++) {
+        if (splitList.at(i).at(column) != SuperKmer()) {
+            return i;
+        }
+    }
+    return i;
 }

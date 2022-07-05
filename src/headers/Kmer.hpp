@@ -22,6 +22,8 @@ public:
     ushort length;
 
     /// Constructor
+    Kmer();
+    Kmer(uint64_t value);
     Kmer(uint64_t value, ushort length);
 
     /// Getter

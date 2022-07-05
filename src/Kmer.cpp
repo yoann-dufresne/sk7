@@ -22,7 +22,24 @@ namespace sk7 {
 }
 
 /**
- * Constructor from value
+ * Default constructor
+ */
+Kmer::Kmer() {
+    this->value = 0;
+    this->length = sk7::k;
+}
+
+/**
+ * Constructor to build a Kmer from its value
+ * @param value the value of the Kmer
+ */
+Kmer::Kmer(uint64_t value) {
+    this->value = value;
+    this->length = sk7::k;
+}
+
+/**
+ * Constructor from value and length
  * @param value the value of the wanted kmer
  * @param length the length (in letter 'A', 'C', 'G', 'T') of the kmer
  */

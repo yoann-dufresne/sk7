@@ -414,7 +414,7 @@ SuperKmer SuperKmer::operator|(SuperKmer toUnite) {
  * @return the list of interleaved Kmers represented by the SuperKmer
  */
 std::vector<SuperKmer> SuperKmer::split() const {
-    std::vector<SuperKmer> result = vector<SuperKmer>();
+    std::vector<SuperKmer> result = vector<SuperKmer>(sk7::k - sk7::m + 1);
     int prefixLen = getPrefixLen();
     int suffixLen = getSuffixLen();
 
@@ -460,7 +460,7 @@ std::vector<SuperKmer> SuperKmer::split() const {
             toInsert.setBits(sk7::fixBitSize, sk7::fixBitSize, sk7::k - (prefixLen - i) - sk7::m);
             toInsert.setBits(sk7::fixBitSize * 2, 4 * max(sk7::k - (prefixLen - i) - sk7::m,  prefixLen - i), (forSuf + forPref) &
                     buildSKMask(prefixLen - i,  sk7::k - (prefixLen - i) - sk7::m));
-            result.push_back(toInsert);
+            result.at(sk7::k - sk7::m - (prefixLen - i)) = toInsert;
 
         } else { // between suffix and prefix
 
@@ -468,7 +468,7 @@ std::vector<SuperKmer> SuperKmer::split() const {
             toInsert.setBits(sk7::fixBitSize, sk7::fixBitSize, sk7::k - (prefixLen - i) - sk7::m);
             toInsert.setBits(sk7::fixBitSize * 2, 4 * max(sk7::k - (prefixLen - i) - sk7::m,  prefixLen - i),
                              ((forSuf + forPref) >> 4) & buildSKMask(prefixLen - i,  sk7::k - (prefixLen - i) - sk7::m));
-            result.push_back(toInsert);
+            result.at(sk7::k - sk7::m - (prefixLen - i)) = toInsert;
 
         }
     }
@@ -482,54 +482,44 @@ std::vector<SuperKmer> SuperKmer::split() const {
  * @return a vector with the result of every comparison in order
  */
 vector<SuperKmer::logic> SuperKmer::compareSK(SuperKmer& superKmer1, SuperKmer& superKmer2) {
-    std::vector<SuperKmer::logic> result = std::vector<SuperKmer::logic>();
+    std::vector<SuperKmer::logic> result = std::vector<SuperKmer::logic>(sk7::k - sk7::m + 1);
 
     std::vector<SuperKmer> unpacked1 = superKmer1.split();
     std::vector<SuperKmer> unpacked2 = superKmer2.split();
 
-    uint64_t i = 0; //loop counter for unpacked1
-    uint64_t j = 0; //loop counter for unpacked2
-    while(i < unpacked1.size() && j < unpacked2.size()) {
-
+    for (int i = 0; i < sk7::k - sk7::m + 1; ++i) {
         int prefix1Len = unpacked1.at(i).getPrefixLen();
-        int prefix2Len = unpacked2.at(j).getPrefixLen();
+        int prefix2Len = unpacked2.at(i).getPrefixLen();
+
+        if ((!prefix1Len && !unpacked1.at(i).getSuffixLen()) || (!prefix2Len && !unpacked2.at(i).getSuffixLen())) { // One is empty
+            result.at(i) = SuperKmer::INCOMPARABLE;
+            continue;
+        }
 
         if (prefix1Len < prefix2Len) { // Not the same minimiser position
-            result.push_back(SuperKmer::INCOMPARABLE);
-            j++;
+            result.at(i) = SuperKmer::INCOMPARABLE;
             continue;
         }
         if (prefix1Len > prefix2Len) {
-            result.push_back(SuperKmer::INCOMPARABLE);
-            i++;
+            result.at(i) = SuperKmer::INCOMPARABLE;
             continue;
+
         } else { // Same minimiser position
 
             uint64_t value1 = unpacked1.at(i).getValue();
-            uint64_t value2 = unpacked2.at(j).getValue();
+            uint64_t value2 = unpacked2.at(i).getValue();
 
             if (value1 == value2) {
-                result.push_back(SuperKmer::EQUAL);
+                result.at(i) = SuperKmer::EQUAL;
             } else if (value1 > value2) {
-                result.push_back(SuperKmer::SUPERIOR);
+                result.at(i) = SuperKmer::SUPERIOR;
             } else {
-                result.push_back(SuperKmer::INFERIOR);
+                result.at(i) = SuperKmer::INFERIOR;
             }
-            i++;
-            j++;
             continue;
         }
     }
 
-    if (i == unpacked1.size()) { // getting the rest of superKmer1
-        for (; j < unpacked2.size(); j++) {
-            result.push_back(SuperKmer::INCOMPARABLE);
-        }
-    } else {
-        for(; i < unpacked1.size(); i++) { // getting the rest of superKmer2
-            result.push_back(SuperKmer::INCOMPARABLE);
-        }
-    }
     return result;
 }
 

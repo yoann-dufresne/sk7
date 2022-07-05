@@ -43,7 +43,7 @@ public:
     /// Intern functions
     Kmer SKtoKmer(SuperKmer superKmer);
     uint64_t findNextOkPosition(SuperKmer superKmer, std::vector<SuperKmer> list, uint64_t startingPosition);
-
+    uint64_t nextKmerIndex(const uint64_t &current, const uint64_t &column, std::vector<std::vector<SuperKmer>> splitList);
 
     /// Misc.
     bool isSorted();

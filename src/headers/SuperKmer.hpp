@@ -3,7 +3,6 @@
 
 #include <cinttypes>
 #include <vector>
-#include <set>
 
 #include "Kmer.hpp"
 
