@@ -9,8 +9,8 @@ int main() {
     cout << "I'm main" << endl;
     sk7::initLib(5, 3);
 
-
-    cout << reorderValue(12,  2,0) << endl;
-
+    SuperKmer SK = SuperKmer({0b00101000, 0b00000000});
+    SK.print();
+    cout << "res = " << bitset<16>(SK.readKmer(0).getValue()) << endl;
     return 0;
 }

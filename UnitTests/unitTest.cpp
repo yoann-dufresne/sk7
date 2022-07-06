@@ -209,19 +209,6 @@ const test superKmerTest[] {
         SKTest.setBits(8, 8, 0b10010110);
         EXPECT(SKTest.accessBits(0, 16) == (uint64_t) 0b1110100110010110);
      },
-//     CASE("cut") {
-//         SuperKmer SK = SuperKmer({0b10011101, 0b00100000});
-//         std::vector<SuperKmer> cut = SK.cut(1, 2, 2);
-//         EXPECT(cut.at(0).getValue() == (uint64_t) 0b00010010);
-//         EXPECT(cut.at(1).getValue() == (uint64_t) 0b1101);
-//         SK = SuperKmer({0b01101001, 0b01000000});
-//         cut = SK.cut(0, 0, 2);
-//         EXPECT(cut.at(0).getValue() == (uint64_t) 0b1001);
-//         EXPECT(cut.at(1).getValue() == (uint64_t) 0b10000100);
-//
-//     },
-
-
 
      CASE("Intersection") {
 
@@ -319,7 +306,7 @@ const test superKmerTest[] {
         EXPECT(split.at(2).nonInterleavedKmerValue() == (uint64_t) 0b0000001010);
 
      },
-     CASE("Compare SK per Kmer included") {
+     CASE("CompareSK") {
         SuperKmer SK1 = SuperKmer({0b10101011, 0b10010000});
         SuperKmer SK2 = SuperKmer({0b01010110});
         SuperKmer SK4 = SuperKmer({0b01101011, 0b10000000});
@@ -342,40 +329,38 @@ const test superKmerTest[] {
         expected = {SuperKmer::INCOMPARABLE, SuperKmer::INCOMPARABLE, SuperKmer::INFERIOR};
         EXPECT(SuperKmer::compareSK(SK1, SK7) == expected);
 
+     },
+
+     CASE("readKmer") {
+         SuperKmer SK1 = SuperKmer({0b10101011, 0b10010000});
+         SuperKmer SK2 = SuperKmer({0b01011000});
+         SuperKmer SK3 = SuperKmer({0b10000011, 0b00110000});
+         SuperKmer SK4 = SuperKmer({0b00101000, 0b00000000});
+
+         EXPECT(SK1.readKmer(0).getValue() == (uint64_t) 0b10001000);
+         EXPECT(SK1.readKmer(1).getValue() == (uint64_t) 0b1011);
+         EXPECT(SK1.readKmer(2).getValue() == (uint64_t) 0b110001);
+
+         EXPECT(SK2.readKmer(0).length == 0);
+         EXPECT(SK2.readKmer(1).getValue() == (uint64_t) 0b1000);
+         EXPECT(SK2.readKmer(2).length == 0);
+
+         EXPECT(SK3.readKmer(0).length == 0);
+         EXPECT(SK3.readKmer(1).length == 0);
+         EXPECT(SK3.readKmer(2).getValue() == (uint64_t) 0b110011);
+
+         EXPECT(SK4.readKmer(0).getValue() == (uint64_t) 0b10000000);
+         EXPECT(SK4.readKmer(1).length == 0);
+         EXPECT(SK4.readKmer(2).length == 0);
      }
 };
 
 const test bucketTest[] {
     CASE("find") {
-        /// SuperKmer 1 : G|CT
-        uint8_t firstSection1 = 0b01100111; //1, 2, C, G
-        uint8_t secondSection1 = 0b10000000; //T, _, _, _
-        vector<TYPE> tab1 = vector<TYPE>();
-        tab1.push_back(firstSection1);
-        tab1.push_back(secondSection1);
-        SuperKmer SK1(tab1);
-
-        ///SuperKmer 2 : CG|TT
-        uint8_t firstSection2 = 0b10101011; //2, 2, T, G
-        uint8_t secondSection2 = 0b10010000; // T, C, _, _
-        vector<TYPE> tab2 = vector<TYPE>();
-        tab2.push_back(firstSection2);
-        tab2.push_back(secondSection2);
-        SuperKmer SK2(tab2);
-
-        ///SuperKmer 3 : GG|
-        uint8_t firstSection3 = 0b10000011; //2, 0, _, G
-        uint8_t secondSection3 = 0b00110000;//_, G, _, _
-        vector<TYPE> tab3 = vector<TYPE>();
-        tab3.push_back(firstSection3);
-        tab3.push_back(secondSection3);
-        SuperKmer SK3(tab3);
-
-
         Bucket bucket(0);
-        bucket.addToList(SK1);
-        bucket.addToList(SK2);
-        bucket.addToList(SK3);
+        bucket.addToList(SuperKmer({0b01100111, 0b10000000}));
+        bucket.addToList(SuperKmer({0b10101011, 0b10010000}));
+        bucket.addToList(SuperKmer({0b10000011, 0b00110000}));
 
         // The bucket contains : G|CT, CG|TT, GG|
 
@@ -403,68 +388,26 @@ const test bucketTest[] {
 
     },
     CASE("isSorted") {
-        /// SuperKmer 1 : G|CT
-        uint8_t firstSection1 = 0b01100111; //1, 2, C, G
-        uint8_t secondSection1 = 0b10000000; //T, _, _, _
-        vector<TYPE> tab1 = vector<TYPE>();
-        tab1.push_back(firstSection1);
-        tab1.push_back(secondSection1);
-        SuperKmer SK1(tab1);
-
-        ///SuperKmer 2 : CG|TT
-        uint8_t firstSection2 = 0b10101011; //2, 2, T, G
-        uint8_t secondSection2 = 0b10010000; // T, C, _, _
-        vector<TYPE> tab2 = vector<TYPE>();
-        tab2.push_back(firstSection2);
-        tab2.push_back(secondSection2);
-        SuperKmer SK2(tab2);
-
-        ///SuperKmer 3 : GG|
-        uint8_t firstSection3 = 0b10000011; //2, 0, _, G
-        uint8_t secondSection3 = 0b00110000;//_, G, _, _
-        vector<TYPE> tab3 = vector<TYPE>();
-        tab3.push_back(firstSection3);
-        tab3.push_back(secondSection3);
-        SuperKmer SK3(tab3);
-
 
         Bucket bucket(0);
-        bucket.addToList(SK1);
-        bucket.addToList(SK2);
-        bucket.addToList(SK3);
+        bucket.addToList(SuperKmer({0b01100111, 0b10000000}));
+        bucket.addToList(SuperKmer({0b10101011, 0b10010000}));
+        bucket.addToList(SuperKmer({0b10000011, 0b00110000}));
+
+        Bucket spaced = Bucket(0);
+        spaced.addToList(SuperKmer({0b10000010, 0b00100000}));
+        spaced.addToList(SuperKmer({0b01011001}));
+        spaced.addToList(SuperKmer({0b10000001, 0b00010000}));
 
         EXPECT(bucket.isSorted());
+        EXPECT(not spaced.isSorted());
     }
         ,
     CASE("addKmer") {
-        /// SuperKmer 1 : G|CT
-        uint8_t firstSection1 = 0b01100111; //1, 2, C, G
-        uint8_t secondSection1 = 0b10000000; //T, _, _, _
-        vector<TYPE> tab1 = vector<TYPE>();
-        tab1.push_back(firstSection1);
-        tab1.push_back(secondSection1);
-        SuperKmer SK1(tab1);
-
-        ///SuperKmer 2 : CG|TT
-        uint8_t firstSection2 = 0b10101011; //2, 2, T, G
-        uint8_t secondSection2 = 0b10010000; // T, C, _, _
-        vector<TYPE> tab2 = vector<TYPE>();
-        tab2.push_back(firstSection2);
-        tab2.push_back(secondSection2);
-        SuperKmer SK2(tab2);
-
-        ///SuperKmer 3 : GG|
-        uint8_t firstSection3 = 0b10000011; //2, 0, _, G
-        uint8_t secondSection3 = 0b00110000;//_, G, _, _
-        vector<TYPE> tab3 = vector<TYPE>();
-        tab3.push_back(firstSection3);
-        tab3.push_back(secondSection3);
-        SuperKmer SK3(tab3);
-
         Bucket bucket(0);
-        bucket.addToList(SK1);
-        bucket.addToList(SK2);
-        bucket.addToList(SK3);
+        bucket.addToList(SuperKmer({0b01100111, 0b10000000}));
+        bucket.addToList(SuperKmer({0b10101011, 0b10010000}));
+        bucket.addToList(SuperKmer({0b10000011, 0b00110000}));
 
         Kmer toAdd = Kmer(0b0000001000, 5); // AAATA
         Kmer toAdd2 = Kmer(0b1000000001, 5); // TAAAC
@@ -651,6 +594,8 @@ const test bucketTest[] {
 
 
         bucket3.addSuperKmer(SuperKmer({0b10000011, 0b00110000}));
+//        cout << "------ 3++ ------" << endl;
+//        bucket3.print();
         EXPECT(bucket3.isSorted());
 
 //        cout << "------ 1 & 3++ --------" << endl;

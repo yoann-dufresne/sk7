@@ -343,59 +343,63 @@ Bucket Bucket::operator|(const Bucket &toAdd) {
  * @return the intersection of the two Buckets
  */
 Bucket Bucket::operator&(Bucket &toIntersect) {
+//    cout << "---------- start --------------" << endl;
     if (toIntersect.minimiser != minimiser || toIntersect.kmerLength != kmerLength || toIntersect.minimiserLength != minimiserLength) {
         throw std::runtime_error("Error: incompatible buckets");
     }
     uint64_t nbColumn = sk7::k - sk7::m + 1;
     Bucket result = Bucket(minimiser); // the final bucket
 
-//    std::vector<SuperKmer> currentSK = std::vector<SuperKmer>(nbColumn, SuperKmer()); // The current lowest SuperKmer
-
-    std::vector<std::vector<SuperKmer>> allSplit = std::vector<std::vector<SuperKmer>>(); // the matrix of Kmers of the first bucket
-    std::vector<std::vector<SuperKmer>> allSplitToIntersect = std::vector<std::vector<SuperKmer>>(); // the matrix of Kmers of the second bucket
 
     std::vector<uint64_t> idx = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the first matrix
     std::vector<uint64_t> idxToIntersect = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the second matrix
 
-    for (auto &it : orderedList) { // Create a matrix of Kmer
-        allSplit.push_back(it.split());
-    }
-    for (auto &it : toIntersect.orderedList) { // Create a matrix of Kmer
-        allSplitToIntersect.push_back(it.split());
+    for(uint64_t j = 0; j < nbColumn; j++) { // find the first Kmer of the column
+        idx.at(j) = nextKmerIndex(0, j);
     }
 
     for(uint64_t j = 0; j < nbColumn; j++) { // find the first Kmer of the column
-        idx.at(j) = nextKmerIndex(0, j, allSplit);
-    }
-
-    for(uint64_t j = 0; j < nbColumn; j++) { // find the first Kmer of the column
-        idxToIntersect.at(j) = nextKmerIndex(0, j, allSplitToIntersect);
+        idxToIntersect.at(j) = toIntersect.nextKmerIndex(0, j);
     }
 
 
     for (uint64_t j = 0; j < nbColumn; j++) {
 
+        int prefixLen = j;
+        int suffixLen = sk7::k - sk7::m - j;
+
         while (idx.at(j) < orderedList.size() && idxToIntersect.at(j) < toIntersect.orderedList.size()) {
 
-//            cout << "idx[j] = " << idx.at(j) << " idxToIntersect.at(j) = " << idxToIntersect.at(j) << endl;
+//            cout << "\tj = " << j << endl;
+//            orderedList.at(idx.at(j)).print();
+//            toIntersect.orderedList.at(idxToIntersect.at(j)).print();
 
-            uint64_t currentSKValue = allSplit.at(idx.at(j)).at(j).getValue();
-            uint64_t currentSKValueToIntersect = allSplitToIntersect.at(idxToIntersect.at(j)).at(j).getValue();
+            uint64_t currentSKValue = orderedList.at(idx.at(j)).readKmer(prefixLen).getValue();
+            uint64_t currentSKValueToIntersect = toIntersect.orderedList.at(idxToIntersect.at(j)).readKmer(prefixLen).getValue();
+
+//            cout << "current SK = "<< currentSKValue << endl;
+//            cout << "current SK i = " << currentSKValueToIntersect << endl;
 
             if (currentSKValue < currentSKValueToIntersect) {
-                idx.at(j) = nextKmerIndex(idx.at(j) + 1, j, allSplit);
+                idx.at(j) = nextKmerIndex(idx.at(j) + 1, j);
             }
             else if (currentSKValue == currentSKValueToIntersect) {
-                result.addToList(allSplit.at(idx.at(j)).at(j));
-                idx.at(j) = nextKmerIndex(idx.at(j) + 1, j, allSplit);
-                idxToIntersect.at(j) = nextKmerIndex(idxToIntersect.at(j) + 1, j, allSplitToIntersect);
+                SuperKmer toAdd = SuperKmer();
+                toAdd.setBits(0, sk7::fixBitSize, prefixLen);
+                toAdd.setBits(sk7::fixBitSize, sk7::fixBitSize, suffixLen);
+                toAdd.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentSKValue);
+//                cout << "adding : ";
+//                toAdd.print();
+                result.addToList(toAdd);
+                idx.at(j) = nextKmerIndex(idx.at(j) + 1, j);
+                idxToIntersect.at(j) = toIntersect.nextKmerIndex(idxToIntersect.at(j) + 1, j);
             }
             else {
-                idxToIntersect.at(j) = nextKmerIndex(idxToIntersect.at(j) + 1, j, allSplitToIntersect);
+                idxToIntersect.at(j) = toIntersect.nextKmerIndex(idxToIntersect.at(j) + 1, j);
             }
         }
     }
-
+//    cout << "-------- end ----------" << endl;
     return result;
 }
 
@@ -481,13 +485,12 @@ void Bucket::print() {
  * Find the index of the next non null kmer in a list of split SuperKmer
  * @param current the starting index in the list
  * @param column the column (linked to the minimiser position) to look in
- * @param splitList the considered list
  * @return the index of the next non null kmer in splitList
  */
-uint64_t Bucket::nextKmerIndex(const uint64_t &current, const uint64_t &column, std::vector<std::vector<SuperKmer>> splitList) {
+uint64_t Bucket::nextKmerIndex(const uint64_t &current, const uint64_t &column) {
     uint64_t i = current;
-    for(; i < splitList.size(); i++) {
-        if (splitList.at(i).at(column) != SuperKmer()) {
+    for(; i < orderedList.size(); i++) {
+        if (orderedList.at(i).readKmer(column).length != 0) {
             return i;
         }
     }

@@ -2,7 +2,6 @@
 
 #include <utility>
 #include <iostream>
-#include <bitset>
 
 using namespace std;
 
@@ -541,5 +540,67 @@ uint64_t SuperKmer::nonInterleavedKmerValue() {
         kmerValue = (kmerValue << 2) + accessBits(readStart, readStart + 2);
     }
     return kmerValue;
+}
+
+/**
+ * Read a specific Kmer from the SuperKmer
+ * @param kmerPrefixLen the length of the prefix of the wanted Kmer
+ * @return the value of the Kmer (stripped from minimiser and interleaved)
+ */
+Kmer SuperKmer::readKmer(int kmerPrefixLen) {
+//    cout << "###### start #######" << endl;
+    int prefixLen = getPrefixLen();
+    int suffixLen = getSuffixLen();
+
+    if (prefixLen < kmerPrefixLen || kmerPrefixLen > sk7::k - sk7::m || kmerPrefixLen + suffixLen < sk7::k - sk7::m) {
+//        cout << "error" << endl;
+        return Kmer(0,0);
+    }
+
+    int maxLen = max(prefixLen, suffixLen);
+    uint64_t value = getValue();
+    uint64_t res = 0;
+
+    // Separation of the prefix and suffix with a mask
+    uint64_t prefixMask = 0b00;
+    uint64_t suffixMask = 0b00;
+    for (int i = 0; i < 2 * maxLen; i++) {
+        if (i % 2 == 0) {
+            prefixMask <<= 2;
+            suffixMask = (suffixMask << 2) + 0b11;
+        } else {
+            prefixMask = (prefixMask << 2) + 0b11;
+            suffixMask <<= 2;
+        }
+    }
+
+    uint64_t mask = buildSKMask(prefixLen, suffixLen);
+    prefixMask &= mask;
+    suffixMask &= mask;
+
+//    cout << "value = " << bitset<16>(value) << endl;
+//    cout << "prefix mask = " << bitset<16>(prefixMask) << endl;
+//    cout << "suffix mask = " << bitset<16>(suffixMask) << endl;
+
+    int maxPref = sk7::k - sk7::m ;
+    uint64_t readingMask = (suffixMask << 4 * maxLen) >> 4 * (maxPref - prefixLen);
+//    cout << "reading mask = " << bitset<16>(readingMask) << endl;
+
+    uint64_t forPref = value & ((prefixMask >> 4 * (min(maxPref, prefixLen) - kmerPrefixLen)) << (4 * (min(maxPref, prefixLen) - kmerPrefixLen)));
+    uint64_t forSuf = value & (readingMask >> 4 * (min(maxPref, prefixLen) - kmerPrefixLen));
+
+//    cout << "for pref = " << bitset<16>(forPref) << endl;
+//    cout << "for suff = " << bitset<16>(forSuf) << endl;
+
+//    cout << "mask = " << bitset<16>(buildSKMask(kmerPrefixLen,  sk7::k - kmerPrefixLen - sk7::m)) << endl;
+
+    if (kmerPrefixLen == min(maxPref, prefixLen) || kmerPrefixLen == 0) {
+        res = (forSuf + forPref) & buildSKMask(kmerPrefixLen, sk7::k - kmerPrefixLen - sk7::m);
+    } else {
+//        cout << "shift" << endl;
+        res = ((forSuf + forPref) >> 4) & buildSKMask(kmerPrefixLen, sk7::k - kmerPrefixLen - sk7::m);
+    }
+//    cout << " val = " << bitset<16>(res) << endl;
+    return Kmer(res);
 }
 
