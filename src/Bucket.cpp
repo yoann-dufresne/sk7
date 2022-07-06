@@ -40,25 +40,12 @@ bool Bucket::find(Kmer kmer, int &position) {
     ///PREPARATION OF THE SEARCH
     Minimiser kmerMinimiser = Minimiser(alpha, sk7::m, kmer);
     Kmer withoutMinimiser = kmer.removePart(kmerMinimiser.getPos(), sk7::m);
+    interleavedOrder(withoutMinimiser, kmerMinimiser.getPos());
 
-    uint64_t kmerMask = interleavedOrder(withoutMinimiser, kmerMinimiser.getPos());
 //    cout << "striped and interleaved: " << withoutMinimiser.toString() << " of value : " << withoutMinimiser.getValue() << endl;
 //    cout << "mask = " << kmerMask << endl;
 
     int prefixLen = kmerMinimiser.getPos();
-    int suffixLen = kmer.getLength() - kmerMinimiser.getPos() - sk7::m;
-    int maxLen;
-
-
-    int needed; // number of bits to compare
-    if (prefixLen >= suffixLen) {
-        maxLen = prefixLen;
-        needed = maxLen * 4;
-    } else {
-        maxLen = suffixLen;
-        needed = maxLen * 4 - 2;
-    }
-
 
     ///START OF THE BINARY SEARCH
     int start = 0;
@@ -67,6 +54,7 @@ bool Bucket::find(Kmer kmer, int &position) {
     int lastPositionWithInformation;
     int lastStartWithInformation = 0;
     bool lastWasSuperior = false;
+
     while (start <= end) {
         int middle = (end + start) / 2;
 //        cout << "start : " << start << " end : " << end << " middle : " << middle << endl;
@@ -75,83 +63,31 @@ bool Bucket::find(Kmer kmer, int &position) {
             infoFound = false;
         }
         SuperKmer current = this->orderedList.at(middle); //Current SuperKmer of the list
+//        cout << "currentSK = "; current.print();
+//        cout << "prefix Len = " << prefixLen << endl;
+        Kmer currentKmer = current.readKmer(prefixLen); // current Kmer
+//        cout << "current Kmer = " << currentKmer.toString() << endl;
 
-        int currentPrefixLen = current.getPrefixLen(); //Current superkmer's prefix length
-        int currentSuffixLen = current.getSuffixLen(); //Current superkmer's suffix length
-
-        int currentMaxLen = max(currentPrefixLen, currentSuffixLen);
-
-        uint64_t currentValue = current.getValue(); // superkmer's value
-//        cout << "current sk : "; current.print();
-        uint64_t maskedSK;
-//        cout << "maxLen : " << maxLen << " current maxLen : " << currentMaxLen << endl;
-
-        if (currentMaxLen < maxLen) {
-            maskedSK = currentValue & (kmerMask >> ((maxLen - currentMaxLen) * 4));
-//            cout << "effective mask = " << (kmerMask >> ((maxLen - currentMaxLen) * 4)) << endl;
-        }
-        else {
-//            cout << "effective comparator = " << (currentValue >> ((currentMaxLen - maxLen) * 4)) << endl;
-            maskedSK = (currentValue >> ((currentMaxLen - maxLen) * 4)) & kmerMask;
-        }
-
-        uint64_t knownInfo = 0;
-        int i = 0;
-
-//        cout << "current SuffixLen : " << currentSuffixLen << " current PrefixLen : " << currentPrefixLen << endl;
-        while (i < currentSuffixLen || i < currentPrefixLen) { //Build the mask from superkmer for known information
-            if(i < currentSuffixLen) {
-                knownInfo = (knownInfo << 2) + 0b11;
-            } else {
-                knownInfo <<=2;
+        if (currentKmer.length == 0) { // No corresponding Kmer in the current SuperKmer
+//            cout << "no info" << endl << endl;
+            if (start < end) {
+                start += 1;
+                continue;
             }
-            if (i < currentPrefixLen) {
-                knownInfo = (knownInfo << 2) + 0b11;
-            } else {
-                knownInfo <<=2;
+            if (start == end) { // End of search via linear search
+                start = lastStartWithInformation;
+                end = lastPositionWithInformation - 1;
+                infoFound = true;
             }
-            i++;
+            continue;
         }
 
-        int found;
-        if (currentPrefixLen < currentSuffixLen) {
-            found = 4 * i - 2;
-            knownInfo >>= 2;
-        } else {
-            found = 4 * i;
-        }
-//        cout << "known info : " << knownInfo << endl;
+        uint64_t currentValue = currentKmer.getValue();
 
+//        cout << "search value = " << withoutMinimiser.getValue() << endl;
+//        cout << "current value = " << currentValue << endl;
 
-        /// We align the values
-//        cout << "found : " << found << " needed : " << needed << endl;
-//        cout << "prefixLen : " << prefixLen << " suffixLen : " << suffixLen << endl;
-        uint64_t toCompare;
-        if (found == needed) {
-            if (prefixLen < suffixLen) {
-                toCompare = ((withoutMinimiser.getValue() >> 2) & knownInfo) /*<< 2*/;
-                maskedSK >>= 2;
-            }
-            else toCompare = withoutMinimiser.getValue() & knownInfo;
-        }
-        else if (found > needed) {
-            if (prefixLen < suffixLen) toCompare = withoutMinimiser.getValue() & (knownInfo >> (found - needed - 2));
-            else toCompare = withoutMinimiser.getValue() & (knownInfo >> ((found - needed)));
-//            /*maskedSK >>= (found - needed);*/
-        } else { // (found < needed)
-//            cout << "init value : " << withoutMinimiser.getValue() << " shifted : " << (((withoutMinimiser.getValue() >> (needed - found)) & knownInfo)) << endl;
-            toCompare = ((withoutMinimiser.getValue() >> (needed - found)) & knownInfo);
-//            if (currentPrefixLen < currentSuffixLen) maskedSK >>=2;
-
-        }
-
-//        cout << "before toCompare : " << toCompare << " maskedSK : " << maskedSK << endl;
-
-        if (currentPrefixLen < prefixLen || currentSuffixLen < suffixLen) {
-            goto noInfo;
-        }
-
-        if (toCompare < maskedSK) {
+        if (withoutMinimiser.getValue() < currentValue) {
 //            cout << "before " << endl << endl;
             start = lastStartWithInformation;
             end = lastPositionWithInformation - 1;
@@ -160,7 +96,7 @@ bool Bucket::find(Kmer kmer, int &position) {
             continue;
         }
 
-        if (toCompare > maskedSK) {
+        if (withoutMinimiser.getValue() > currentValue) {
 //            cout << "after " << endl << endl;
             start = lastPositionWithInformation + 1;
             lastStartWithInformation = start;
@@ -169,25 +105,12 @@ bool Bucket::find(Kmer kmer, int &position) {
             continue;
         }
 
-        if (toCompare == maskedSK) { //Match or not enough information
-            if (currentPrefixLen >= prefixLen && currentSuffixLen >= suffixLen) { // Match
+        if (withoutMinimiser.getValue() == currentValue) { //Match or not enough information
                 position = middle;
                 return true;
-            } else { //No info
-                noInfo:
-//                cout << "no info" << endl << endl;
-                if (start < end) {
-                    start += 1;
-                    continue;
-                }
-                if (start == end) { // End of search via linear search
-                    start = lastStartWithInformation;
-                    end = lastPositionWithInformation - 1;
-                    infoFound = true;
-                }
-                continue;
-            }
         }
+
+
     }
 
 //    cout << "ending start : " << start << " ending end : " << end << endl;
@@ -350,7 +273,6 @@ Bucket Bucket::operator&(Bucket &toIntersect) {
     uint64_t nbColumn = sk7::k - sk7::m + 1;
     Bucket result = Bucket(minimiser); // the final bucket
 
-
     std::vector<uint64_t> idx = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the first matrix
     std::vector<uint64_t> idxToIntersect = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the second matrix
 
@@ -361,7 +283,6 @@ Bucket Bucket::operator&(Bucket &toIntersect) {
     for(uint64_t j = 0; j < nbColumn; j++) { // find the first Kmer of the column
         idxToIntersect.at(j) = toIntersect.nextKmerIndex(0, j);
     }
-
 
     for (uint64_t j = 0; j < nbColumn; j++) {
 

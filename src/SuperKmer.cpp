@@ -592,14 +592,18 @@ Kmer SuperKmer::readKmer(int kmerPrefixLen) {
 //    cout << "for pref = " << bitset<16>(forPref) << endl;
 //    cout << "for suff = " << bitset<16>(forSuf) << endl;
 
+    uint64_t sum = forSuf + forPref;
+
 //    cout << "mask = " << bitset<16>(buildSKMask(kmerPrefixLen,  sk7::k - kmerPrefixLen - sk7::m)) << endl;
 
-    if (kmerPrefixLen == min(maxPref, prefixLen) || kmerPrefixLen == 0) {
-        res = (forSuf + forPref) & buildSKMask(kmerPrefixLen, sk7::k - kmerPrefixLen - sk7::m);
+    if (kmerPrefixLen == 0) {
+        res = sum & buildSKMask(kmerPrefixLen, sk7::k - kmerPrefixLen - sk7::m);
     } else {
 //        cout << "shift" << endl;
-        res = ((forSuf + forPref) >> 4) & buildSKMask(kmerPrefixLen, sk7::k - kmerPrefixLen - sk7::m);
+        res = (sum >> (4 * (maxLen - kmerPrefixLen))) & buildSKMask(kmerPrefixLen, sk7::k - kmerPrefixLen - sk7::m);
     }
+
+
 //    cout << " val = " << bitset<16>(res) << endl;
     return Kmer(res);
 }
