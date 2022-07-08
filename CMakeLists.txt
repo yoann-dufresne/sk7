@@ -15,9 +15,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(CMAKE_CXX_FLAGS "-Wall")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -Ofast -fno-omit-frame-pointer")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -fno-omit-frame-pointer")
 set(CMAKE_CXX_FLAGS_RELEASE "-Ofast")
-
 
 add_subdirectory(apps/)
 add_subdirectory(src/)

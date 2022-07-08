@@ -43,7 +43,6 @@ bool Bucket::find(Kmer kmer, int &position) {
     interleavedOrder(withoutMinimiser, kmerMinimiser.getPos());
 
 //    cout << "striped and interleaved: " << withoutMinimiser.toString() << " of value : " << withoutMinimiser.getValue() << endl;
-//    cout << "mask = " << kmerMask << endl;
 
     int prefixLen = kmerMinimiser.getPos();
 

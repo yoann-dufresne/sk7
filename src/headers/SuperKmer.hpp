@@ -36,7 +36,7 @@ public:
     std::vector<SuperKmer> cut(const int &commonPartStart, const int &commonPartEnd, const int &fixBitSize); // To redo to cut specific part
     static std::vector<logic> compareSK(SuperKmer& superKmer1, SuperKmer& superKmer2);
     uint64_t buildSKMask(const int &prefixLen, const int &suffixLen) const;
-    Kmer readKmer(int kmerPrefixLen);
+    Kmer readKmer(int kmerPrefixLen) const;
 
     /// Operator
     bool operator==(const SuperKmer &toCompare) const;

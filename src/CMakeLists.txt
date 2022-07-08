@@ -1,3 +1,4 @@
+add_compile_options(-Ofast)
 
 add_library(sk7
     FastaReader.cpp

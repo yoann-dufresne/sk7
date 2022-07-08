@@ -10,3 +10,16 @@ target_include_directories(unitTest
         "${PROJECT_SOURCE_DIR}/extern/lest/include/lest"
         "${PROJECT_SOURCE_DIR}/src/headers"
         )
+
+add_executable(unitTest15-5
+        unitTest15-5.cpp)
+
+target_link_libraries(unitTest15-5
+        sk7)
+
+target_include_directories(unitTest15-5
+        PUBLIC
+        .
+        "${PROJECT_SOURCE_DIR}/extern/lest/include/lest"
+        "${PROJECT_SOURCE_DIR}/src/headers"
+        )
