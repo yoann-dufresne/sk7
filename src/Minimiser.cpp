@@ -2,7 +2,7 @@
 
 /**
  * Constructor for the minimiser of a given kmer
- * @param hashFunction a function that gives an whole value to a mmer
+ * @param hashFunction a function that gives an value to a mmer
  * @param length the wanted length of the minimiser
  * @param kmer the initial kmer
  */
@@ -11,11 +11,78 @@ Minimiser::Minimiser(hashPos (*hashFunction)(Kmer, ushort), ushort length, Kmer 
 }
 
 /**
+ * Constructor for a Minimiser taking reverse complement in consideration
+ * @param hashFunction a function that gives an value to a mmer
+ * @param kmer the initial kmer
+ */
+Minimiser::Minimiser(hashPos (*hashFunction)(Kmer, ushort), Kmer &kmer) {
+
+    this->hashFunction = hashFunction;
+    this->length = sk7::m;
+
+    Kmer reverse = kmer.reverseComplement();
+
+    hashPos hash = hashFunction(kmer, sk7::m);
+    hashPos hashRev = hashFunction(reverse, sk7::m);
+
+    if (hash.hashValue < hashRev.hashValue) {
+        this->value = hash.hashValue;
+        this->pos = hash.pos;
+        return;
+    }
+    if (hash.hashValue > hashRev.hashValue) {
+        this->value = hashRev.hashValue;
+        this->pos = hashRev.pos;
+        kmer = reverse;
+        return;
+    }
+
+    // same minimiser value
+    int dist = abs(hash.pos - (sk7::k - 1) / 2);
+    int distRev = abs(hashRev.pos - (sk7::k - 1) / 2);
+    if (dist < distRev) {
+        this->value = hash.hashValue;
+        this->pos = hash.pos;
+        return;
+    }
+    if (dist > distRev) {
+        this->value = hashRev.hashValue;
+        this->pos = hashRev.pos;
+        kmer = reverse;
+        return;
+    }
+
+    // position and value equivalent
+    Kmer withoutMinimiser = kmer.removePart(hash.pos, sk7::m);
+    interleavedOrder(withoutMinimiser, hash.pos);
+    Kmer withoutMinimiserRev = reverse.removePart(hashRev.pos, sk7::m);
+    interleavedOrder(withoutMinimiserRev, hash.pos);
+    if (withoutMinimiser.getValue() < withoutMinimiserRev.getValue()) {
+        this->value = hash.hashValue;
+        this->pos = hash.pos;
+        return;
+    }
+
+    if(withoutMinimiser.getValue() > withoutMinimiserRev.getValue()) {
+        this->value = hashRev.hashValue;
+        this->pos = hashRev.pos;
+        kmer = reverse;
+        return;
+    }
+
+
+    this->value = hash.hashValue;
+    this->pos = hash.pos;
+
+}
+
+
+/**
  * Constructor for a minimiser for a sequence of kmer
  * @param hashFunction a function that gives an whole value to a mmer
  * @param length the wanted length of the minimiser
  */
-Minimiser ::Minimiser(hashPos (*hashFunction)(Kmer, ushort), ushort length) {
+Minimiser::Minimiser(hashPos (*hashFunction)(Kmer, ushort), ushort length) {
     this->hashFunction = hashFunction;
     this->length = length;
     this->value = 0;

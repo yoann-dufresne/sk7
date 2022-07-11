@@ -99,8 +99,45 @@ const test minimiser[] {
         EXPECT(minimiser10.getValue() == (uint64_t) 0b00110111011101);
 
 
-         },
-         CASE("Minimiser from previous one : ") {
+    },
+
+    CASE("Minimiser with reverse complement : ") {
+        sk7::initLib(8, 3);
+        Kmer testKmer1 = Kmer(0b0100101101110011); // CATGCGAG
+        Kmer testKmer2 = Kmer(0b0111001111100111); // CGAGGTCG
+        Kmer testKmer3 = Kmer(0b0111011101110111); // CGCGCGCG
+        Kmer testKmer4 = Kmer(0b0001110001111110); // ACGACGGT
+        Kmer testKmer5 = Kmer(0b0100011111011110); // CACGGCGT
+
+        Minimiser minimiser1 = Minimiser(alpha, testKmer1);
+        Minimiser minimiser2 = Minimiser(alpha, testKmer2);
+        Minimiser minimiser3 = Minimiser(alpha, testKmer3);
+        Minimiser minimiser4 = Minimiser(alpha, testKmer4);
+        Minimiser minimiser5 = Minimiser(alpha, testKmer5);
+
+        EXPECT(minimiser1.getValue() == (uint64_t) 0b001011);
+        EXPECT(minimiser1.getPos() == 1);
+        EXPECT(testKmer1 == Kmer(0b0100101101110011));
+
+        EXPECT(minimiser2.getValue() == (uint64_t) 0b000101);
+        EXPECT(minimiser2.getPos() == 2);
+        EXPECT(testKmer2 == Kmer(0b0111000101100111));
+
+        EXPECT(minimiser3.getValue() == (uint64_t) 0b011101);
+        EXPECT(minimiser3.getPos() == 4);
+        EXPECT(testKmer3 == Kmer(0b0111011101110111));
+
+        EXPECT(minimiser4.getValue() == (uint64_t) 0b000101);
+        EXPECT(minimiser4.getPos() == 0);
+        EXPECT(testKmer4 == Kmer(0b0001011110011110));
+
+        EXPECT(minimiser5.getValue() == (uint64_t) 0b000111);
+        EXPECT(minimiser5.getPos() == 1);
+        EXPECT(testKmer5 == Kmer(0b0100011111011110));
+
+        sk7::initLib(5, 3);
+    },
+        CASE("Minimiser from previous one : ") {
         Kmer testKmer1 = Kmer(0b0100101010, 5); // CATTT
         Kmer testKmer2 = Kmer(0b0010101011, 5); // ATTTG
         Kmer testKmer3 = Kmer(0b1010101101, 5); // TTTGC
@@ -277,13 +314,11 @@ const test superKmerTest[] {
         EXPECT(equal);
 
         std::vector<SuperKmer> split2 = SK2.split();
-        split2.at(1).print();
         EXPECT(split2.size() == (uint64_t) 3);
         equal = split2.at(1) == SK2;
         EXPECT(equal);
 
         std::vector<SuperKmer> split3 = SK3.split();
-        SK3.print();
         EXPECT(split3.size() == (uint64_t) 3);
         equal = split3.at(1) == SuperKmer({0b01011011});
         EXPECT(equal);

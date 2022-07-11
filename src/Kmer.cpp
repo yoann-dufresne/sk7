@@ -133,3 +133,31 @@ Kmer Kmer::removePart(int pos, int fragLength) {
 bool Kmer::operator<(const Kmer &toCompare) const {
     return this->value < toCompare.value;
 }
+
+/**
+ * Build and return the reverse complement of this Kmer
+ * @return a reverse Kmer
+ */
+Kmer Kmer::reverseComplement() {
+    uint64_t res = value;
+
+    res = ((res >> 2 & 0x3333333333333333) | (res & 0x3333333333333333) << 2);
+    res = ((res >> 4 & 0x0F0F0F0F0F0F0F0F) | (res & 0x0F0F0F0F0F0F0F0F) << 4);
+    res = ((res >> 8 & 0x00FF00FF00FF00FF) | (res & 0x00FF00FF00FF00FF) << 8);
+    res = ((res >> 16 & 0x0000FFFF0000FFFF) | (res & 0x0000FFFF0000FFFF) << 16);
+    res = ((res >> 32 & 0x00000000FFFFFFFF) | (res & 0x00000000FFFFFFFF) << 32);
+
+    res ^= 0xAAAAAAAAAAAAAAAA;
+    res >>= (2 * (32 - sk7::k));
+
+    return Kmer(res);
+}
+
+/**
+ * Equality between two Kmers
+ * @param ToCompare the Kmer to compare with
+ * @return true if the Kmers are the same, else false
+ */
+bool Kmer::operator==(const Kmer &toCompare) const {
+    return length == toCompare.length && value == toCompare.value;
+}

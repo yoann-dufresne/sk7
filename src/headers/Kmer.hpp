@@ -33,9 +33,11 @@ public:
     /// Utils
     Kmer getSubKmer(int start, int end);
     Kmer removePart(int pos, int fragLength);
+    Kmer reverseComplement();
 
     /// Operator
     bool operator<(const Kmer &toCompare) const;
+    bool operator==(const Kmer &toCompare) const;
 
     /// Misc.
     std::string toString();

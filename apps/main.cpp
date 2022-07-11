@@ -7,15 +7,12 @@ using namespace std;
 int main() {
 
     cout << "I'm main" << endl;
-    sk7::initLib(15, 5);
+    sk7::initLib(8, 3);
 
-    SuperKmer SK1 = SuperKmer({0b01100100, 0b11111110, 0b01110011, 0b00110000});
-    SK1.print();
-    Kmer test = SK1.readKmer(6);
-    cout << test.toString() << endl;
-
-//    for (auto it : SK1.split()) {
-//        it.print();
-//    }
+    Kmer test = Kmer(0b1100000010101001); // GAAATTTC
+    cout << " init : " << test.toString() << endl;
+    Minimiser a = Minimiser(alpha, test);
+    cout << "after : " << test.toString() << endl;
+    cout << "Minimiser : " << a.toString() << " pos = " << a.getPos() << endl;
     return 0;
 }
