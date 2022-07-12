@@ -406,39 +406,90 @@ Bucket Bucket::operator^(const Bucket &toXor) {
     if (toXor.minimiser != minimiser || toXor.kmerLength != kmerLength || toXor.minimiserLength != minimiserLength) {
         throw std::runtime_error("Error: incompatible buckets");
     }
-    Bucket result = Bucket(minimiser);
-//    uint64_t i = 0; // loop index for the current Bucket
-//    uint64_t j = 0; // loop index for toXor
-//    while (i < orderedList.size() && j < toXor.orderedList.size()) {
-//        switch (SuperKmer::compareSKPerNucleotides(orderedList.at(i), toXor.orderedList.at(j))) {
-//            case SuperKmer::SUPERIOR :
-//                result.addToList(toXor.orderedList.at(j));
-//                j++;
-//                break;
-//            case SuperKmer::INFERIOR :
-//                result.addToList(orderedList.at(i));
-//                i++;
-//                break;
-//            case SuperKmer::EQUAL :
-//                i++;
-//                j++;
-//                break;
-//            case SuperKmer::INCOMPARABLE:
-//                result.addToList(toXor.orderedList.at(j));
-//                j++;
-//                break;
-//
-//        }
-//    }
-//    if (i == orderedList.size()) { // End of this, add the rest of toXor
-//        for (; j < toXor.orderedList.size(); j++) {
-//            result.addToList(toXor.orderedList.at(j));
-//        }
-//    } else { // End of toXor, add the rest of this
-//        for (; i < orderedList.size(); i++) {
-//            result.addToList(orderedList.at(i));
-//        }
-//    }
+    uint64_t nbColumn = sk7::k - sk7::m + 1;
+    Bucket result = Bucket(minimiser); // the final bucket
+
+    std::vector<uint64_t> idx = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the first matrix
+    std::vector<uint64_t> idxToXor = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the second matrix
+
+    for(uint64_t j = 0; j < nbColumn; j++) { // find the first Kmer of the column
+        idx.at(j) = nextKmerIndex(0, j);
+        idxToXor.at(j) = toXor.nextKmerIndex(0, j);
+    }
+
+    for (uint64_t j = 0; j < nbColumn; j++) {
+
+        uint64_t prefixLen = j;
+        uint64_t suffixLen = sk7::k - sk7::m - j;
+
+        while (idx.at(j) < orderedList.size() && idxToXor.at(j) < toXor.orderedList.size()) {
+
+//            cout << "\tj = " << j << endl;
+//            orderedList.at(idx.at(j)).print();
+//            toIntersect.orderedList.at(idxToXor.at(j)).print();
+
+            uint64_t currentKmerValue = orderedList.at(idx.at(j)).readKmer(prefixLen).getValue();
+            uint64_t currentKmerValueToXor = toXor.orderedList.at(idxToXor.at(j)).readKmer(prefixLen).getValue();
+
+//            cout << "current SK = "<< currentKmerValue << endl;
+//            cout << "current SK i = " << currentKmerValueToXor << endl;
+
+            if (currentKmerValue < currentKmerValueToXor) {
+                SuperKmer toAdd = SuperKmer();
+                toAdd.setBits(0, sk7::fixBitSize, prefixLen);
+                toAdd.setBits(sk7::fixBitSize, sk7::fixBitSize, suffixLen);
+                toAdd.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmerValue);
+//                cout << "adding : ";
+//                toAdd.print();
+                result.addToList(toAdd);
+                idx.at(j) = nextKmerIndex(idx.at(j) + 1, j);
+            }
+            else if (currentKmerValue == currentKmerValueToXor) {
+                idx.at(j) = nextKmerIndex(idx.at(j) + 1, j);
+                idxToXor.at(j) = toXor.nextKmerIndex(idxToXor.at(j) + 1, j);
+                continue;
+            }
+            else {
+                SuperKmer toAdd = SuperKmer();
+                toAdd.setBits(0, sk7::fixBitSize, prefixLen);
+                toAdd.setBits(sk7::fixBitSize, sk7::fixBitSize, suffixLen);
+                toAdd.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmerValueToXor);
+//                cout << "adding : ";
+//                toAdd.print();
+                result.addToList(toAdd);
+                idxToXor.at(j) = toXor.nextKmerIndex(idxToXor.at(j) + 1, j);
+            }
+        }
+
+        if (idx.at(j) == orderedList.size()) { // end of this' column, add the rest of toAdd's
+            while (idxToXor.at(j) < toXor.orderedList.size()) {
+
+                uint64_t currentKmerValueToXor = toXor.orderedList.at(idxToXor.at(j)).readKmer(prefixLen).getValue();
+                SuperKmer SK = SuperKmer();
+
+                SK.setBits(0, sk7::fixBitSize, prefixLen);
+                SK.setBits(sk7::fixBitSize, sk7::fixBitSize, suffixLen);
+                SK.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmerValueToXor);
+
+                result.addToList(SK);
+                idxToXor.at(j) = toXor.nextKmerIndex(idxToXor.at(j) + 1, j);
+            }
+        } else { // end of toAdd's column, add the rest of this'
+            while (idx.at(j) < orderedList.size()) {
+
+                uint64_t currentKmerValue = orderedList.at(idx.at(j)).readKmer(prefixLen).getValue();
+                SuperKmer SK = SuperKmer();
+
+                SK.setBits(0, sk7::fixBitSize, prefixLen);
+                SK.setBits(sk7::fixBitSize, sk7::fixBitSize, suffixLen);
+                SK.setBits(2 * sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmerValue);
+
+                result.addToList(SK);
+                idx.at(j) = nextKmerIndex(idx.at(j) + 1, j);
+            }
+        }
+    }
+//    cout << "-------- end ----------" << endl;
     return result;
 }
 

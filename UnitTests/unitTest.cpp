@@ -730,6 +730,101 @@ const test bucketTest[] {
 //        (bucket1 | empty).print();
         EXPECT((bucket1 | empty).getListSize() == (uint64_t) 5);
 
+    },
+
+    CASE("Symmetrical difference") {
+        Bucket bucket1 = Bucket(0);
+        Bucket bucket2 = Bucket(0);
+        Bucket bucket3 = Bucket(0);
+        Bucket bucket4 = Bucket(0);
+        Bucket bucket5 = Bucket(0);
+
+        int position;
+
+        bucket1.addToList(SuperKmer({0b00101000, 0b00000000}));
+        bucket1.addToList(SuperKmer({0b10101011, 0b10010000}));
+        bucket1.addToList(SuperKmer({0b10000011, 0b00110000}));
+//        cout << "------ 1 ------" << endl;
+//        bucket1.print();
+        EXPECT(bucket1.isSorted());
+
+        bucket2.addToList(SuperKmer({0b10100111, 0b10010000}));
+        bucket2.addToList(SuperKmer({0b01011101}));
+        bucket2.addToList(SuperKmer({0b00101100, 0b11000000}));
+//        cout << "----- 2 ------" << endl;
+//        bucket2.print();
+        EXPECT(bucket2.isSorted());
+
+//        cout << "---- 1 ^ 2 ----" << endl;
+        Bucket test12 = bucket1 ^ bucket2;
+//        test12.print();
+        EXPECT(test12.getListSize() == (uint64_t) 8);
+        EXPECT(not test12.find(Kmer(0b0111000000), position));
+        EXPECT(test12.isSorted());
+
+        bucket3.addToList(SuperKmer({0b01010110}));
+        bucket3.addToList(SuperKmer({0b10101001, 0b10010000}));
+        bucket3.addToList(SuperKmer({0b10101010, 0b11100000}));
+        bucket3.addSuperKmer(SuperKmer({0b01011011}));
+        bucket3.addSuperKmer(SuperKmer({0b00101100, 0b01000000}));
+//        cout << "------ 3 ------" << endl;
+//        bucket3.print();
+        EXPECT(bucket3.isSorted());
+
+//        cout << "------ 1 ^ 3 --------" << endl;
+//        (bucket1  ^ bucket3).print();
+        EXPECT((bucket1 ^ bucket3).getListSize() == (uint64_t) 10);
+        EXPECT(not (bucket1 ^ bucket3).find(Kmer(0b1100000010), position));
+        EXPECT(not (bucket1 ^ bucket3).find(Kmer(0b0000001010), position));
+
+
+        bucket3.addSuperKmer(SuperKmer({0b10000011, 0b00110000}));
+//        cout << "------ 3++ ------" << endl;
+//        bucket3.print();
+        EXPECT(bucket3.isSorted());
+
+//        cout << "------ 1 ^ 3++ --------" << endl;
+//        (bucket1  ^ bucket3).print();
+        EXPECT((bucket1 ^ bucket3).getListSize() == (uint64_t) 9);
+        EXPECT((bucket1 ^ bucket3).isSorted());
+        EXPECT(not (bucket1 ^ bucket3).find(Kmer(0b1100000010), position));
+        EXPECT(not (bucket1 ^ bucket3).find(Kmer(0b0000001010), position));
+        EXPECT(not (bucket1 ^ bucket3).find(Kmer(0b1111000000), position));
+
+        bucket4.addToList(SuperKmer({0b10000001, 0b00000000}));
+        bucket4.addToList(SuperKmer({0b00101000, 0b00000000}));
+        bucket4.addToList(SuperKmer({0b01101001, 0b10000000}));
+        bucket4.addToList(SuperKmer({0b01011011}));
+//        cout << "------ 4 -------" << endl;
+//        bucket4.print();
+        EXPECT(bucket4.isSorted());
+
+//        cout << "----- 1 ^ 4 -----" << endl;
+//        (bucket1 | bucket4).print();
+        EXPECT((bucket1 ^ bucket4).getListSize() == (uint64_t) 4);
+        EXPECT((bucket1 ^ bucket4).isSorted());
+        EXPECT(not (bucket1 ^ bucket4).find(Kmer(0b1100000010), position));
+        EXPECT(not (bucket1 ^ bucket4).find(Kmer(0b0000001000), position));
+        EXPECT(not (bucket1 ^ bucket4).find(Kmer(0b0000001010), position));
+
+
+        bucket5.addToList(SuperKmer({0b01011000}));
+        bucket5.addToList(SuperKmer({0b00100100, 0b10000000}));
+        bucket5.addToList(SuperKmer({0b00101000, 0b11000000}));
+        bucket5.addToList(SuperKmer({0b10101100, 0b01100000}));
+//        cout << "------ 5 ------" << endl;
+//        bucket5.print();
+        EXPECT(bucket5.isSorted());
+
+//        cout << "------ 1 ^ 5 ------" << endl;
+        Bucket bucket15 = bucket1 ^ bucket5;
+//        bucket15.print();
+        EXPECT(bucket15.getListSize() == (uint64_t) 11);
+
+        Bucket empty = Bucket(0);
+//        (bucket1 ^ empty).print();
+        EXPECT((bucket1 ^ empty).getListSize() == (uint64_t) 5);
+
     }
 };
 
