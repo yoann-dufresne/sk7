@@ -189,38 +189,33 @@ void SuperKmer::print() const {
     int prefixLen = getPrefixLen();
     int suffixLen = getSuffixLen();
     uint64_t value = getValue();
-    std::string nucleo = Kmer(value, prefixLen + suffixLen).toString();
-    if (suffixLen == 0) nucleo = '_' + nucleo;
-    int i = 0;
-    while(i < (int) nucleo.length()) {
-        if(i >= 2 * suffixLen) {
+    std::string nucleo = "";
+    for (int i = 0; i < 2 * max(prefixLen, suffixLen); i++) {
+        switch (value & 0b11) {
+            case 0b00:
+                nucleo = "A" + nucleo;
+                break;
+            case 0b01:
+                nucleo = "C" + nucleo;
+                break;
+            case 0b10:
+                nucleo = "T" + nucleo;
+                break;
+            case 0b11:
+                nucleo = "G" + nucleo;
+                break;
+        }
+        value >>= 2;
+    }
+    for (int i = 0; i < 2 * max(prefixLen, suffixLen); i++) {
+        if (i + 1 > 2 * suffixLen) {
             nucleo.at(i) = '_';
         }
-        try {
-            if (i + 1 >= 2 * prefixLen) {
-                nucleo.at(i + 1) = '_';
-            }
-        } catch (...){
-            nucleo += '_';
-        }
-        i += 2;
-    }
-
-    int nucleotideCnt = 0;
-    for (i = 0; i < (int) nucleo.length(); i++) {
-        if (nucleo.at(i) != '_') {
-            nucleotideCnt++;
+        i++;
+        if (i + 1 > 2 * prefixLen) {
+            nucleo.at(i) = '_';
         }
     }
-    if (nucleotideCnt < prefixLen + suffixLen) {
-        while (nucleotideCnt < prefixLen + suffixLen) {
-            nucleo = "A" + nucleo;
-            nucleotideCnt++;
-        }
-        if (suffixLen == 0) nucleo = '_' + nucleo;
-    }
-    else if (suffixLen == 0) nucleo.at(0) = '_';
-
     cout << " --> " << "prefixLen = " << prefixLen << ", suffixLen = " << suffixLen << " : "
     << nucleo << endl;
 

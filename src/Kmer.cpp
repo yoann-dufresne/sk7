@@ -18,7 +18,7 @@ namespace sk7 {
         k = _k;
         m = _m;
         fixBitSize = ceil(log2(k - m + 1));
-        }
+    }
 }
 
 /**

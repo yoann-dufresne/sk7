@@ -250,12 +250,86 @@ Bucket Bucket::operator|(const Bucket &toAdd) {
     if (toAdd.minimiser != minimiser || toAdd.kmerLength != kmerLength || toAdd.minimiserLength != minimiserLength) {
         throw std::runtime_error("Error: incompatible buckets");
     }
-    Bucket result = Bucket(minimiser);
-    uint64_t i = 0; // loop index for the current Bucket
-    uint64_t j = 0; // loop index for toAdd
-    while (i < orderedList.size() && j < toAdd.orderedList.size()) {
-        break;
+
+    uint64_t nbColumn = sk7::k - sk7::m + 1;
+    Bucket result = Bucket(minimiser); // the final bucket
+
+    std::vector<uint64_t> idx = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the first matrix
+    std::vector<uint64_t> idxToAdd = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the second matrix
+
+    for(uint64_t j = 0; j < nbColumn; j++) { // find the first Kmer of the column
+        idx.at(j) = nextKmerIndex(0, j);
+        idxToAdd.at(j) = toAdd.nextKmerIndex(0, j);
     }
+
+
+    for (uint64_t j = 0; j < nbColumn; j++) {
+
+        uint64_t prefixLen = j;
+        uint64_t suffixLen = sk7::k - sk7::m - j;
+
+//        SuperKmer lastAdded;
+
+        while (idx.at(j) < orderedList.size() && idxToAdd.at(j) < toAdd.orderedList.size()) {
+
+//            cout << "\tj = " << j << endl;
+//            orderedList.at(idx.at(j)).print();
+//            toAdd.orderedList.at(idxToAdd.at(j)).print();
+
+            uint64_t currentKmerValue = orderedList.at(idx.at(j)).readKmer(prefixLen).getValue();
+            uint64_t currentKmerValueToAdd = toAdd.orderedList.at(idxToAdd.at(j)).readKmer(prefixLen).getValue();
+
+//            cout << "current K = " << currentKmerValue << endl;
+//            cout << "current K a = " << currentKmerValueToAdd << endl;
+
+            SuperKmer SK = SuperKmer();
+            SK.setBits(0, sk7::fixBitSize, prefixLen);
+            SK.setBits(sk7::fixBitSize, sk7::fixBitSize, suffixLen);
+            SK.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), min(currentKmerValue, currentKmerValueToAdd));
+
+            result.addToList(SK);
+
+            if (currentKmerValue < currentKmerValueToAdd) {
+                idx.at(j) = nextKmerIndex(idx.at(j) + 1, j);
+            }
+            else if (currentKmerValue == currentKmerValueToAdd) {
+                idx.at(j) = nextKmerIndex(idx.at(j) + 1, j);
+                idxToAdd.at(j) = toAdd.nextKmerIndex(idxToAdd.at(j) + 1, j);
+            }
+            else {
+                idxToAdd.at(j) = toAdd.nextKmerIndex(idxToAdd.at(j) + 1, j);
+            }
+        }
+
+        if (idx.at(j) == orderedList.size()) { // end of this' column, add the rest of toAdd's
+            while (idxToAdd.at(j) < toAdd.orderedList.size()) {
+
+                uint64_t currentKmerValueToAdd = toAdd.orderedList.at(idxToAdd.at(j)).readKmer(prefixLen).getValue();
+                SuperKmer SK = SuperKmer();
+
+                SK.setBits(0, sk7::fixBitSize, prefixLen);
+                SK.setBits(sk7::fixBitSize, sk7::fixBitSize, suffixLen);
+                SK.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmerValueToAdd);
+
+                result.addToList(SK);
+                idxToAdd.at(j) = toAdd.nextKmerIndex(idxToAdd.at(j) + 1, j);
+            }
+        } else { // end of toAdd's column, add the rest of this'
+            while (idx.at(j) < orderedList.size()) {
+
+                uint64_t currentKmerValue = orderedList.at(idx.at(j)).readKmer(prefixLen).getValue();
+                SuperKmer SK = SuperKmer();
+
+                SK.setBits(0, sk7::fixBitSize, prefixLen);
+                SK.setBits(sk7::fixBitSize, sk7::fixBitSize, suffixLen);
+                SK.setBits(2 * sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmerValue);
+
+                result.addToList(SK);
+                idx.at(j) = nextKmerIndex(idx.at(j) + 1, j);
+            }
+        }
+    }
+//    cout << "-------- end ----------" << endl;
     return result;
 }
 
@@ -277,16 +351,14 @@ Bucket Bucket::operator&(Bucket &toIntersect) {
 
     for(uint64_t j = 0; j < nbColumn; j++) { // find the first Kmer of the column
         idx.at(j) = nextKmerIndex(0, j);
-    }
-
-    for(uint64_t j = 0; j < nbColumn; j++) { // find the first Kmer of the column
         idxToIntersect.at(j) = toIntersect.nextKmerIndex(0, j);
     }
 
+
     for (uint64_t j = 0; j < nbColumn; j++) {
 
-        int prefixLen = j;
-        int suffixLen = sk7::k - sk7::m - j;
+        uint64_t prefixLen = j;
+        uint64_t suffixLen = sk7::k - sk7::m - j;
 
         while (idx.at(j) < orderedList.size() && idxToIntersect.at(j) < toIntersect.orderedList.size()) {
 
@@ -294,20 +366,20 @@ Bucket Bucket::operator&(Bucket &toIntersect) {
 //            orderedList.at(idx.at(j)).print();
 //            toIntersect.orderedList.at(idxToIntersect.at(j)).print();
 
-            uint64_t currentSKValue = orderedList.at(idx.at(j)).readKmer(prefixLen).getValue();
-            uint64_t currentSKValueToIntersect = toIntersect.orderedList.at(idxToIntersect.at(j)).readKmer(prefixLen).getValue();
+            uint64_t currentKmerValue = orderedList.at(idx.at(j)).readKmer(prefixLen).getValue();
+            uint64_t currentKmerValueToIntersect = toIntersect.orderedList.at(idxToIntersect.at(j)).readKmer(prefixLen).getValue();
 
-//            cout << "current SK = "<< currentSKValue << endl;
-//            cout << "current SK i = " << currentSKValueToIntersect << endl;
+//            cout << "current SK = "<< currentKmerValue << endl;
+//            cout << "current SK i = " << currentKmerValueToIntersect << endl;
 
-            if (currentSKValue < currentSKValueToIntersect) {
+            if (currentKmerValue < currentKmerValueToIntersect) {
                 idx.at(j) = nextKmerIndex(idx.at(j) + 1, j);
             }
-            else if (currentSKValue == currentSKValueToIntersect) {
+            else if (currentKmerValue == currentKmerValueToIntersect) {
                 SuperKmer toAdd = SuperKmer();
                 toAdd.setBits(0, sk7::fixBitSize, prefixLen);
                 toAdd.setBits(sk7::fixBitSize, sk7::fixBitSize, suffixLen);
-                toAdd.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentSKValue);
+                toAdd.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmerValue);
 //                cout << "adding : ";
 //                toAdd.print();
                 result.addToList(toAdd);
@@ -407,7 +479,7 @@ void Bucket::print() {
  * @param column the column (linked to the minimiser position) to look in
  * @return the index of the next non null kmer in splitList
  */
-uint64_t Bucket::nextKmerIndex(const uint64_t &current, const uint64_t &column) {
+uint64_t Bucket::nextKmerIndex(const uint64_t &current, const uint64_t &column) const {
     uint64_t i = current;
     for(; i < orderedList.size(); i++) {
         if (orderedList.at(i).readKmer(column).length != 0) {
