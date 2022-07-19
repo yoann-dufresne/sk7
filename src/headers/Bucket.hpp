@@ -10,8 +10,6 @@
 #include "exampleHash.hpp"
 #include "utils.hpp"
 
-
-
 class Bucket {
 
 private:
@@ -36,9 +34,9 @@ public:
     std::vector<SuperKmer> getListCopy();
 
     /// Operator overloading
-    Bucket operator|(const Bucket &toAdd); // Union todo : with new compare
+    Bucket operator|(const Bucket &toAdd); // Union
     Bucket operator&(Bucket &toIntersect); // Intersection
-    Bucket operator^(const Bucket &toXor); // Symmetrical difference todo : union - intersection
+    Bucket operator^(const Bucket &toXor); // Symmetrical difference
 
     /// Intern functions
     Kmer SKtoKmer(SuperKmer superKmer);
@@ -48,6 +46,10 @@ public:
     /// Misc.
     bool isSorted();
     void print();
+
+    /// WIP
+    static Bucket chainedUnion(Bucket bucket1, Bucket bucket2);
+    static bool compatible(const SuperKmer &SK1, const SuperKmer &SK2);
 
 };
 #endif //SK7_BUCKET_HPP

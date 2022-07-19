@@ -37,6 +37,7 @@ public:
     static std::vector<logic> compareSK(SuperKmer& superKmer1, SuperKmer& superKmer2);
     uint64_t buildSKMask(const int &prefixLen, const int &suffixLen) const;
     Kmer readKmer(int kmerPrefixLen) const;
+    SuperKmer extract(int wantedPrefixLen) const;
 
     /// Operator
     bool operator==(const SuperKmer &toCompare) const;
@@ -45,7 +46,7 @@ public:
 
     /// Intern methods
     std::vector<SuperKmer> split() const;
-    uint64_t nonInterleavedKmerValue();
+    uint64_t nonInterleavedKmerValue() const;
 
     /// Misc.
     void print() const;

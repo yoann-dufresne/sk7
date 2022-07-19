@@ -339,9 +339,9 @@ const test superKmerTest[] {
      CASE("nonInterleaved value") {
         SuperKmer SK1 = SuperKmer({0b10101011, 0b10010000});
         std::vector<SuperKmer> split = SK1.split();
-        EXPECT(split.at(0).nonInterleavedKmerValue() == (uint64_t) 0b0111000000);
-        EXPECT(split.at(1).nonInterleavedKmerValue() == (uint64_t) 0b1100000010);
-        EXPECT(split.at(2).nonInterleavedKmerValue() == (uint64_t) 0b0000001010);
+        EXPECT(split.at(0).nonInterleavedKmerValue() == (uint64_t) 0b0111);
+        EXPECT(split.at(1).nonInterleavedKmerValue() == (uint64_t) 0b1110);
+        EXPECT(split.at(2).nonInterleavedKmerValue() == (uint64_t) 0b1010);
 
      },
      CASE("CompareSK") {

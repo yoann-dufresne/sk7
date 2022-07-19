@@ -539,3 +539,304 @@ uint64_t Bucket::nextKmerIndex(const uint64_t &current, const uint64_t &column) 
     }
     return i;
 }
+
+
+/// TEST ZONE
+
+Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
+
+    if (bucket1.minimiser != bucket2.minimiser ||
+        bucket1.kmerLength != bucket2.kmerLength ||
+        bucket1.minimiserLength != bucket2.minimiserLength) {
+        throw std::runtime_error("Error: incompatible buckets");
+    }
+
+    Bucket result = Bucket(bucket1.minimiser);
+
+    uint64_t nbColumn = sk7::k - sk7::m + 1; // = max number of Kmer per SuperKmer
+
+    std::vector<uint64_t> idx1 = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the first matrix
+    std::vector<uint64_t> idx2 = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the second matrix
+
+    uint64_t current_line = max(bucket1.getListSize(), bucket2.getListSize());
+    uint64_t current_column = 0;
+    uint64_t current_bucket = 0;
+
+    for(uint64_t column = 0; column < nbColumn; column++) { // find the first Kmer of the column (column number = prefix len)
+
+        uint64_t line1 = bucket1.nextKmerIndex(0, column);
+        uint64_t line2 = bucket2.nextKmerIndex(0, column);
+
+        idx1.at(column) = line1;
+        idx2.at(column) = line2;
+
+        uint64_t kmer1;
+        uint64_t kmer2;
+
+        try {
+            kmer1 = bucket1.orderedList.at(line1).extract(column).getValue();
+        } catch (...) {
+            kmer1 = UINT64_MAX;
+        }
+
+        try {
+            kmer2 = bucket2.orderedList.at(line2).extract(column).getValue();
+        } catch (...) {
+            kmer2 = UINT64_MAX;
+        }
+
+        if (kmer1 < kmer2 && line1 < current_line) {
+            current_line = line1;
+            current_column = column;
+            current_bucket = 1;
+        }
+
+        else if (kmer2 < kmer1 && line2 < current_line) {
+            current_line = line2;
+            current_column = column;
+            current_bucket = 2;
+        }
+    }
+
+    while ((current_bucket == 1)? current_line < bucket1.getListSize() : current_line < bucket2.getListSize()) {
+        // on a un pointeur dans un bucket
+        // comparaison avec le correspondant de l'autre bucket, on prend le plus petit.
+        // on regarde les voisins compatibles
+        // si ils sont plus petits que leur correspondant, on l'ajoutera au SK + on regarde ces voisins compatibles de la même manière
+
+//        cout << "NEW TOUR" << endl;
+//        cout << "current line = " << current_line << endl;
+//        cout << "current column = " << current_column << endl;
+//        cout << "current bucket = " << current_bucket << endl;
+
+        SuperKmer toAdd; // The SuperKmer to add at the end of the iteration
+        SuperKmer current; // The chosen Kmer for the iteration
+        SuperKmer last; // Last Kmer seen to check for compatibility
+
+        if (current_bucket == 1) { // We take current in the first bucket
+            current = bucket1.orderedList.at(idx1.at(current_column)).extract(current_column);
+            toAdd = bucket1.orderedList.at(idx1.at(current_column)).extract(current_column);
+            last = bucket1.orderedList.at(idx1.at(current_column)).extract(current_column);
+            idx1.at(current_column) = bucket1.nextKmerIndex(idx1.at(current_column) + 1, current_column);
+            try {
+                if (bucket2.orderedList.at(idx2.at(current_column)).extract(current_column) == current) { // check for double possibility
+                    idx2.at(current_column) = bucket2.nextKmerIndex(idx2.at(current_column) + 1, current_column);
+                }
+            } catch (...) {
+
+            }
+
+        } else { // We take current in the second bucket
+            current = bucket2.orderedList.at(idx2.at(current_column)).extract(current_column);
+            toAdd = bucket2.orderedList.at(idx2.at(current_column)).extract(current_column);
+            last = bucket2.orderedList.at(idx2.at(current_column)).extract(current_column);
+            idx2.at(current_column) = bucket2.nextKmerIndex(idx2.at(current_column) + 1, current_column);
+
+            try {
+                if (bucket1.orderedList.at(idx1.at(current_column)).extract(current_column) == current) { // check for double possibility
+                    idx1.at(current_column) = bucket1.nextKmerIndex(idx1.at(current_column) + 1, current_column);
+                }
+            } catch (...) {
+
+            }
+
+        }
+
+//        cout << "current = "; current.print();
+
+        for (uint64_t i = current_column + 1; i < nbColumn; i++) { // Looking for possibility in upper columns
+//            cout << "going up : " << i << endl;
+//            cout << "\tidx1 -> " << idx1.at(i) << " idx2 -> " << idx2.at(i) << endl;
+            if (idx1.at(i) < bucket1.getListSize() && idx2.at(i) < bucket2.getListSize()) { // two Kmers to compare
+                SuperKmer neighbor1 = bucket1.orderedList.at(idx1.at(i)).extract(i);
+                SuperKmer neighbor2 = bucket2.orderedList.at(idx2.at(i)).extract(i);
+
+//                cout << "\tneighbor1 ";
+//                neighbor1.print();
+//                cout << "\tneighbor2 ";
+//                neighbor2.print();
+
+                if (neighbor1.readKmer(i).getValue() < neighbor2.readKmer(i).getValue()
+                    && Bucket::compatible(neighbor1, last)) { // Adding the Kmer of the first bucket if compatible
+//                    cout << "adding 1" << endl;
+                    last = neighbor1;
+                    toAdd = toAdd | neighbor1;
+                    idx1.at(i) = bucket1.nextKmerIndex(idx1.at(i) + 1, i);
+                    continue;
+                } else if (neighbor2.readKmer(i).getValue() < neighbor1.readKmer(i).getValue()
+                           && Bucket::compatible(neighbor2, last)) { // Adding the Kmer of the second bucket if compatible
+//                    cout << "adding 2" << endl;
+                    last = neighbor2;
+                    toAdd = toAdd | neighbor2;
+                    idx2.at(i) = bucket2.nextKmerIndex(idx2.at(i) + 1, i);
+                    continue;
+                } else if (neighbor2.readKmer(i).getValue() == neighbor1.readKmer(i).getValue()
+                           && Bucket::compatible(neighbor2, last)) { // The two Kmers are equals -> adding the two if compatible
+//                    cout << "adding 1 & 2" << endl;
+                    last = neighbor1;
+                    toAdd = toAdd | neighbor2;
+                    idx1.at(i) = bucket1.nextKmerIndex(idx1.at(i) + 1, i);
+                    idx2.at(i) = bucket2.nextKmerIndex(idx2.at(i) + 1, i);
+                    continue;
+                }
+
+                break;
+            }
+
+            else if (idx2.at(i) < bucket2.getListSize()) { // No more Kmer in this column of bucket1
+                SuperKmer neighbor2 = bucket2.orderedList.at(idx2.at(i)).extract(i);
+                if (Bucket::compatible(neighbor2, last)) {
+                    last = neighbor2;
+                    toAdd = toAdd | neighbor2;
+                    idx2.at(i) = bucket2.nextKmerIndex(idx2.at(i) + 1, i);
+                    continue;
+                }
+            }
+
+            else if (idx1.at(i) < bucket1.getListSize()) { // No more Kmer in this column of bucket2
+                SuperKmer neighbor1 = bucket1.orderedList.at(idx1.at(i)).extract(i);
+                if (Bucket::compatible(neighbor1, last)) {
+                    last = neighbor1;
+                    toAdd = toAdd | neighbor1;
+                    idx1.at(i) = bucket1.nextKmerIndex(idx1.at(i) + 1, i);
+                    continue;
+                }
+            }
+
+            else
+                break;
+        }
+
+        last = current; // reset of last
+
+        for (int64_t i = current_column - 1; i >= 0 ; i--) { // Looking for possibility in lower columns
+//            cout << "going down : " << i << endl;
+            if (idx1.at(i) < bucket1.getListSize() && idx2.at(i) < bucket2.getListSize()) { // two Kmers to compare
+                SuperKmer neighbor1 = bucket1.orderedList.at(idx1.at(i)).extract(i);
+                SuperKmer neighbor2 = bucket2.orderedList.at(idx2.at(i)).extract(i);
+
+//                cout << "\tneighbor1 ";
+//                neighbor1.print();
+//                cout << "\tneighbor2 ";
+//                neighbor2.print();
+
+                if (neighbor1.readKmer(i).getValue() < neighbor2.readKmer(i).getValue()
+                    && Bucket::compatible(neighbor1, last)) { // Adding the Kmer of the first bucket if compatible
+//                    cout << "adding 1" << endl;
+                    last = neighbor1;
+                    toAdd = toAdd | neighbor1;
+                    idx1.at(i) = bucket1.nextKmerIndex(idx1.at(i) + 1, i);
+                    continue;
+                } else if (neighbor2.readKmer(i).getValue() < neighbor1.readKmer(i).getValue()
+                           && Bucket::compatible(neighbor2, last)) { // Adding the Kmer of the second bucket if compatible
+//                    cout << "adding 2" << endl;
+                    last = neighbor2;
+                    toAdd = toAdd | neighbor2;
+                    idx2.at(i) = bucket2.nextKmerIndex(idx2.at(i) + 1, i);
+                    continue;
+                } else if (neighbor2.readKmer(i).getValue() == neighbor1.readKmer(i).getValue()
+                           && Bucket::compatible(neighbor2, last)) { // The two Kmers are equals -> adding the two if compatible
+//                    cout << "adding 1 & 2" << endl;
+                    last = neighbor1;
+                    toAdd = toAdd | neighbor2;
+                    idx1.at(i) = bucket1.nextKmerIndex(idx1.at(i) + 1, i);
+                    idx2.at(i) = bucket2.nextKmerIndex(idx2.at(i) + 1, i);
+                    continue;
+                }
+
+                break;
+            }
+
+            else if (idx2.at(i) < bucket2.getListSize()) { // No more Kmer in this column of bucket1
+                SuperKmer neighbor2 = bucket2.orderedList.at(idx2.at(i)).extract(i);
+                if (Bucket::compatible(neighbor2, last)) {
+                    last = neighbor2;
+                    toAdd = toAdd | neighbor2;
+                    idx2.at(i) = bucket2.nextKmerIndex(idx2.at(i) + 1, i);
+                    continue;
+                }
+            }
+
+            else if (idx1.at(i) < bucket1.getListSize()) { // No more Kmer in this column of bucket2
+                SuperKmer neighbor1 = bucket1.orderedList.at(idx1.at(i)).extract(i);
+                if (Bucket::compatible(neighbor1, last)) {
+                    last = neighbor1;
+                    toAdd = toAdd | neighbor1;
+                    idx1.at(i) = bucket1.nextKmerIndex(idx1.at(i) + 1, i);
+                    continue;
+                }
+            }
+
+            else
+                break;
+
+        }
+
+//        cout << "\t\t\ttoAdd : " ; toAdd.print();
+        result.addToList(toAdd); // Adding the built SuperKmer
+
+        current_line = max(bucket1.getListSize(), bucket2.getListSize());
+
+        for(uint64_t column = 0; column < nbColumn; column++) { // find the coordinates of the next current
+
+            uint64_t line1 = idx1.at(column);
+            uint64_t line2 = idx2.at(column);
+
+            uint64_t kmer1;
+            uint64_t kmer2;
+
+            try {
+                kmer1 = bucket1.orderedList.at(line1).extract(column).getValue();
+            } catch (...) {
+                kmer1 = UINT64_MAX;
+            }
+
+            try {
+                kmer2 = bucket2.orderedList.at(line2).extract(column).getValue();
+            } catch (...) {
+                kmer2 = UINT64_MAX;
+            }
+
+            if (kmer1 < kmer2 && line1 < current_line) {
+                    current_line = line1;
+                    current_column = column;
+                    current_bucket = 1;
+            }
+
+            else if (kmer2 < kmer1 && line2 < current_line) {
+                    current_line = line2;
+                    current_column = column;
+                    current_bucket = 2;
+            }
+
+        }
+    }
+
+    return result;
+}
+
+
+
+bool Bucket::compatible(const SuperKmer& SK1, const SuperKmer& SK2) {
+//    cout << endl;
+    uint64_t rangeLen = sk7::k - sk7::m - 1;
+    uint64_t mask = (1u << rangeLen * 2) - 1;
+//    cout << "mask    = " << bitset<64>(mask) << endl;
+
+    uint64_t kmerValue1 = 0;
+    uint64_t kmerValue2 = 0;
+
+    if (SK1.getPrefixLen() < SK2.getPrefixLen()) {
+        kmerValue1 = (SK1.nonInterleavedKmerValue() >> 2) ;
+        kmerValue2 = SK2.nonInterleavedKmerValue();
+    }
+    else {
+        kmerValue1 = SK1.nonInterleavedKmerValue() ;
+        kmerValue2 = (SK2.nonInterleavedKmerValue() >> 2);
+    }
+
+//    cout << "value 1 = " << bitset<64>(kmerValue1) << endl;
+//    cout << "value 2 = " << bitset<64>(kmerValue2) << endl;
+
+    return (kmerValue1 & mask) == (kmerValue2 & mask);
+}
