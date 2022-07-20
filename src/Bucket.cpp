@@ -543,8 +543,15 @@ uint64_t Bucket::nextKmerIndex(const uint64_t &current, const uint64_t &column) 
 
 /// TEST ZONE
 
+/**
+ * Build the union of two compatible buckets trying to conserve the compression
+ * @param bucket1 the first Bucket
+ * @param bucket2 the second Bucket
+ * @return the built union
+ */
 Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
 
+    /// Initialisation
     if (bucket1.minimiser != bucket2.minimiser ||
         bucket1.kmerLength != bucket2.kmerLength ||
         bucket1.minimiserLength != bucket2.minimiserLength) {
@@ -598,11 +605,8 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
         }
     }
 
+    /// Iterations
     while ((current_bucket == 1)? current_line < bucket1.getListSize() : current_line < bucket2.getListSize()) {
-        // on a un pointeur dans un bucket
-        // comparaison avec le correspondant de l'autre bucket, on prend le plus petit.
-        // on regarde les voisins compatibles
-        // si ils sont plus petits que leur correspondant, on l'ajoutera au SK + on regarde ces voisins compatibles de la même manière
 
 //        cout << "NEW TOUR" << endl;
 //        cout << "current line = " << current_line << endl;
@@ -614,9 +618,7 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
         SuperKmer last; // Last Kmer seen to check for compatibility
 
         if (current_bucket == 1) { // We take current in the first bucket
-            current = bucket1.orderedList.at(idx1.at(current_column)).extract(current_column);
-            toAdd = bucket1.orderedList.at(idx1.at(current_column)).extract(current_column);
-            last = bucket1.orderedList.at(idx1.at(current_column)).extract(current_column);
+            toAdd = current = last = bucket1.orderedList.at(idx1.at(current_column)).extract(current_column);
             idx1.at(current_column) = bucket1.nextKmerIndex(idx1.at(current_column) + 1, current_column);
             try {
                 if (bucket2.orderedList.at(idx2.at(current_column)).extract(current_column) == current) { // check for double possibility
@@ -627,11 +629,8 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
             }
 
         } else { // We take current in the second bucket
-            current = bucket2.orderedList.at(idx2.at(current_column)).extract(current_column);
-            toAdd = bucket2.orderedList.at(idx2.at(current_column)).extract(current_column);
-            last = bucket2.orderedList.at(idx2.at(current_column)).extract(current_column);
+            toAdd = current = last = bucket2.orderedList.at(idx2.at(current_column)).extract(current_column);
             idx2.at(current_column) = bucket2.nextKmerIndex(idx2.at(current_column) + 1, current_column);
-
             try {
                 if (bucket1.orderedList.at(idx1.at(current_column)).extract(current_column) == current) { // check for double possibility
                     idx1.at(current_column) = bucket1.nextKmerIndex(idx1.at(current_column) + 1, current_column);
@@ -663,6 +662,7 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
                     toAdd = toAdd | neighbor1;
                     idx1.at(i) = bucket1.nextKmerIndex(idx1.at(i) + 1, i);
                     continue;
+
                 } else if (neighbor2.readKmer(i).getValue() < neighbor1.readKmer(i).getValue()
                            && Bucket::compatible(neighbor2, last)) { // Adding the Kmer of the second bucket if compatible
 //                    cout << "adding 2" << endl;

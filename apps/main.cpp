@@ -48,6 +48,7 @@ int main() {
 
     cout << "### 4 ###" << endl;
     Bucket bucket4 = Bucket(0);
+//    bucket4.addToList(SuperKmer({0b10000001, 0b00000000}));
     bucket4.addToList(SuperKmer({0b01010110}));
     bucket4.addToList(SuperKmer({0b10101001, 0b10010000}));
     bucket4.addToList(SuperKmer({0b10101010, 0b11100000}));
