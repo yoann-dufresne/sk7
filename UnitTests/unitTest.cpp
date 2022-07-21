@@ -117,23 +117,23 @@ const test minimiser[] {
 
         EXPECT(minimiser1.getValue() == (uint64_t) 0b001011);
         EXPECT(minimiser1.getPos() == 1);
-        EXPECT(testKmer1 == Kmer(0b0100101101110011));
+        EXPECT(Kmer::fullComparison(testKmer1, Kmer(0b0100101101110011)));
 
         EXPECT(minimiser2.getValue() == (uint64_t) 0b000101);
         EXPECT(minimiser2.getPos() == 2);
-        EXPECT(testKmer2 == Kmer(0b0111000101100111));
+        EXPECT(Kmer::fullComparison(testKmer2, Kmer(0b0111000101100111)));
 
         EXPECT(minimiser3.getValue() == (uint64_t) 0b011101);
         EXPECT(minimiser3.getPos() == 4);
-        EXPECT(testKmer3 == Kmer(0b0111011101110111));
+        EXPECT(Kmer::fullComparison(testKmer3, Kmer(0b0111011101110111)));
 
         EXPECT(minimiser4.getValue() == (uint64_t) 0b000101);
         EXPECT(minimiser4.getPos() == 0);
-        EXPECT(testKmer4 == Kmer(0b0001011110011110));
+        EXPECT(Kmer::fullComparison(testKmer4, Kmer(0b0001011110011110)));
 
         EXPECT(minimiser5.getValue() == (uint64_t) 0b000111);
         EXPECT(minimiser5.getPos() == 1);
-        EXPECT(testKmer5 == Kmer(0b0100011111011110));
+        EXPECT(Kmer::fullComparison(testKmer5, Kmer(0b0100011111011110)));
 
         sk7::initLib(5, 3);
     },
@@ -335,16 +335,17 @@ const test superKmerTest[] {
         EXPECT(split5.size() == (uint64_t) 3);
         equal = split5.at(2) == SK5;
         EXPECT(equal);
-     },
-     CASE("nonInterleaved value") {
+    },
+
+    CASE("nonInterleaved value") {
         SuperKmer SK1 = SuperKmer({0b10101011, 0b10010000});
         std::vector<SuperKmer> split = SK1.split();
         EXPECT(split.at(0).nonInterleavedKmerValue() == (uint64_t) 0b0111);
         EXPECT(split.at(1).nonInterleavedKmerValue() == (uint64_t) 0b1110);
         EXPECT(split.at(2).nonInterleavedKmerValue() == (uint64_t) 0b1010);
 
-     },
-     CASE("CompareSK") {
+    },
+    CASE("CompareSK") {
         SuperKmer SK1 = SuperKmer({0b10101011, 0b10010000});
         SuperKmer SK2 = SuperKmer({0b01010110});
         SuperKmer SK4 = SuperKmer({0b01101011, 0b10000000});
@@ -367,13 +368,13 @@ const test superKmerTest[] {
         expected = {SuperKmer::INCOMPARABLE, SuperKmer::INCOMPARABLE, SuperKmer::INFERIOR};
         EXPECT(SuperKmer::compareSK(SK1, SK7) == expected);
 
-     },
+    },
 
-     CASE("readKmer") {
-         SuperKmer SK1 = SuperKmer({0b10101011, 0b10010000});
-         SuperKmer SK2 = SuperKmer({0b01011000});
-         SuperKmer SK3 = SuperKmer({0b10000011, 0b00110000});
-         SuperKmer SK4 = SuperKmer({0b00101000, 0b00000000});
+    CASE("readKmer") {
+        SuperKmer SK1 = SuperKmer({0b10101011, 0b10010000});
+        SuperKmer SK2 = SuperKmer({0b01011000});
+        SuperKmer SK3 = SuperKmer({0b10000011, 0b00110000});
+        SuperKmer SK4 = SuperKmer({0b00101000, 0b00000000});
 
          EXPECT(SK1.readKmer(0).getValue() == (uint64_t) 0b10001000);
          EXPECT(SK1.readKmer(1).getValue() == (uint64_t) 0b1011);
@@ -390,7 +391,7 @@ const test superKmerTest[] {
          EXPECT(SK4.readKmer(0).getValue() == (uint64_t) 0b10000000);
          EXPECT(SK4.readKmer(1).length == 0);
          EXPECT(SK4.readKmer(2).length == 0);
-     }
+    }
 };
 
 const test bucketTest[] {

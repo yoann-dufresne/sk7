@@ -81,12 +81,10 @@ bool Bucket::find(Kmer kmer, int &position) {
             continue;
         }
 
-        uint64_t currentValue = currentKmer.getValue();
-
 //        cout << "search value = " << withoutMinimiser.getValue() << endl;
 //        cout << "current value = " << currentValue << endl;
 
-        if (withoutMinimiser.getValue() < currentValue) {
+        if (withoutMinimiser < currentKmer) {
 //            cout << "before " << endl << endl;
             start = lastStartWithInformation;
             end = lastPositionWithInformation - 1;
@@ -95,7 +93,7 @@ bool Bucket::find(Kmer kmer, int &position) {
             continue;
         }
 
-        if (withoutMinimiser.getValue() > currentValue) {
+        if (currentKmer < withoutMinimiser) {
 //            cout << "after " << endl << endl;
             start = lastPositionWithInformation + 1;
             lastStartWithInformation = start;
@@ -104,7 +102,7 @@ bool Bucket::find(Kmer kmer, int &position) {
             continue;
         }
 
-        if (withoutMinimiser.getValue() == currentValue) { //Match or not enough information
+        if (withoutMinimiser == currentKmer) { //Match or not enough information
                 position = middle;
                 return true;
         }
@@ -214,6 +212,7 @@ std::vector<SuperKmer> Bucket::getListCopy() {
 
 /**
  * For a given SuperKmer, given list and starting position, linearly find the next position where it could be inserted in the list
+ * @deprecated not up to date
  * @param superKmer the SuperKmer to position with only one Kmer in it
  * @param list the list to insert the SuperKmer in
  * @param startingPosition the initial position in the list
@@ -276,8 +275,8 @@ Bucket Bucket::operator|(const Bucket &toAdd) {
 //            orderedList.at(idx.at(j)).print();
 //            toAdd.orderedList.at(idxToAdd.at(j)).print();
 
-            uint64_t currentKmerValue = orderedList.at(idx.at(j)).readKmer(prefixLen).getValue();
-            uint64_t currentKmerValueToAdd = toAdd.orderedList.at(idxToAdd.at(j)).readKmer(prefixLen).getValue();
+            Kmer currentKmer = orderedList.at(idx.at(j)).readKmer(prefixLen);
+            Kmer currentKmerToAdd = toAdd.orderedList.at(idxToAdd.at(j)).readKmer(prefixLen);
 
 //            cout << "current K = " << currentKmerValue << endl;
 //            cout << "current K a = " << currentKmerValueToAdd << endl;
@@ -285,21 +284,26 @@ Bucket Bucket::operator|(const Bucket &toAdd) {
             SuperKmer SK = SuperKmer();
             SK.setBits(0, sk7::fixBitSize, prefixLen);
             SK.setBits(sk7::fixBitSize, sk7::fixBitSize, suffixLen);
-            SK.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), min(currentKmerValue, currentKmerValueToAdd));
 
-            result.addToList(SK);
 
-            if (currentKmerValue < currentKmerValueToAdd) {
+            if (currentKmer < currentKmerToAdd) {
                 idx.at(j) = nextKmerIndex(idx.at(j) + 1, j);
+                SK.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmer.getValue());
             }
-            else if (currentKmerValue == currentKmerValueToAdd) {
+            else if (currentKmer == currentKmerToAdd) {
                 idx.at(j) = nextKmerIndex(idx.at(j) + 1, j);
                 idxToAdd.at(j) = toAdd.nextKmerIndex(idxToAdd.at(j) + 1, j);
+                SK.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmer.getValue());
             }
             else {
                 idxToAdd.at(j) = toAdd.nextKmerIndex(idxToAdd.at(j) + 1, j);
+                SK.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmerToAdd.getValue());
             }
+
+            result.addToList(SK);
+
         }
+
 
         if (idx.at(j) == orderedList.size()) { // end of this' column, add the rest of toAdd's
             while (idxToAdd.at(j) < toAdd.orderedList.size()) {
@@ -366,20 +370,20 @@ Bucket Bucket::operator&(Bucket &toIntersect) {
 //            orderedList.at(idx.at(j)).print();
 //            toIntersect.orderedList.at(idxToIntersect.at(j)).print();
 
-            uint64_t currentKmerValue = orderedList.at(idx.at(j)).readKmer(prefixLen).getValue();
-            uint64_t currentKmerValueToIntersect = toIntersect.orderedList.at(idxToIntersect.at(j)).readKmer(prefixLen).getValue();
+            Kmer currentKmer = orderedList.at(idx.at(j)).readKmer(prefixLen);
+            Kmer currentKmerToIntersect = toIntersect.orderedList.at(idxToIntersect.at(j)).readKmer(prefixLen);
 
 //            cout << "current SK = "<< currentKmerValue << endl;
 //            cout << "current SK i = " << currentKmerValueToIntersect << endl;
 
-            if (currentKmerValue < currentKmerValueToIntersect) {
+            if (currentKmer < currentKmerToIntersect) {
                 idx.at(j) = nextKmerIndex(idx.at(j) + 1, j);
             }
-            else if (currentKmerValue == currentKmerValueToIntersect) {
+            else if (currentKmer == currentKmerToIntersect) {
                 SuperKmer toAdd = SuperKmer();
                 toAdd.setBits(0, sk7::fixBitSize, prefixLen);
                 toAdd.setBits(sk7::fixBitSize, sk7::fixBitSize, suffixLen);
-                toAdd.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmerValue);
+                toAdd.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmer.getValue());
 //                cout << "adding : ";
 //                toAdd.print();
                 result.addToList(toAdd);
@@ -428,23 +432,23 @@ Bucket Bucket::operator^(const Bucket &toXor) {
 //            orderedList.at(idx.at(j)).print();
 //            toIntersect.orderedList.at(idxToXor.at(j)).print();
 
-            uint64_t currentKmerValue = orderedList.at(idx.at(j)).readKmer(prefixLen).getValue();
-            uint64_t currentKmerValueToXor = toXor.orderedList.at(idxToXor.at(j)).readKmer(prefixLen).getValue();
+            Kmer currentKmer = orderedList.at(idx.at(j)).readKmer(prefixLen);
+            Kmer currentKmerToXor = toXor.orderedList.at(idxToXor.at(j)).readKmer(prefixLen);
 
 //            cout << "current SK = "<< currentKmerValue << endl;
 //            cout << "current SK i = " << currentKmerValueToXor << endl;
 
-            if (currentKmerValue < currentKmerValueToXor) {
+            if (currentKmer < currentKmerToXor) {
                 SuperKmer toAdd = SuperKmer();
                 toAdd.setBits(0, sk7::fixBitSize, prefixLen);
                 toAdd.setBits(sk7::fixBitSize, sk7::fixBitSize, suffixLen);
-                toAdd.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmerValue);
+                toAdd.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmer.getValue());
 //                cout << "adding : ";
 //                toAdd.print();
                 result.addToList(toAdd);
                 idx.at(j) = nextKmerIndex(idx.at(j) + 1, j);
             }
-            else if (currentKmerValue == currentKmerValueToXor) {
+            else if (currentKmer == currentKmerToXor) {
                 idx.at(j) = nextKmerIndex(idx.at(j) + 1, j);
                 idxToXor.at(j) = toXor.nextKmerIndex(idxToXor.at(j) + 1, j);
                 continue;
@@ -453,7 +457,7 @@ Bucket Bucket::operator^(const Bucket &toXor) {
                 SuperKmer toAdd = SuperKmer();
                 toAdd.setBits(0, sk7::fixBitSize, prefixLen);
                 toAdd.setBits(sk7::fixBitSize, sk7::fixBitSize, suffixLen);
-                toAdd.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmerValueToXor);
+                toAdd.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmerToXor.getValue());
 //                cout << "adding : ";
 //                toAdd.print();
                 result.addToList(toAdd);
@@ -498,14 +502,14 @@ Bucket Bucket::operator^(const Bucket &toXor) {
  * @return true if the bucket is sorted with no duplicate else false
  */
 bool Bucket::isSorted() {
-    std::vector<uint64_t> currentKmers = std::vector<uint64_t>(sk7::k - sk7::m + 1, 0);
+    std::vector<Kmer> currentKmers = std::vector<Kmer>(sk7::k - sk7::m + 1, Kmer(0, 0));
     for (uint64_t i = 0; i < orderedList.size(); i++) {
-        std::vector<SuperKmer> current = orderedList.at(i).split();
         for (int j = 0; j < sk7::k - sk7::m + 1; j++) {
-            if (currentKmers.at(j) >= current.at(j).getValue() && current.at(j) != SuperKmer()) {
+            Kmer current = orderedList.at(i).readKmer(j);
+            if (current != Kmer(0, 0) && currentKmers.at(j) != Kmer(0,0) && currentKmers.at(j) >= current) {
                 return false;
-            } else if (current.at(j) != SuperKmer()) {
-                currentKmers.at(j) = current.at(j).getValue();
+            } else if (current != Kmer(0, 0)) {
+                currentKmers.at(j) = current;
             }
         }
     }
@@ -577,32 +581,48 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
         idx1.at(column) = line1;
         idx2.at(column) = line2;
 
-        uint64_t kmer1;
-        uint64_t kmer2;
+        Kmer kmer1;
+        Kmer kmer2;
 
         try {
-            kmer1 = bucket1.orderedList.at(line1).extract(column).getValue();
-        } catch (...) {
-            kmer1 = UINT64_MAX;
+            kmer1 = bucket1.orderedList.at(line1).readKmer(column);
+            try {
+                kmer2 = bucket2.orderedList.at(line2).readKmer(column);
+
+                if (kmer1 < kmer2 && line1 < current_line) {
+                    current_line = line1;
+                    current_column = column;
+                    current_bucket = 1;
+                }
+
+                else if (kmer2 < kmer1 && line2 < current_line) {
+                    current_line = line2;
+                    current_column = column;
+                    current_bucket = 2;
+                }
+
+            }
+            catch (std::out_of_range const &) {
+                if (line1 < current_line) {
+                    current_line = line1;
+                    current_column = column;
+                    current_bucket = 1;
+                }
+            }
+        } catch (std::out_of_range const &) {
+            try {
+                kmer2 = bucket2.orderedList.at(line2).readKmer(column);
+                if (line2 < current_line) {
+                    current_line = line2;
+                    current_column = column;
+                    current_bucket = 2;
+                }
+            }
+            catch (std::out_of_range const &) {
+
+            }
         }
 
-        try {
-            kmer2 = bucket2.orderedList.at(line2).extract(column).getValue();
-        } catch (...) {
-            kmer2 = UINT64_MAX;
-        }
-
-        if (kmer1 < kmer2 && line1 < current_line) {
-            current_line = line1;
-            current_column = column;
-            current_bucket = 1;
-        }
-
-        else if (kmer2 < kmer1 && line2 < current_line) {
-            current_line = line2;
-            current_column = column;
-            current_bucket = 2;
-        }
     }
 
     /// Iterations
@@ -624,7 +644,7 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
                 if (bucket2.orderedList.at(idx2.at(current_column)).extract(current_column) == current) { // check for double possibility
                     idx2.at(current_column) = bucket2.nextKmerIndex(idx2.at(current_column) + 1, current_column);
                 }
-            } catch (...) {
+            } catch (std::out_of_range const &) {
 
             }
 
@@ -635,7 +655,7 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
                 if (bucket1.orderedList.at(idx1.at(current_column)).extract(current_column) == current) { // check for double possibility
                     idx1.at(current_column) = bucket1.nextKmerIndex(idx1.at(current_column) + 1, current_column);
                 }
-            } catch (...) {
+            } catch (std::out_of_range const &) {
 
             }
 
@@ -655,7 +675,7 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
 //                cout << "\tneighbor2 ";
 //                neighbor2.print();
 
-                if (neighbor1.readKmer(i).getValue() < neighbor2.readKmer(i).getValue()
+                if (neighbor1.readKmer(i) < neighbor2.readKmer(i)
                     && Bucket::compatible(neighbor1, last)) { // Adding the Kmer of the first bucket if compatible
 //                    cout << "adding 1" << endl;
                     last = neighbor1;
@@ -663,14 +683,14 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
                     idx1.at(i) = bucket1.nextKmerIndex(idx1.at(i) + 1, i);
                     continue;
 
-                } else if (neighbor2.readKmer(i).getValue() < neighbor1.readKmer(i).getValue()
+                } else if (neighbor2.readKmer(i)< neighbor1.readKmer(i)
                            && Bucket::compatible(neighbor2, last)) { // Adding the Kmer of the second bucket if compatible
 //                    cout << "adding 2" << endl;
                     last = neighbor2;
                     toAdd = toAdd | neighbor2;
                     idx2.at(i) = bucket2.nextKmerIndex(idx2.at(i) + 1, i);
                     continue;
-                } else if (neighbor2.readKmer(i).getValue() == neighbor1.readKmer(i).getValue()
+                } else if (neighbor2.readKmer(i)== neighbor1.readKmer(i)
                            && Bucket::compatible(neighbor2, last)) { // The two Kmers are equals -> adding the two if compatible
 //                    cout << "adding 1 & 2" << endl;
                     last = neighbor1;
@@ -720,21 +740,21 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
 //                cout << "\tneighbor2 ";
 //                neighbor2.print();
 
-                if (neighbor1.readKmer(i).getValue() < neighbor2.readKmer(i).getValue()
+                if (neighbor1.readKmer(i) < neighbor2.readKmer(i)
                     && Bucket::compatible(neighbor1, last)) { // Adding the Kmer of the first bucket if compatible
 //                    cout << "adding 1" << endl;
                     last = neighbor1;
                     toAdd = toAdd | neighbor1;
                     idx1.at(i) = bucket1.nextKmerIndex(idx1.at(i) + 1, i);
                     continue;
-                } else if (neighbor2.readKmer(i).getValue() < neighbor1.readKmer(i).getValue()
+                } else if (neighbor2.readKmer(i) < neighbor1.readKmer(i)
                            && Bucket::compatible(neighbor2, last)) { // Adding the Kmer of the second bucket if compatible
 //                    cout << "adding 2" << endl;
                     last = neighbor2;
                     toAdd = toAdd | neighbor2;
                     idx2.at(i) = bucket2.nextKmerIndex(idx2.at(i) + 1, i);
                     continue;
-                } else if (neighbor2.readKmer(i).getValue() == neighbor1.readKmer(i).getValue()
+                } else if (neighbor2.readKmer(i) == neighbor1.readKmer(i)
                            && Bucket::compatible(neighbor2, last)) { // The two Kmers are equals -> adding the two if compatible
 //                    cout << "adding 1 & 2" << endl;
                     last = neighbor1;
@@ -782,31 +802,46 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
             uint64_t line1 = idx1.at(column);
             uint64_t line2 = idx2.at(column);
 
-            uint64_t kmer1;
-            uint64_t kmer2;
+            Kmer kmer1;
+            Kmer kmer2;
 
             try {
-                kmer1 = bucket1.orderedList.at(line1).extract(column).getValue();
-            } catch (...) {
-                kmer1 = UINT64_MAX;
-            }
+                kmer1 = bucket1.orderedList.at(line1).readKmer(column);
+                try {
+                    kmer2 = bucket2.orderedList.at(line2).readKmer(column);
 
-            try {
-                kmer2 = bucket2.orderedList.at(line2).extract(column).getValue();
-            } catch (...) {
-                kmer2 = UINT64_MAX;
-            }
+                    if (kmer1 < kmer2 && line1 < current_line) {
+                        current_line = line1;
+                        current_column = column;
+                        current_bucket = 1;
+                    }
 
-            if (kmer1 < kmer2 && line1 < current_line) {
-                    current_line = line1;
-                    current_column = column;
-                    current_bucket = 1;
-            }
+                    else if (kmer2 < kmer1 && line2 < current_line) {
+                        current_line = line2;
+                        current_column = column;
+                        current_bucket = 2;
+                    }
 
-            else if (kmer2 < kmer1 && line2 < current_line) {
-                    current_line = line2;
-                    current_column = column;
-                    current_bucket = 2;
+                }
+                catch (std::out_of_range const &) {
+                    if (line1 < current_line) {
+                        current_line = line1;
+                        current_column = column;
+                        current_bucket = 1;
+                    }
+                }
+            } catch (std::out_of_range const &) {
+                try {
+                    kmer2 = bucket2.orderedList.at(line2).readKmer(column);
+                    if (line2 < current_line) {
+                        current_line = line2;
+                        current_column = column;
+                        current_bucket = 2;
+                    }
+                }
+                catch (std::out_of_range const &) {
+
+                }
             }
 
         }

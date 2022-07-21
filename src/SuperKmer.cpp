@@ -445,6 +445,7 @@ std::vector<SuperKmer> SuperKmer::split() const {
 
 /**
  * Compare every Kmers included in two SuperKmers
+ * @deprecated not up to date
  * @param superKmer1 the first SuperKmer
  * @param superKmer2 the second SuperKmer
  * @return a vector with the result of every comparison in order
@@ -550,13 +551,18 @@ Kmer SuperKmer::readKmer(int kmerPrefixLen) const {
     return Kmer(sum);
 }
 
+/**
+ * Extract a SuperKmer that represents a single Kmer from this SuperKmer
+ * @param wantedPrefixLen
+ * @return
+ */
 SuperKmer SuperKmer::extract(int wantedPrefixLen) const {
     int prefixLen = getPrefixLen();
     int suffixLen = getSuffixLen();
 
-//    if (prefixLen < kmerPrefixLen || kmerPrefixLen > sk7::k - sk7::m || kmerPrefixLen + suffixLen < sk7::k - sk7::m) {
-//        return Kmer(0,0);
-//    }
+    if (prefixLen < wantedPrefixLen || wantedPrefixLen > sk7::k - sk7::m || wantedPrefixLen + suffixLen < sk7::k - sk7::m) {
+        return SuperKmer();
+    }
 
     SuperKmer result = SuperKmer();
 

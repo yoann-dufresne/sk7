@@ -88,3 +88,23 @@ uint64_t reorderValue(uint64_t value, const int &prefixLen, const int &suffixLen
 
     return kmerValue;
 }
+
+/**
+ * Compare two Kmers in value
+ * @param kmer1 the first Kmer
+ * @param kmer2 the second Kmer
+ * @return kmer1 < kmer2 in alphabetical order
+ */
+bool infId(const Kmer &kmer1, const Kmer &kmer2) {
+    return kmer1.getValue() < kmer2.getValue();
+}
+
+/**
+ * Compare two Kmers in value
+ * @param kmer1 the first Kmer
+ * @param kmer2 the second Kmer
+ * @return kmer1 == kmer2 in alphabetical order
+ */
+bool equalId(const Kmer &kmer1, const Kmer &kmer2) {
+    return kmer1.getValue() == kmer2.getValue();
+}

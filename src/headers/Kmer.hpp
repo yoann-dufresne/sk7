@@ -5,12 +5,6 @@
 #include <string>
 #include <cmath>
 
-namespace sk7 {
-    extern int k;
-    extern int m;
-    extern int fixBitSize;
-    void initLib(int _k, int _m);
-}
 
 class Kmer {
 
@@ -27,22 +21,38 @@ public:
     Kmer(uint64_t value, ushort length);
 
     /// Getter
-    uint64_t getValue();
-    ushort getLength();
+    uint64_t getValue() const;
+    ushort getLength() const;
 
     /// Utils
     Kmer getSubKmer(int start, int end);
     Kmer removePart(int pos, int fragLength);
     Kmer reverseComplement();
 
-    /// Operator
+    /// Operator / Comparator
     bool operator<(const Kmer &toCompare) const;
     bool operator==(const Kmer &toCompare) const;
+    bool operator>(const Kmer &toCompare) const;
+    bool operator>=(const Kmer &toCompare) const;
+    static bool fullComparison(const Kmer &, const Kmer &);
 
     /// Misc.
     std::string toString();
 
 };
 
+#include "utils.hpp"
+
+/// namespace for share use of variables or initialisation
+namespace sk7 {
+    extern int k;
+    extern int m;
+    extern int fixBitSize;
+
+    extern bool (*infKmer) (const Kmer &, const Kmer &);
+    extern bool (*equalKmer) (const Kmer &, const Kmer &);
+
+    void initLib(int _k, int _m, bool (*_infKmer) (const Kmer &, const Kmer &) = &infId, bool (*_equalKmer) (const Kmer &, const Kmer &) = &equalId);
+}
 
 #endif //SK7_KMER_HPP

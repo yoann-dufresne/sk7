@@ -1,4 +1,5 @@
 #include "Kmer.hpp"
+
 #include <string>
 
 /**
@@ -8,17 +9,24 @@ namespace sk7 {
     int k;
     int m;
     int fixBitSize;
+    bool (*infKmer) (const Kmer &, const Kmer &);
+    bool (*equalKmer) (const Kmer &, const Kmer &);
 
     /**
      * Initialise the global parameters of the library
      * @param _k the size of the Kmers
      * @param _m the size of the Minimisers
+     * @param _infKmer a function to order two Kmers (all functions are not guaranteed to work ex. those who count "A", compare specific nucleotide at specific indexes)
+     * @param _equalKmer a function to verify the equality between two Kmers (same)
      */
-    void initLib(int _k, int _m) {
+    void initLib(int _k, int _m, bool (*_infKmer) (const Kmer &, const Kmer &), bool (*_equalKmer) (const Kmer &, const Kmer &)) {
         k = _k;
         m = _m;
         fixBitSize = ceil(log2(k - m + 1));
+        infKmer = _infKmer;
+        equalKmer = _equalKmer;
     }
+
 }
 
 /**
@@ -52,7 +60,7 @@ Kmer::Kmer(uint64_t value, ushort length) {
  * getter for the value
  * @return the value of the kmer
  */
-uint64_t Kmer::getValue() {
+uint64_t Kmer::getValue() const {
     return this->value;
 }
 
@@ -94,7 +102,7 @@ std::string Kmer::toString() {
  * a getter for the Kmer length
  * @return the length of the kmer
  */
-ushort Kmer::getLength() {
+ushort Kmer::getLength() const{
     return this->length;
 }
 
@@ -125,14 +133,6 @@ Kmer Kmer::removePart(int pos, int fragLength) {
     return Kmer(((this->value >> ((this->length - pos) * 2)) << (suffixLen * 2)) + suffix, this->length - fragLength);
 }
 
-/**
- * Compare the value of two Kmers
- * @param toCompare the Kmer to compare with
- * @return this.value < toCompare.value
- */
-bool Kmer::operator<(const Kmer &toCompare) const {
-    return this->value < toCompare.value;
-}
 
 /**
  * Build and return the reverse complement of this Kmer
@@ -154,10 +154,49 @@ Kmer Kmer::reverseComplement() {
 }
 
 /**
- * Equality between two Kmers
+ * Compare the value of two Kmers
+ * @param toCompare the Kmer to compare with
+ * @return this < toCompare with a custom function if provided with InitLib
+ */
+bool Kmer::operator<(const Kmer &toCompare) const {
+    return sk7::infKmer(*this, toCompare);
+}
+
+/**
+ * Equality between two Kmers with a personalized function
  * @param ToCompare the Kmer to compare with
- * @return true if the Kmers are the same, else false
+ * @return true if the Kmers are the same (for the given function), else false
  */
 bool Kmer::operator==(const Kmer &toCompare) const {
-    return length == toCompare.length && value == toCompare.value;
+    return sk7::equalKmer(*this, toCompare);
 }
+
+/**
+ * Compare the value of two Kmers
+ * @param toCompare the Kmer to compare with
+ * @return this > toCompare with a custom function if provided with InitLib
+ */
+bool Kmer::operator>(const Kmer &toCompare) const {
+    return not (*this == toCompare or *this < toCompare);
+}
+
+/**
+ * Compare the value of two Kmers
+ * @param toCompare the Kmer to compare with
+ * @return this >= toCompare with a custom function if provided with InitLib
+ */
+bool Kmer::operator>=(const Kmer &toCompare) const {
+    return not (*this < toCompare);
+}
+
+/**
+ * Compare the plain parameters of two Kmers
+ * @param kmer1 the first Kmer
+ * @param kmer2 the second Kmer
+ * @return true if the Kmers are the same, else false
+ */
+bool Kmer::fullComparison(const Kmer &kmer1, const Kmer &kmer2) {
+    return kmer1.length == kmer2.length && kmer1.value == kmer2.value;
+}
+
+
