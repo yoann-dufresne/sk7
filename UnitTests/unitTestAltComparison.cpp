@@ -5,6 +5,8 @@
 
 using namespace lest;
 using namespace std;
+using namespace sk7;
+
 
 /**
  * reverse inf

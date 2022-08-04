@@ -1,3 +1,7 @@
 [submodule "extern/lest"]
 	path = extern/lest
 	url = git@github.com:martinmoene/lest.git
+[submodule "extern/kff-tools"]
+	path = extern/kff-tools
+	url = https://github.com/Kmer-File-Format/kff-tools.git
+	branch = compact

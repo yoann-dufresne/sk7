@@ -4,6 +4,8 @@
 
 using namespace std;
 using namespace lest;
+using namespace sk7;
+
 
 const test superKmerTest[] {
     CASE("split") {

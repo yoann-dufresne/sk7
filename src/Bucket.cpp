@@ -4,6 +4,7 @@
 #include <cmath>
 
 using namespace std;
+using namespace sk7;
 
 /**
  * Initialise a Bucket
@@ -12,6 +13,16 @@ using namespace std;
 Bucket::Bucket(uint64_t minimiserValue) {
     this->minimiserLength = sk7::m;
     this->minimiser = minimiserValue;
+    this->orderedList = std::vector<SuperKmer>();
+    this->kmerLength = sk7::k;
+}
+
+/**
+ * Default constructor for a Bucket
+ */
+Bucket::Bucket() {
+    this->minimiserLength = sk7::m;
+    this->minimiser = 0;
     this->orderedList = std::vector<SuperKmer>();
     this->kmerLength = sk7::k;
 }
@@ -850,8 +861,6 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
     return result;
 }
 
-
-
 bool Bucket::compatible(const SuperKmer& SK1, const SuperKmer& SK2) {
 //    cout << endl;
     uint64_t rangeLen = sk7::k - sk7::m - 1;
@@ -875,3 +884,4 @@ bool Bucket::compatible(const SuperKmer& SK1, const SuperKmer& SK2) {
 
     return (kmerValue1 & mask) == (kmerValue2 & mask);
 }
+

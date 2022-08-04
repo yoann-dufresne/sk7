@@ -3,8 +3,10 @@
 #include "lest.hpp"
 #include "Bucket.hpp"
 
+
 using namespace std;
 using namespace lest;
+using namespace sk7;
 
 const test minimiser[] {
     CASE("alphabetical order hash (A < C < T < G) : ") {
