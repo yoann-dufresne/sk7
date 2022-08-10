@@ -1,14 +1,14 @@
 add_compile_options(-Ofast)
 
 add_library(sk7
-    FastaReader.cpp
     Kmer.cpp
     exampleHash.cpp
     Minimiser.cpp
     utils.cpp
     SuperKmer.cpp
     Bucket.cpp
-    Kff_scanner.cpp)
+    Kff_scanner.cpp
+    BucketMap.cpp)
 
 target_include_directories(sk7
     PUBLIC

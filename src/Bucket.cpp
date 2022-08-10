@@ -518,6 +518,7 @@ bool Bucket::isSorted() {
         for (int j = 0; j < sk7::k - sk7::m + 1; j++) {
             Kmer current = orderedList.at(i).readKmer(j);
             if (current != Kmer(0, 0) && currentKmers.at(j) != Kmer(0,0) && currentKmers.at(j) >= current) {
+                cout << "not sorted at : " << i << ", " << j << " between : " << currentKmers.at(j).toString() << " and " << current.toString() << endl;
                 return false;
             } else if (current != Kmer(0, 0)) {
                 currentKmers.at(j) = current;

@@ -12,7 +12,6 @@ using namespace std;
  */
 Kff_scanner::Kff_scanner(char *path, bool bucketed, bool compacted, bool sorted, uint8_t m) {
 
-
     this->bucketed = bucketed;
     this->compacted = bucketed & compacted;
     this->sorted = compacted & sorted;
@@ -54,7 +53,7 @@ Kff_scanner::Kff_scanner(char *path, bool bucketed, bool compacted, bool sorted,
 Kff_scanner::~Kff_scanner() {
     file->close();
     delete file;
-    std::filesystem::remove_all("tmp/");
+//    std::filesystem::remove_all("tmp/");
 }
 
 /// Preparing file
@@ -86,9 +85,9 @@ void Kff_scanner::preparation() {
  * Read the content of a kff file
  * @return a map of Bucket where the keys are the minimizer value
  */
-std::unordered_map<uint64_t , sk7::Bucket> Kff_scanner::readAll() {
+BucketMap* Kff_scanner::readAll() {
 
-    std::unordered_map<uint64_t , sk7::Bucket> result;
+    BucketMap* result = new BucketMap();
     sk7::Bucket bucket;
     std::pair<uint64_t , sk7::Bucket> pair;
 
@@ -97,7 +96,7 @@ std::unordered_map<uint64_t , sk7::Bucket> Kff_scanner::readAll() {
         if (section_name == 'm') {
             bucket = readMinimiserSection();
             pair = {bucket.minimiser, bucket};
-            result.insert(pair);
+            result->addBucket(bucket);
         }
 
         else if (not file->jump_next_section()) {
@@ -125,22 +124,20 @@ sk7::Bucket Kff_scanner::readMinimiserSection() {
     uint64_t minimiser = decodeMinimiser(sm.minimizer, m);
     sk7::Bucket result = sk7::Bucket(minimiser);
 
+
     for (uint64_t i=0 ; i<sm.nb_blocks ; i++) {
         uint64_t mini_pos;
         uint nb_kmers = sm.read_compacted_sequence_without_mini(seq, data, mini_pos);
-        SuperKmer SK = decodeSuperKmer(seq, nb_kmers + k - sk7::m - 1, (int64_t) mini_pos);
-        sk7::Bucket tmp(minimiser);
-        tmp.addToList(SK);
-        // TODO : add by interleave order because this function doesn't guaranty optimal compaction
-        result = sk7::Bucket::chainedUnion(result, tmp);
+        SuperKmer SK = decodeSuperKmer(seq, (nb_kmers + k - sk7::m - 1), (int64_t) mini_pos);
+        result.addToList(SK);
     }
 
 
     delete[] seq;
     delete[] data;
+
     return result;
 }
-
 
 
 /// Decoding functions
@@ -171,15 +168,13 @@ uint64_t decodeMinimiser(uint8_t * encoded, size_t size) {
 
 SuperKmer decodeSuperKmer(uint8_t * encoded, size_t size, int64_t mini_pos) {
 
-
     SuperKmer result = SuperKmer();
 
     int64_t prefixLen = mini_pos;
     int64_t suffixLen = size - prefixLen;
     int64_t maxLen = fmax(suffixLen, prefixLen);
 
-
-    int64_t remnant = (4 - ((int64_t) size % 4)) * 2;
+    int64_t remnant = (4 - ((int64_t) size % 4)) % 4 * 2;
 
     // Set prefix and suffix
     result.setBits(0, sk7::fixBitSize, prefixLen);
@@ -189,8 +184,11 @@ SuperKmer decodeSuperKmer(uint8_t * encoded, size_t size, int64_t mini_pos) {
     int64_t i = 0;
     for (; i < maxLen; i++) {
 
+
         int64_t index = (i + mini_pos + remnant / 2) / 4;
         uint64_t shift = (4 - ((i + mini_pos + 1 + remnant / 2) % 4)) % 4;
+
+
         if (i < suffixLen) {
             result.setBits(2u * sk7::fixBitSize + 4 * i, 2u, ((encoded[index] >> ((shift) * 2)) & 0b11));
         }

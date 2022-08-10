@@ -31,11 +31,8 @@ namespace sk7 {
 
         /// Add or request methods
         void addToList(SuperKmer superKmer);
-
         void addKmer(Kmer kmer);
-
         void addSuperKmer(const SuperKmer &superKmer);
-
         bool find(Kmer kmer, int &position);
 
         /// Getter

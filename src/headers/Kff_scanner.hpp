@@ -5,6 +5,7 @@
 #include "Bucket.hpp" // sk7 one
 #include "bucket.hpp" // kfftl one
 #include "compact.hpp"
+#include "BucketMap.hpp"
 
 #include <cstring>
 #include <filesystem>
@@ -12,6 +13,7 @@
 
 class Kff_scanner {
 
+private:
 
     /// Attributes
     std::string file_path;
@@ -32,7 +34,7 @@ public:
     /// Methods
     void preparation();
     sk7::Bucket readMinimiserSection();
-    std::unordered_map<uint64_t , sk7::Bucket> readAll();
+    BucketMap* readAll();
 
     /// Destructor
     ~Kff_scanner();

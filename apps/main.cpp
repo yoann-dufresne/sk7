@@ -4,6 +4,9 @@
 
 using namespace std;
 
+// TTCATTTTTTATCACATA
+// TGATCAATATATTAAACA
+
 int main(int argc, char** argv) {
 
     cout << "I'm main" << endl;
@@ -12,25 +15,24 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    Kff_scanner scanner = Kff_scanner(argv[1], false, false, false, 12);
+    Kff_scanner scanner = Kff_scanner(argv[1], false, false, false, 10);
 
     cout << "here" << endl;
-    std::unordered_map<uint64_t, sk7::Bucket> read = scanner.readAll();
+    BucketMap* read = scanner.readAll();
 
-    uint64_t cmpt = 0;
-
-    for (auto &it : read) {
-
+    for (auto &it : *read->map) {
+        cout << "New Bucket minimizer = " << bitset<20>(it.first) << " of size : " << it.second.getListSize() <<  endl;
+        it.second.print();
         if (not it.second.isSorted()) {
-            cout << bitset<24>(it.first) << endl;
-            it.second.print();
-            cout << "cmpt = " << cmpt << endl;
+            cout << "fucked up" << endl;
             exit(1);
         }
-        cmpt++;
+        cout << "#######" << endl;
     }
 
     cout << "end" << endl;
+
+    delete read;
 
     return 0;
 }
