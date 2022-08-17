@@ -19,7 +19,6 @@ private:
     std::string file_path;
     Kff_file* file;
     bool bucketed;
-    bool compacted;
     bool sorted;
     uint64_t k;
     uint64_t m;
@@ -29,7 +28,7 @@ private:
 public:
 
     /// Constructor
-    Kff_scanner(char* path, bool bucketed = true, bool compacted = true, bool sorted = true, uint8_t m = 5);
+    Kff_scanner(char* path, uint8_t m, bool bucketed = false, bool sorted = false);
 
     /// Methods
     void preparation();

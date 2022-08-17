@@ -4,17 +4,15 @@ using namespace std;
 
 /**
  * Initialise a Kff_scanner
- * @param bucketed does the input file when through the bucket tool
- * @param compacted does the input file when through the compact tool
- * @param sorted does the input file when through the compact tool with the -s option
- * @param m for non bucketed files the m is needed for further work
  * @param path path to the kff file
+ * @param m for non bucketed files the m is needed for further work
+ * @param bucketed does the input file when through the bucket tool
+ * @param sorted does the input file when through the compact tool with the -s option
  */
-Kff_scanner::Kff_scanner(char *path, bool bucketed, bool compacted, bool sorted, uint8_t m) {
+Kff_scanner::Kff_scanner(char *path, uint8_t m, bool bucketed, bool sorted) {
 
     this->bucketed = bucketed;
-    this->compacted = bucketed & compacted;
-    this->sorted = compacted & sorted;
+    this->sorted = sorted;
     this->file_path = path;
 
     if (not this->bucketed) {
@@ -33,7 +31,6 @@ Kff_scanner::Kff_scanner(char *path, bool bucketed, bool compacted, bool sorted,
         std::cerr << "No footer when one expected!" << std::endl;
         exit(1);
     }
-    std::cout << "Footer discovered" << std::endl;
 
     // --- Global variable read ---
     Section_GV sgv = Section_GV(file);
@@ -43,7 +40,7 @@ Kff_scanner::Kff_scanner(char *path, bool bucketed, bool compacted, bool sorted,
     this->max = file->global_vars["max"];
     this->data_size = file->global_vars["data_size"];
 
-    sk7::initLib(k , m);
+    sk7::initLib(this->k , this->m);
 
 }
 
@@ -53,27 +50,28 @@ Kff_scanner::Kff_scanner(char *path, bool bucketed, bool compacted, bool sorted,
 Kff_scanner::~Kff_scanner() {
     file->close();
     delete file;
-//    std::filesystem::remove_all("tmp/");
+    std::filesystem::remove_all("sk7_tmp/");
 }
 
 /// Preparing file
 
 void Kff_scanner::preparation() {
 
-    std::filesystem::create_directory("tmp/");
+    std::filesystem::create_directory("sk7_tmp/");
 
     if (not bucketed) {
-        auto bucket = new Bucket(this->file_path, "tmp/bucket_tmp", this->m);
+        auto bucket = new Bucket(this->file_path, "sk7_tmp/bucket_tmp", this->m);
         bucket->exec();
         delete bucket;
+        this->file_path = "sk7_tmp/bucket_tmp";
     }
 
-    if (not compacted or not sorted) {
-        auto compact = new Compact("tmp/bucket_tmp", "tmp/compact_tmp", true);
+
+    if (not sorted) {
+        auto compact = new Compact(this->file_path, "sk7_tmp/compact_tmp", true);
         compact->exec();
         delete compact;
-
-        this->file_path = "tmp/compact_tmp";
+        this->file_path = "sk7_tmp/compact_tmp";
     }
 
 }
@@ -88,15 +86,12 @@ void Kff_scanner::preparation() {
 BucketMap* Kff_scanner::readAll() {
 
     BucketMap* result = new BucketMap();
-    sk7::Bucket bucket;
     std::pair<uint64_t , sk7::Bucket> pair;
 
     while(file->tellp() < file->end_position) {
         char section_name = file->read_section_type();
         if (section_name == 'm') {
-            bucket = readMinimiserSection();
-            pair = {bucket.minimiser, bucket};
-            result->addBucket(bucket);
+            result->addBucket(readMinimiserSection());
         }
 
         else if (not file->jump_next_section()) {
@@ -124,7 +119,6 @@ sk7::Bucket Kff_scanner::readMinimiserSection() {
     uint64_t minimiser = decodeMinimiser(sm.minimizer, m);
     sk7::Bucket result = sk7::Bucket(minimiser);
 
-
     for (uint64_t i=0 ; i<sm.nb_blocks ; i++) {
         uint64_t mini_pos;
         uint nb_kmers = sm.read_compacted_sequence_without_mini(seq, data, mini_pos);
@@ -147,9 +141,11 @@ uint64_t decodeMinimiser(uint8_t * encoded, size_t size) {
 
     // Decode the truncated first compacted 8 bits
     size_t remnant = size % 4;
+    int reads = 0;
     if (remnant > 0) {
         for (size_t j=0 ; j<remnant ; j++) {
-            result = (result << 2) + (0b11 & (encoded[0] >> 2*((3 - j))));
+            reads++;
+            result = (result << 2) + (0b11 & (encoded[0] >> 2*((remnant - 1 - j))));
         }
         encoded++;
     }
@@ -158,10 +154,10 @@ uint64_t decodeMinimiser(uint8_t * encoded, size_t size) {
     size_t nb_uint_used = size / 4;
     for (size_t i=0 ; i<nb_uint_used ; i++) {
         for (size_t j=0 ; j<4 ; j++) {
+            reads++;
             result = (result << 2) + (0b11 & (encoded[i] >> (2*(3 - j)))) ;
         }
     }
-
 
     return result;
 }
@@ -184,10 +180,8 @@ SuperKmer decodeSuperKmer(uint8_t * encoded, size_t size, int64_t mini_pos) {
     int64_t i = 0;
     for (; i < maxLen; i++) {
 
-
         int64_t index = (i + mini_pos + remnant / 2) / 4;
         uint64_t shift = (4 - ((i + mini_pos + 1 + remnant / 2) % 4)) % 4;
-
 
         if (i < suffixLen) {
             result.setBits(2u * sk7::fixBitSize + 4 * i, 2u, ((encoded[index] >> ((shift) * 2)) & 0b11));
@@ -201,8 +195,9 @@ SuperKmer decodeSuperKmer(uint8_t * encoded, size_t size, int64_t mini_pos) {
         if (i < prefixLen) {
             result.setBits(2u * sk7::fixBitSize + 4 * (i + 1) - 2, 2u, ((encoded[index] >> (shift * 2)) & 0b11));
         }
-        else
+        else {
             result.setBits(2u * sk7::fixBitSize + 4 * (i + 1) - 2, 2u, 0);
+        }
     }
 
     return result;

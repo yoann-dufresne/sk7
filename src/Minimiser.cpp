@@ -37,7 +37,21 @@ Minimiser::Minimiser(hashPos (*hashFunction)(Kmer, ushort), Kmer &kmer) {
         return;
     }
 
-    // same minimiser value
+    /// TMP
+//    std::cout << "pos = " << hash.pos << " rev pos = " << hashRev.pos << std::endl;
+//    if (hash.pos <= hashRev.pos) {
+        this->value = hash.hashValue;
+        this->pos = hash.pos;
+//    } else {
+//        this->value = hashRev.hashValue;
+//        this->pos = hashRev.pos;
+//        kmer = reverse;
+//    }
+
+    return;
+    /// END TMP
+
+    // same minimiser value, compare distance to middle
     int dist = abs(hash.pos - (sk7::k - 1) / 2);
     int distRev = abs(hashRev.pos - (sk7::k - 1) / 2);
     if (dist < distRev) {
@@ -52,7 +66,7 @@ Minimiser::Minimiser(hashPos (*hashFunction)(Kmer, ushort), Kmer &kmer) {
         return;
     }
 
-    // position and value equivalent
+    // position and value equivalent, compare interleave
     Kmer withoutMinimiser = kmer.removePart(hash.pos, sk7::m);
     interleavedOrder(withoutMinimiser, hash.pos);
     Kmer withoutMinimiserRev = reverse.removePart(hashRev.pos, sk7::m);

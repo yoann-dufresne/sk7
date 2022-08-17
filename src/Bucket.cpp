@@ -49,11 +49,14 @@ bool Bucket::find(Kmer kmer, int &position) {
 //    cout << endl << endl << "------------------------------" << endl;
 //    cout << "searching : " << kmer.toString()  << endl;
     ///PREPARATION OF THE SEARCH
-    Minimiser kmerMinimiser = Minimiser(alpha, sk7::m, kmer);
+    Minimiser kmerMinimiser = Minimiser(alpha, kmer);
     Kmer withoutMinimiser = kmer.removePart(kmerMinimiser.getPos(), sk7::m);
+
+//    cout << "no interleave = " << withoutMinimiser.toString() << " len = " << withoutMinimiser.getLength() << " mini pos = " << kmerMinimiser.getPos() << endl;
+
     interleavedOrder(withoutMinimiser, kmerMinimiser.getPos());
 
-//    cout << "striped and interleaved: " << withoutMinimiser.toString() << " of value : " << withoutMinimiser.getValue() << endl;
+//    cout << "striped and interleaved: " << withoutMinimiser.toString() << " of value : " << bitset<128>(withoutMinimiser.getValue()) << endl;
 
     int prefixLen = kmerMinimiser.getPos();
 
@@ -92,8 +95,8 @@ bool Bucket::find(Kmer kmer, int &position) {
             continue;
         }
 
-//        cout << "search value = " << withoutMinimiser.getValue() << endl;
-//        cout << "current value = " << currentValue << endl;
+//        cout << "search value = " << bitset<30>(withoutMinimiser.getValue()) << endl;
+//        cout << "current Kmer = " << bitset<30>(currentKmer.getValue()) << endl;
 
         if (withoutMinimiser < currentKmer) {
 //            cout << "before " << endl << endl;
@@ -113,9 +116,9 @@ bool Bucket::find(Kmer kmer, int &position) {
             continue;
         }
 
-        if (withoutMinimiser == currentKmer) { //Match or not enough information
-                position = middle;
-                return true;
+        if (withoutMinimiser == currentKmer) { //Match
+            position = middle;
+            return true;
         }
 
 
@@ -469,8 +472,7 @@ Bucket Bucket::operator^(const Bucket &toXor) {
                 toAdd.setBits(0, sk7::fixBitSize, prefixLen);
                 toAdd.setBits(sk7::fixBitSize, sk7::fixBitSize, suffixLen);
                 toAdd.setBits(2*sk7::fixBitSize, 4 * max(prefixLen, suffixLen), currentKmerToXor.getValue());
-//                cout << "adding : ";
-//                toAdd.print();
+
                 result.addToList(toAdd);
                 idxToXor.at(j) = toXor.nextKmerIndex(idxToXor.at(j) + 1, j);
             }
@@ -518,7 +520,6 @@ bool Bucket::isSorted() {
         for (int j = 0; j < sk7::k - sk7::m + 1; j++) {
             Kmer current = orderedList.at(i).readKmer(j);
             if (current != Kmer(0, 0) && currentKmers.at(j) != Kmer(0,0) && currentKmers.at(j) >= current) {
-                cout << "not sorted at : " << i << ", " << j << " between : " << currentKmers.at(j).toString() << " and " << current.toString() << endl;
                 return false;
             } else if (current != Kmer(0, 0)) {
                 currentKmers.at(j) = current;

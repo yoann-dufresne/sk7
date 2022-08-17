@@ -548,7 +548,7 @@ Kmer SuperKmer::readKmer(int kmerPrefixLen) const {
     uint64_t forSuf = value & suffixMask;
 
     uint64_t sum = (forSuf + forPref) >> 4 * (maxLen - max(kmerPrefixLen, sk7::k - sk7::m - kmerPrefixLen));
-    return Kmer(sum);
+    return Kmer(sum, sk7::k - sk7::m);
 }
 
 /**

@@ -6,10 +6,12 @@
 #include <cmath>
 
 
+typedef unsigned __int128 uint128_t;
+
 class Kmer {
 
 protected:
-    uint64_t value;
+    uint128_t value;
 
 public:
     /// Attributes
@@ -17,11 +19,11 @@ public:
 
     /// Constructor
     Kmer();
-    Kmer(uint64_t value);
-    Kmer(uint64_t value, ushort length);
+    Kmer(uint128_t value);
+    Kmer(uint128_t value, ushort length);
 
     /// Getter
-    uint64_t getValue() const;
+    uint128_t getValue() const;
     ushort getLength() const;
 
     /// Utils

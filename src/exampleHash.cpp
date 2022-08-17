@@ -19,7 +19,7 @@ hashPos alpha(Kmer kmer, ushort length) {
 
     for (ushort i = 0; i < nb_bit; i += 2) {
         uint64_t current = (whole >> i) & mask;
-        if(result > current) {
+        if(result >= current) {
             result = current;
             pos = nb_bit - i - 1;
         }

@@ -126,7 +126,7 @@ const test minimiser[] {
         EXPECT(Kmer::fullComparison(testKmer2, Kmer(0b0111000101100111)));
 
         EXPECT(minimiser3.getValue() == (uint64_t) 0b011101);
-        EXPECT(minimiser3.getPos() == 4);
+        EXPECT(minimiser3.getPos() == 0);
         EXPECT(Kmer::fullComparison(testKmer3, Kmer(0b0111011101110111)));
 
         EXPECT(minimiser4.getValue() == (uint64_t) 0b000101);

@@ -18,7 +18,7 @@ public:
     /// Requests
     void addKmer(Kmer kmer);
     void addBucket(sk7::Bucket bucket);
-    bool find(Kmer kmer, int &position);
+    bool find(Kmer kmer, int &position) const;
 
     /// Destructor
     ~BucketMap();

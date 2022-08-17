@@ -41,7 +41,7 @@ Kmer::Kmer() {
  * Constructor to build a Kmer from its value
  * @param value the value of the Kmer
  */
-Kmer::Kmer(uint64_t value) {
+Kmer::Kmer(uint128_t value) {
     this->value = value;
     this->length = sk7::k;
 }
@@ -51,7 +51,7 @@ Kmer::Kmer(uint64_t value) {
  * @param value the value of the wanted kmer
  * @param length the length (in letter 'A', 'C', 'G', 'T') of the kmer
  */
-Kmer::Kmer(uint64_t value, ushort length) {
+Kmer::Kmer(uint128_t value, ushort length) {
     this->value = value;
     this->length = length;
 }
@@ -60,7 +60,7 @@ Kmer::Kmer(uint64_t value, ushort length) {
  * getter for the value
  * @return the value of the kmer
  */
-uint64_t Kmer::getValue() const {
+uint128_t Kmer::getValue() const {
     return this->value;
 }
 
