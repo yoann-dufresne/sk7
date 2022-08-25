@@ -2,7 +2,9 @@
 #define SK7_EXAMPLEHASH_HPP
 
 #include "Kmer.hpp"
-#include "Minimiser.hpp"
+#include "Minimizer.hpp"
+
+using namespace sk7;
 
 hashPos alpha(Kmer kmer, ushort length);
 

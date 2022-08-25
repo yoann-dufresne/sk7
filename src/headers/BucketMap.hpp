@@ -5,25 +5,27 @@
 
 #include "Bucket.hpp"
 
-class BucketMap {
+namespace sk7 {
 
-public:
+    class BucketMap {
 
-    /// Attribute
-    std::unordered_map<uint64_t , sk7::Bucket>* map;
+    public:
 
-    /// Constructor
-    BucketMap();
+        /// Attribute
+        std::unordered_map<uint64_t, sk7::Bucket_> *map;
 
-    /// Requests
-    void addKmer(Kmer kmer);
-    void addBucket(sk7::Bucket bucket);
-    bool find(Kmer kmer, int &position) const;
+        /// Constructor
+        BucketMap();
 
-    /// Destructor
-    ~BucketMap();
+        /// Requests
+        void addKmer(Kmer kmer);
+        void addBucket(sk7::Bucket_ bucket);
+        bool find(Kmer kmer, int &position) const;
 
-};
+        /// Destructor
+        ~BucketMap();
 
+    };
+}
 
 #endif //SK7_BUCKETMAP_HPP

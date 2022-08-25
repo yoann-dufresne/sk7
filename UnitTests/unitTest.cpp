@@ -65,7 +65,7 @@ const test minimiser[] {
         EXPECT(res10.pos == expected10.pos);
 
         },
-         CASE("Minimiser from kmer: ") {
+         CASE("Minimizer from kmer: ") {
         Kmer testKmer1 = Kmer(0b0100101010, 5); // CATTT
         Kmer testKmer2 = Kmer(0b11111001011111, 7); // GGTCCGG
         Kmer testKmer3 = Kmer(0b101001000010000110, 9); // TTCAATACT
@@ -77,16 +77,16 @@ const test minimiser[] {
         Kmer testKmer9 = Kmer(0b000011000000110000010010, 12); // AAGAAAGAACAT
         Kmer testKmer10 = Kmer(0b1101010011011101110101111000, 14); // GCCAGCGCGCCGTA
 
-        Minimiser minimiser1 = Minimiser(alpha, 3, testKmer1); // ATT
-        Minimiser minimiser2 = Minimiser(alpha, 4, testKmer2); // CCGG
-        Minimiser minimiser3 = Minimiser(alpha, 5, testKmer3); // AATAC
-        Minimiser minimiser4 = Minimiser(alpha, 6, testKmer4); // ACACGG
-        Minimiser minimiser5 = Minimiser(alpha, 7, testKmer5); // AATCTCA
-        Minimiser minimiser6 = Minimiser(alpha, 8, testKmer6); // AAGATCGA
-        Minimiser minimiser7 = Minimiser(alpha, 4, testKmer7); // CTCC
-        Minimiser minimiser8 = Minimiser(alpha, 5, testKmer8); // AGCTT
-        Minimiser minimiser9 = Minimiser(alpha, 6, testKmer9); // AAAGAA
-        Minimiser minimiser10 = Minimiser(alpha, 7, testKmer10); // AGCGCGC
+        Minimizer minimiser1 = Minimizer(alpha, 3, testKmer1); // ATT
+        Minimizer minimiser2 = Minimizer(alpha, 4, testKmer2); // CCGG
+        Minimizer minimiser3 = Minimizer(alpha, 5, testKmer3); // AATAC
+        Minimizer minimiser4 = Minimizer(alpha, 6, testKmer4); // ACACGG
+        Minimizer minimiser5 = Minimizer(alpha, 7, testKmer5); // AATCTCA
+        Minimizer minimiser6 = Minimizer(alpha, 8, testKmer6); // AAGATCGA
+        Minimizer minimiser7 = Minimizer(alpha, 4, testKmer7); // CTCC
+        Minimizer minimiser8 = Minimizer(alpha, 5, testKmer8); // AGCTT
+        Minimizer minimiser9 = Minimizer(alpha, 6, testKmer9); // AAAGAA
+        Minimizer minimiser10 = Minimizer(alpha, 7, testKmer10); // AGCGCGC
 
 
         EXPECT(minimiser1.getValue() == (uint64_t) 0b001010);
@@ -103,7 +103,7 @@ const test minimiser[] {
 
     },
 
-    CASE("Minimiser with reverse complement : ") {
+    CASE("Minimizer with reverse complement : ") {
         sk7::initLib(8, 3);
         Kmer testKmer1 = Kmer(0b0100101101110011); // CATGCGAG
         Kmer testKmer2 = Kmer(0b0111001111100111); // CGAGGTCG
@@ -111,11 +111,11 @@ const test minimiser[] {
         Kmer testKmer4 = Kmer(0b0001110001111110); // ACGACGGT
         Kmer testKmer5 = Kmer(0b0100011111011110); // CACGGCGT
 
-        Minimiser minimiser1 = Minimiser(alpha, testKmer1);
-        Minimiser minimiser2 = Minimiser(alpha, testKmer2);
-        Minimiser minimiser3 = Minimiser(alpha, testKmer3);
-        Minimiser minimiser4 = Minimiser(alpha, testKmer4);
-        Minimiser minimiser5 = Minimiser(alpha, testKmer5);
+        Minimizer minimiser1 = Minimizer(alpha, testKmer1);
+        Minimizer minimiser2 = Minimizer(alpha, testKmer2);
+        Minimizer minimiser3 = Minimizer(alpha, testKmer3);
+        Minimizer minimiser4 = Minimizer(alpha, testKmer4);
+        Minimizer minimiser5 = Minimizer(alpha, testKmer5);
 
         EXPECT(minimiser1.getValue() == (uint64_t) 0b001011);
         EXPECT(minimiser1.getPos() == 1);
@@ -139,14 +139,14 @@ const test minimiser[] {
 
         sk7::initLib(5, 3);
     },
-        CASE("Minimiser from previous one : ") {
+        CASE("Minimizer from previous one : ") {
         Kmer testKmer1 = Kmer(0b0100101010, 5); // CATTT
         Kmer testKmer2 = Kmer(0b0010101011, 5); // ATTTG
         Kmer testKmer3 = Kmer(0b1010101101, 5); // TTTGC
         Kmer testKmer4 = Kmer(0b1010110100, 5); // TTGCA
         Kmer testKmer5 = Kmer(0b1011010010, 5); // TGCAT
 
-        Minimiser minimiser = Minimiser(alpha, 3);
+        Minimizer minimiser = Minimizer(alpha, 3);
         minimiser.init(testKmer1); //ATT
         EXPECT(minimiser.getValue() == (uint64_t) 0b001010);
         minimiser.fromNewEnd(testKmer2); // ATT
@@ -200,10 +200,10 @@ const test utilsTest[] {
         Kmer testKmer2 = Kmer(0b11111001011111, 7); // GGTCCGG
         Kmer testKmer3 = Kmer(0b101001000010000110, 9); // TTCAATACT
         Kmer testKmer4 = Kmer(0b0010000100011111011000, 11); // ATACACGGCTA
-        Minimiser minimiser1 = Minimiser(alpha, 3, testKmer1);
-        Minimiser minimiser2 = Minimiser(alpha, 4, testKmer2);
-        Minimiser minimiser3 = Minimiser(alpha, 5, testKmer3);
-        Minimiser minimiser4 = Minimiser(alpha, 6, testKmer4);
+        Minimizer minimiser1 = Minimizer(alpha, 3, testKmer1);
+        Minimizer minimiser2 = Minimizer(alpha, 4, testKmer2);
+        Minimizer minimiser3 = Minimizer(alpha, 5, testKmer3);
+        Minimizer minimiser4 = Minimizer(alpha, 6, testKmer4);
         Kmer withoutMinimiser1 = testKmer1.removePart(minimiser1.getPos(), 3);
         Kmer withoutMinimiser2 = testKmer2.removePart(minimiser2.getPos(), 4);
         Kmer withoutMinimiser3 = testKmer3.removePart(minimiser3.getPos(), 5);
@@ -392,7 +392,7 @@ const test superKmerTest[] {
 
 const test bucketTest[] {
     CASE("find") {
-        Bucket bucket(0);
+        Bucket_ bucket(0);
         bucket.addToList(SuperKmer({0b01100111, 0b10000000}));
         bucket.addToList(SuperKmer({0b10101011, 0b10010000}));
         bucket.addToList(SuperKmer({0b10000011, 0b00110000}));
@@ -425,12 +425,12 @@ const test bucketTest[] {
 
     CASE("isSorted") {
 
-        Bucket bucket(0);
+        Bucket_ bucket(0);
         bucket.addToList(SuperKmer({0b01100111, 0b10000000}));
         bucket.addToList(SuperKmer({0b10101011, 0b10010000}));
         bucket.addToList(SuperKmer({0b10000011, 0b00110000}));
 
-        Bucket spaced = Bucket(0);
+        Bucket_ spaced = Bucket_(0);
         spaced.addToList(SuperKmer({0b10000010, 0b00100000}));
         spaced.addToList(SuperKmer({0b01011001}));
         spaced.addToList(SuperKmer({0b10000001, 0b00010000}));
@@ -440,7 +440,7 @@ const test bucketTest[] {
     },
 
     CASE("addKmer") {
-        Bucket bucket(0);
+        Bucket_ bucket(0);
         bucket.addToList(SuperKmer({0b01100111, 0b10000000}));
         bucket.addToList(SuperKmer({0b10101011, 0b10010000}));
         bucket.addToList(SuperKmer({0b10000011, 0b00110000}));
@@ -480,7 +480,7 @@ const test bucketTest[] {
     },
 
     CASE("SKtoKmer") {
-        Bucket bucket = Bucket(0);
+        Bucket_ bucket = Bucket_(0);
         EXPECT(bucket.SKtoKmer(SuperKmer({0b01101011, 0b01000000})).getValue() == (uint64_t) 0b110000001001);
         EXPECT(bucket.SKtoKmer(SuperKmer({0b11110110, 0b10110010})).getValue() == (uint64_t) 0b101110000000011000);
         EXPECT(bucket.SKtoKmer(SuperKmer({0b00101100, 0b00000000})).getValue() == (uint64_t) 0b0000001100);
@@ -515,7 +515,7 @@ const test bucketTest[] {
         tab3.push_back(secondSection3);
         SuperKmer SK3(tab3);
 
-        Bucket bucket(0);
+        Bucket_ bucket(0);
         bucket.addSuperKmer(SK3);
         EXPECT(bucket.getListSize() == (uint64_t) 1);
         bucket.addSuperKmer(SK2);
@@ -535,7 +535,7 @@ const test bucketTest[] {
     },
 
     CASE("findNextOkPosition") {
-        Bucket bucket = Bucket(0);
+        Bucket_ bucket = Bucket_(0);
         bucket.addSuperKmer(SuperKmer({0b01010110}));
         bucket.addSuperKmer(SuperKmer({0b00101100, 0b01000000}));
         bucket.addSuperKmer(SuperKmer({0b01100111, 0b10000000}));
@@ -548,11 +548,11 @@ const test bucketTest[] {
     },
 
     CASE("Intersection") {
-        Bucket bucket1 = Bucket(0);
-        Bucket bucket2 = Bucket(0);
-        Bucket bucket3 = Bucket(0);
-        Bucket bucket4 = Bucket(0);
-        Bucket bucket5 = Bucket(0);
+        Bucket_ bucket1 = Bucket_(0);
+        Bucket_ bucket2 = Bucket_(0);
+        Bucket_ bucket3 = Bucket_(0);
+        Bucket_ bucket4 = Bucket_(0);
+        Bucket_ bucket5 = Bucket_(0);
 
         int position;
 
@@ -629,17 +629,17 @@ const test bucketTest[] {
         EXPECT(bucket5.isSorted());
         EXPECT((bucket1 & bucket5).getListSize() == (uint64_t) 0);
 
-        Bucket empty = Bucket(0);
+        Bucket_ empty = Bucket_(0);
         EXPECT((bucket1 & empty).getListSize() == (uint64_t) 0);
 
     },
 
     CASE("Union") {
-        Bucket bucket1 = Bucket(0);
-        Bucket bucket2 = Bucket(0);
-        Bucket bucket3 = Bucket(0);
-        Bucket bucket4 = Bucket(0);
-        Bucket bucket5 = Bucket(0);
+        Bucket_ bucket1 = Bucket_(0);
+        Bucket_ bucket2 = Bucket_(0);
+        Bucket_ bucket3 = Bucket_(0);
+        Bucket_ bucket4 = Bucket_(0);
+        Bucket_ bucket5 = Bucket_(0);
 
         int position;
 
@@ -658,7 +658,7 @@ const test bucketTest[] {
         EXPECT(bucket2.isSorted());
 
 //        cout << "---- 1 | 2 ----" << endl;
-        Bucket test12 = bucket1 | bucket2;
+        Bucket_ test12 = bucket1 | bucket2;
 //        test12.print();
         EXPECT(test12.getListSize() == (uint64_t) 9);
         EXPECT(test12.find(Kmer(0b0111000000), position));
@@ -719,22 +719,22 @@ const test bucketTest[] {
         EXPECT(bucket5.isSorted());
 
 //        cout << "------ 1 | 5 ------" << endl;
-        Bucket bucket15 = bucket1 | bucket5;
+        Bucket_ bucket15 = bucket1 | bucket5;
 //        bucket15.print();
         EXPECT(bucket15.getListSize() == (uint64_t) 11);
 
-        Bucket empty = Bucket(0);
+        Bucket_ empty = Bucket_(0);
 //        (bucket1 | empty).print();
         EXPECT((bucket1 | empty).getListSize() == (uint64_t) 5);
 
     },
 
     CASE("Symmetrical difference") {
-        Bucket bucket1 = Bucket(0);
-        Bucket bucket2 = Bucket(0);
-        Bucket bucket3 = Bucket(0);
-        Bucket bucket4 = Bucket(0);
-        Bucket bucket5 = Bucket(0);
+        Bucket_ bucket1 = Bucket_(0);
+        Bucket_ bucket2 = Bucket_(0);
+        Bucket_ bucket3 = Bucket_(0);
+        Bucket_ bucket4 = Bucket_(0);
+        Bucket_ bucket5 = Bucket_(0);
 
         int position;
 
@@ -753,7 +753,7 @@ const test bucketTest[] {
         EXPECT(bucket2.isSorted());
 
 //        cout << "---- 1 ^ 2 ----" << endl;
-        Bucket test12 = bucket1 ^ bucket2;
+        Bucket_ test12 = bucket1 ^ bucket2;
 //        test12.print();
         EXPECT(test12.getListSize() == (uint64_t) 8);
         EXPECT(not test12.find(Kmer(0b0111000000), position));
@@ -814,11 +814,11 @@ const test bucketTest[] {
         EXPECT(bucket5.isSorted());
 
 //        cout << "------ 1 ^ 5 ------" << endl;
-        Bucket bucket15 = bucket1 ^ bucket5;
+        Bucket_ bucket15 = bucket1 ^ bucket5;
 //        bucket15.print();
         EXPECT(bucket15.getListSize() == (uint64_t) 11);
 
-        Bucket empty = Bucket(0);
+        Bucket_ empty = Bucket_(0);
 //        (bucket1 ^ empty).print();
         EXPECT((bucket1 ^ empty).getListSize() == (uint64_t) 5);
 

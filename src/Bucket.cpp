@@ -7,10 +7,10 @@ using namespace std;
 using namespace sk7;
 
 /**
- * Initialise a Bucket
+ * Initialise a Bucket_
  * @param minimiserValue the value of the minimiser
  */
-Bucket::Bucket(uint64_t minimiserValue) {
+Bucket_::Bucket_(uint64_t minimiserValue) {
     this->minimiserLength = sk7::m;
     this->minimiser = minimiserValue;
     this->orderedList = std::vector<SuperKmer>();
@@ -18,9 +18,9 @@ Bucket::Bucket(uint64_t minimiserValue) {
 }
 
 /**
- * Default constructor for a Bucket
+ * Default constructor for a Bucket_
  */
-Bucket::Bucket() {
+Bucket_::Bucket_() {
     this->minimiserLength = sk7::m;
     this->minimiser = 0;
     this->orderedList = std::vector<SuperKmer>();
@@ -28,10 +28,10 @@ Bucket::Bucket() {
 }
 
 /**
- * Add a element to the Bucket WITHOUT considering the order
+ * Add a element to the Bucket_ WITHOUT considering the order
  * @param superKmer the superkmer to add to the bucket
  */
-void Bucket::addToList(SuperKmer superKmer) {
+void Bucket_::addToList(SuperKmer superKmer) {
     this->orderedList.push_back(superKmer);
 }
 
@@ -41,7 +41,7 @@ void Bucket::addToList(SuperKmer superKmer) {
  * @param position a parameter used to store the position found by the search
  * @return true if the kmer was already in the bucket false otherwise
  */
-bool Bucket::find(Kmer kmer, int &position) {
+bool Bucket_::find(Kmer kmer, int &position) {
     if (orderedList.empty()) {
         position = 0;
         return false;
@@ -49,7 +49,7 @@ bool Bucket::find(Kmer kmer, int &position) {
 //    cout << endl << endl << "------------------------------" << endl;
 //    cout << "searching : " << kmer.toString()  << endl;
     ///PREPARATION OF THE SEARCH
-    Minimiser kmerMinimiser = Minimiser(alpha, kmer);
+    Minimizer kmerMinimiser = Minimizer(alpha, kmer);
     Kmer withoutMinimiser = kmer.removePart(kmerMinimiser.getPos(), sk7::m);
 //    cout << "no interleave = " << withoutMinimiser.toString() << " len = " << withoutMinimiser.getLength() << " mini pos = " << kmerMinimiser.getPos() << endl;
     interleavedOrder(withoutMinimiser, kmerMinimiser.getPos());
@@ -135,7 +135,7 @@ bool Bucket::find(Kmer kmer, int &position) {
  * Add a kmer to a bucket at the right place
  * @param kmer the kmer to add to the bucket
  */
-void Bucket::addKmer(Kmer kmer) {
+void Bucket_::addKmer(Kmer kmer) {
     if (kmer.length != sk7::k) {
         return;
     }
@@ -146,7 +146,7 @@ void Bucket::addKmer(Kmer kmer) {
 //        cout << "position find = " << position << endl;
         auto itPos = orderedList.begin() + position;
         // We build a superKmer from the kmer and put it in the bucket
-        Minimiser minimiserKmer = Minimiser(alpha, sk7::m, kmer);
+        Minimizer minimiserKmer = Minimizer(alpha, sk7::m, kmer);
         Kmer withoutMinimiser = kmer.removePart(minimiserKmer.getPos(), sk7::m);
         interleavedOrder(withoutMinimiser, minimiserKmer.getPos());
 
@@ -167,7 +167,7 @@ void Bucket::addKmer(Kmer kmer) {
  * @param superKmer the starting superKmer
  * @return the built Kmer
  */
-Kmer Bucket::SKtoKmer(SuperKmer superKmer) {
+Kmer Bucket_::SKtoKmer(SuperKmer superKmer) {
     int PrefixLen = superKmer.getPrefixLen(); // superkmer's prefix length
     int SuffixLen = superKmer.getSuffixLen(); // superkmer's suffix length
     uint64_t kmerValue = 0;
@@ -187,7 +187,7 @@ Kmer Bucket::SKtoKmer(SuperKmer superKmer) {
  * Add a superKmer to a bucket conserving the order
  * @param superKmer the superKmer to add to the bucket
  */
-void Bucket::addSuperKmer(const SuperKmer& superKmer) {
+void Bucket_::addSuperKmer(const SuperKmer& superKmer) {
 //    cout << "SK is : \t"; superKmer.print();
     if (orderedList.empty()) {
         return addToList(superKmer);
@@ -205,7 +205,7 @@ void Bucket::addSuperKmer(const SuperKmer& superKmer) {
  * Getter for the size of the bucket
  * @return the number of superKmer in the bucket
  */
-uint64_t Bucket::getListSize() {
+uint64_t Bucket_::getListSize() {
     return orderedList.size();
 }
 
@@ -213,7 +213,7 @@ uint64_t Bucket::getListSize() {
  * Getter for the superKmer list of the bucket
  * @return the list of the superKmer in the bucket
  */
-std::vector<SuperKmer> Bucket::getListCopy() {
+std::vector<SuperKmer> Bucket_::getListCopy() {
     return std::vector<SuperKmer>(orderedList);
 }
 
@@ -227,7 +227,7 @@ std::vector<SuperKmer> Bucket::getListCopy() {
  * @param startingPosition the initial position in the list
  * @return the index of a certain position in the list
  */
-uint64_t Bucket::findNextOkPosition(SuperKmer superKmer, std::vector<SuperKmer> list, uint64_t startingPosition) {
+uint64_t Bucket_::findNextOkPosition(SuperKmer superKmer, std::vector<SuperKmer> list, uint64_t startingPosition) {
     uint64_t current = startingPosition;
     uint64_t res = current;
     for (; current < list.size(); current++) {
@@ -254,13 +254,13 @@ uint64_t Bucket::findNextOkPosition(SuperKmer superKmer, std::vector<SuperKmer> 
  * @param toAdd the bucket to join
  * @return a new bucket containing every superKmers of the starting bucket in order without no duplicate
  */
-Bucket Bucket::operator|(const Bucket &toAdd) {
+Bucket_ Bucket_::operator|(const Bucket_ &toAdd) {
     if (toAdd.minimiser != minimiser || toAdd.kmerLength != kmerLength || toAdd.minimiserLength != minimiserLength) {
         throw std::runtime_error("Error: incompatible buckets");
     }
 
     uint64_t nbColumn = sk7::k - sk7::m + 1;
-    Bucket result = Bucket(minimiser); // the final bucket
+    Bucket_ result = Bucket_(minimiser); // the final bucket
 
     std::vector<uint64_t> idx = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the first matrix
     std::vector<uint64_t> idxToAdd = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the second matrix
@@ -351,13 +351,13 @@ Bucket Bucket::operator|(const Bucket &toAdd) {
  * @param toIntersect the bucket to intersect
  * @return the intersection of the two Buckets
  */
-Bucket Bucket::operator&(Bucket &toIntersect) {
+Bucket_ Bucket_::operator&(Bucket_ &toIntersect) {
 //    cout << "---------- start --------------" << endl;
     if (toIntersect.minimiser != minimiser || toIntersect.kmerLength != kmerLength || toIntersect.minimiserLength != minimiserLength) {
         throw std::runtime_error("Error: incompatible buckets");
     }
     uint64_t nbColumn = sk7::k - sk7::m + 1;
-    Bucket result = Bucket(minimiser); // the final bucket
+    Bucket_ result = Bucket_(minimiser); // the final bucket
 
     std::vector<uint64_t> idx = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the first matrix
     std::vector<uint64_t> idxToIntersect = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the second matrix
@@ -412,15 +412,15 @@ Bucket Bucket::operator&(Bucket &toIntersect) {
 
 /**
  * Build the symmetrical difference between two Buckets
- * @param toXor the Bucket to wor with
+ * @param toXor the Bucket_ to wor with
  * @return the symmetrical difference between the two Buckets
  */
-Bucket Bucket::operator^(const Bucket &toXor) {
+Bucket_ Bucket_::operator^(const Bucket_ &toXor) {
     if (toXor.minimiser != minimiser || toXor.kmerLength != kmerLength || toXor.minimiserLength != minimiserLength) {
         throw std::runtime_error("Error: incompatible buckets");
     }
     uint64_t nbColumn = sk7::k - sk7::m + 1;
-    Bucket result = Bucket(minimiser); // the final bucket
+    Bucket_ result = Bucket_(minimiser); // the final bucket
 
     std::vector<uint64_t> idx = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the first matrix
     std::vector<uint64_t> idxToXor = std::vector<uint64_t>(nbColumn, 0); // The list of index in the column of the second matrix
@@ -509,7 +509,7 @@ Bucket Bucket::operator^(const Bucket &toXor) {
  * Check if the bucket is sorted
  * @return true if the bucket is sorted with no duplicate else false
  */
-bool Bucket::isSorted() {
+bool Bucket_::isSorted() {
     std::vector<Kmer> currentKmers = std::vector<Kmer>(sk7::k - sk7::m + 1, Kmer(0, 0));
     for (uint64_t i = 0; i < orderedList.size(); i++) {
         for (int j = 0; j < sk7::k - sk7::m + 1; j++) {
@@ -529,7 +529,7 @@ bool Bucket::isSorted() {
 /**
  * Print every superKmer of the bucket as a bitset
  */
-void Bucket::print() {
+void Bucket_::print() {
     cout << "content : " << endl;
     for (auto &it : orderedList) {
         it.print();
@@ -542,7 +542,7 @@ void Bucket::print() {
  * @param column the column (linked to the minimiser position) to look in
  * @return the index of the next non null kmer in splitList
  */
-uint64_t Bucket::nextKmerIndex(const uint64_t &current, const uint64_t &column) const {
+uint64_t Bucket_::nextKmerIndex(const uint64_t &current, const uint64_t &column) const {
     uint64_t i = current;
     for(; i < orderedList.size(); i++) {
         if (orderedList.at(i).readKmer(column).length != 0) {
@@ -557,11 +557,11 @@ uint64_t Bucket::nextKmerIndex(const uint64_t &current, const uint64_t &column) 
 
 /**
  * Build the union of two compatible buckets trying to conserve the compression
- * @param bucket1 the first Bucket
- * @param bucket2 the second Bucket
+ * @param bucket1 the first Bucket_
+ * @param bucket2 the second Bucket_
  * @return the built union
  */
-Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
+Bucket_ Bucket_::chainedUnion(Bucket_ bucket1, Bucket_ bucket2) {
 
     /// Initialisation
     if (bucket1.minimiser != bucket2.minimiser ||
@@ -570,7 +570,7 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
         throw std::runtime_error("Error: incompatible buckets");
     }
 
-    Bucket result = Bucket(bucket1.minimiser);
+    Bucket_ result = Bucket_(bucket1.minimiser);
 
     uint64_t nbColumn = sk7::k - sk7::m + 1; // = max number of Kmer per SuperKmer
 
@@ -684,7 +684,7 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
 //                neighbor2.print();
 
                 if (neighbor1.readKmer(i) < neighbor2.readKmer(i)
-                    && Bucket::compatible(neighbor1, last)) { // Adding the Kmer of the first bucket if compatible
+                    && Bucket_::compatible(neighbor1, last)) { // Adding the Kmer of the first bucket if compatible
 //                    cout << "adding 1" << endl;
                     last = neighbor1;
                     toAdd = toAdd | neighbor1;
@@ -692,14 +692,14 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
                     continue;
 
                 } else if (neighbor2.readKmer(i)< neighbor1.readKmer(i)
-                           && Bucket::compatible(neighbor2, last)) { // Adding the Kmer of the second bucket if compatible
+                           && Bucket_::compatible(neighbor2, last)) { // Adding the Kmer of the second bucket if compatible
 //                    cout << "adding 2" << endl;
                     last = neighbor2;
                     toAdd = toAdd | neighbor2;
                     idx2.at(i) = bucket2.nextKmerIndex(idx2.at(i) + 1, i);
                     continue;
                 } else if (neighbor2.readKmer(i)== neighbor1.readKmer(i)
-                           && Bucket::compatible(neighbor2, last)) { // The two Kmers are equals -> adding the two if compatible
+                           && Bucket_::compatible(neighbor2, last)) { // The two Kmers are equals -> adding the two if compatible
 //                    cout << "adding 1 & 2" << endl;
                     last = neighbor1;
                     toAdd = toAdd | neighbor2;
@@ -713,7 +713,7 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
 
             else if (idx2.at(i) < bucket2.getListSize()) { // No more Kmer in this column of bucket1
                 SuperKmer neighbor2 = bucket2.orderedList.at(idx2.at(i)).extract(i);
-                if (Bucket::compatible(neighbor2, last)) {
+                if (Bucket_::compatible(neighbor2, last)) {
                     last = neighbor2;
                     toAdd = toAdd | neighbor2;
                     idx2.at(i) = bucket2.nextKmerIndex(idx2.at(i) + 1, i);
@@ -723,7 +723,7 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
 
             else if (idx1.at(i) < bucket1.getListSize()) { // No more Kmer in this column of bucket2
                 SuperKmer neighbor1 = bucket1.orderedList.at(idx1.at(i)).extract(i);
-                if (Bucket::compatible(neighbor1, last)) {
+                if (Bucket_::compatible(neighbor1, last)) {
                     last = neighbor1;
                     toAdd = toAdd | neighbor1;
                     idx1.at(i) = bucket1.nextKmerIndex(idx1.at(i) + 1, i);
@@ -749,21 +749,21 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
 //                neighbor2.print();
 
                 if (neighbor1.readKmer(i) < neighbor2.readKmer(i)
-                    && Bucket::compatible(neighbor1, last)) { // Adding the Kmer of the first bucket if compatible
+                    && Bucket_::compatible(neighbor1, last)) { // Adding the Kmer of the first bucket if compatible
 //                    cout << "adding 1" << endl;
                     last = neighbor1;
                     toAdd = toAdd | neighbor1;
                     idx1.at(i) = bucket1.nextKmerIndex(idx1.at(i) + 1, i);
                     continue;
                 } else if (neighbor2.readKmer(i) < neighbor1.readKmer(i)
-                           && Bucket::compatible(neighbor2, last)) { // Adding the Kmer of the second bucket if compatible
+                           && Bucket_::compatible(neighbor2, last)) { // Adding the Kmer of the second bucket if compatible
 //                    cout << "adding 2" << endl;
                     last = neighbor2;
                     toAdd = toAdd | neighbor2;
                     idx2.at(i) = bucket2.nextKmerIndex(idx2.at(i) + 1, i);
                     continue;
                 } else if (neighbor2.readKmer(i) == neighbor1.readKmer(i)
-                           && Bucket::compatible(neighbor2, last)) { // The two Kmers are equals -> adding the two if compatible
+                           && Bucket_::compatible(neighbor2, last)) { // The two Kmers are equals -> adding the two if compatible
 //                    cout << "adding 1 & 2" << endl;
                     last = neighbor1;
                     toAdd = toAdd | neighbor2;
@@ -777,7 +777,7 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
 
             else if (idx2.at(i) < bucket2.getListSize()) { // No more Kmer in this column of bucket1
                 SuperKmer neighbor2 = bucket2.orderedList.at(idx2.at(i)).extract(i);
-                if (Bucket::compatible(neighbor2, last)) {
+                if (Bucket_::compatible(neighbor2, last)) {
                     last = neighbor2;
                     toAdd = toAdd | neighbor2;
                     idx2.at(i) = bucket2.nextKmerIndex(idx2.at(i) + 1, i);
@@ -787,7 +787,7 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
 
             else if (idx1.at(i) < bucket1.getListSize()) { // No more Kmer in this column of bucket2
                 SuperKmer neighbor1 = bucket1.orderedList.at(idx1.at(i)).extract(i);
-                if (Bucket::compatible(neighbor1, last)) {
+                if (Bucket_::compatible(neighbor1, last)) {
                     last = neighbor1;
                     toAdd = toAdd | neighbor1;
                     idx1.at(i) = bucket1.nextKmerIndex(idx1.at(i) + 1, i);
@@ -858,7 +858,7 @@ Bucket Bucket::chainedUnion(Bucket bucket1, Bucket bucket2) {
     return result;
 }
 
-bool Bucket::compatible(const SuperKmer& SK1, const SuperKmer& SK2) {
+bool Bucket_::compatible(const SuperKmer& SK1, const SuperKmer& SK2) {
 //    cout << endl;
     uint64_t rangeLen = sk7::k - sk7::m - 1;
     uint64_t mask = (1u << rangeLen * 2) - 1;

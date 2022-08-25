@@ -1,23 +1,25 @@
-#include "Minimiser.hpp"
+#include "Minimizer.hpp"
 
 using namespace std;
 
+namespace sk7 {
+
 /**
- * Constructor for the minimiser of a given kmer
- * @param hashFunction a function that gives an value to a mmer
- * @param length the wanted length of the minimiser
- * @param kmer the initial kmer
- */
-Minimiser::Minimiser(hashPos (*hashFunction)(Kmer, ushort), ushort length, Kmer kmer): Minimiser(hashFunction, length) {
+* Constructor for the minimiser of a given kmer
+* @param hashFunction a function that gives an value to a mmer
+* @param length the wanted length of the minimiser
+* @param kmer the initial kmer
+*/
+Minimizer::Minimizer(hashPos (*hashFunction)(Kmer, ushort), ushort length, Kmer kmer) : Minimizer(hashFunction,length) {
     init(kmer);
 }
 
 /**
- * Constructor for a Minimiser taking reverse complement in consideration
- * @param hashFunction a function that gives an value to a mmer
- * @param kmer the initial kmer
- */
-Minimiser::Minimiser(hashPos (*hashFunction)(Kmer, ushort), Kmer &kmer) {
+* Constructor for a Minimizer taking reverse complement in consideration
+* @param hashFunction a function that gives an value to a mmer
+* @param kmer the initial kmer
+*/
+Minimizer::Minimizer(hashPos (*hashFunction)(Kmer, ushort), Kmer &kmer) {
 
     this->hashFunction = hashFunction;
     this->length = sk7::m;
@@ -67,7 +69,7 @@ Minimiser::Minimiser(hashPos (*hashFunction)(Kmer, ushort), Kmer &kmer) {
         return;
     }
 
-    if(kmer.getValue() > reverse.getValue()) {
+    if (kmer.getValue() > reverse.getValue()) {
         this->value = hashRev.hashValue;
         this->pos = hashRev.pos;
         kmer = reverse;
@@ -81,11 +83,11 @@ Minimiser::Minimiser(hashPos (*hashFunction)(Kmer, ushort), Kmer &kmer) {
 
 
 /**
- * Constructor for a minimiser for a sequence of kmer
- * @param hashFunction a function that gives an whole value to a mmer
- * @param length the wanted length of the minimiser
- */
-Minimiser::Minimiser(hashPos (*hashFunction)(Kmer, ushort), ushort length) {
+* Constructor for a minimiser for a sequence of kmer
+* @param hashFunction a function that gives an whole value to a mmer
+* @param length the wanted length of the minimiser
+*/
+Minimizer::Minimizer(hashPos (*hashFunction)(Kmer, ushort), ushort length) {
     this->hashFunction = hashFunction;
     this->length = length;
     this->value = 0;
@@ -93,20 +95,20 @@ Minimiser::Minimiser(hashPos (*hashFunction)(Kmer, ushort), ushort length) {
 }
 
 /**
- * Initialise value with the hash of the given kmer
- * @param kmer the initializer
- */
-void Minimiser::init(Kmer kmer) {
+* Initialise value with the hash of the given kmer
+* @param kmer the initializer
+*/
+void Minimizer::init(Kmer kmer) {
     hashPos retHash = hashFunction(kmer, this->length);
     this->value = retHash.hashValue;
     this->pos = retHash.pos;
 }
 
 /**
- * Found the new minimiser depending on the new end
- * @param kmer the current kmer to minimise
- */
-void Minimiser::fromNewEnd(Kmer kmer) {
+* Found the new minimiser depending on the new end
+* @param kmer the current kmer to minimise
+*/
+void Minimizer::fromNewEnd(Kmer kmer) {
     if (pos == 0) { //Forced change of the minimiser
         this->init(kmer);
         return;
@@ -123,26 +125,26 @@ void Minimiser::fromNewEnd(Kmer kmer) {
 }
 
 /**
- * Getter for the minimiser value
- * @return the minimiser's value
- */
-uint64_t Minimiser::getValue() const {
+* Getter for the minimiser value
+* @return the minimiser's value
+*/
+uint64_t Minimizer::getValue() const {
     return this->value;
 }
 
 /**
- * Getter for the pos attribute
- * @return the minimiser's pos
- */
-short Minimiser::getPos() const {
+* Getter for the pos attribute
+* @return the minimiser's pos
+*/
+short Minimizer::getPos() const {
     return this->pos;
 }
 
 /**
- * Give a textual representation of a minimiser
- * @return a string on {'A', 'C', 'G', 'T'} that represents the minimiser
- */
-std::string Minimiser::toString() const {
+* Give a textual representation of a minimiser
+* @return a string on {'A', 'C', 'G', 'T'} that represents the minimiser
+*/
+std::string Minimizer::toString() const {
     uint64_t tmp = value;
     std::string res;
     res.reserve(this->length);
@@ -173,4 +175,4 @@ std::string Minimiser::toString() const {
 }
 
 
-
+}

@@ -2,10 +2,10 @@
 #define SK7_KFF_SCANNER_HPP
 
 #include "kff_io.hpp"
-#include "Bucket.hpp" // sk7 one
 #include "bucket.hpp" // kfftl one
 #include "compact.hpp"
 #include "BucketMap.hpp"
+
 
 #include <cstring>
 #include <filesystem>
@@ -32,7 +32,7 @@ public:
 
     /// Methods
     void preparation();
-    sk7::Bucket readMinimiserSection();
+    sk7::Bucket_ readMinimiserSection();
     BucketMap* readAll();
 
     /// Destructor

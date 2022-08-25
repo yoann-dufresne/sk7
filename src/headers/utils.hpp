@@ -3,15 +3,18 @@
 
 #include <iostream>
 
-class Kmer;
+namespace sk7 {
+    class Kmer;
 
 /// Kmer manipulation
-uint64_t interleavedOrder(Kmer &kmer, int minimiserPos);
-uint64_t reorderValue(uint64_t value, const int &prefixLen, const int &suffixLen);
+    uint64_t interleavedOrder(Kmer &kmer, int minimiserPos);
+    uint64_t reorderValue(uint64_t value, const int &prefixLen, const int &suffixLen);
 
 /// Example for Kmer comparison
-bool infId(const Kmer &kmer1, const Kmer &kmer2);
-bool equalId(const Kmer &kmer1, const Kmer &kmer2);
+    bool infId(const Kmer &kmer1, const Kmer &kmer2);
+    bool equalId(const Kmer &kmer1, const Kmer &kmer2);
+
+}
 
 #include "Kmer.hpp"
 

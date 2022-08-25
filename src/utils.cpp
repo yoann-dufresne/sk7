@@ -2,13 +2,14 @@
 
 
 using namespace std;
+namespace sk7 {
 
 /**
- * Build a Kmer in interleaved order from an existing kmer and its minimiser position
- * @param kmer striped from its minimiser via Kmer.removePart, will be modify by the function.
- * @param minimiserPos the initial position of the minimiser
- * @return the mask to find the interleave of the modify kmer
- */
+* Build a Kmer in interleaved order from an existing kmer and its minimiser position
+* @param kmer striped from its minimiser via Kmer.removePart, will be modify by the function.
+* @param minimiserPos the initial position of the minimiser
+* @return the mask to find the interleave of the modify kmer
+*/
 uint64_t interleavedOrder(Kmer &kmer, int minimiserPos) {
     uint64_t finalValue = 0;
     uint64_t mask = 0;
@@ -35,7 +36,7 @@ uint64_t interleavedOrder(Kmer &kmer, int minimiserPos) {
         mask = (mask << 4) + 0b1111;
     }
 
-    if(prefixIsSmaller) { //We recover the end of the suffix
+    if (prefixIsSmaller) { //We recover the end of the suffix
         for (; i < max; i++) {
             finalValue = (finalValue << 2) +
                          kmer.getSubKmer(minimiserPos + i, minimiserPos + i).getValue();
@@ -47,7 +48,7 @@ uint64_t interleavedOrder(Kmer &kmer, int minimiserPos) {
         for (; i < max; i++) {
             finalValue <<= 2;
             finalValue = (finalValue << 2)
-                    + kmer.getSubKmer(minimiserPos - i - 1, minimiserPos - i - 1).getValue();
+                         + kmer.getSubKmer(minimiserPos - i - 1, minimiserPos - i - 1).getValue();
             mask = (mask << 4) + 0b0011;
         }
     }
@@ -58,21 +59,23 @@ uint64_t interleavedOrder(Kmer &kmer, int minimiserPos) {
 }
 
 /**
- * Compare two Kmers in value
- * @param kmer1 the first Kmer
- * @param kmer2 the second Kmer
- * @return kmer1 < kmer2 in alphabetical order
- */
+* Compare two Kmers in value
+* @param kmer1 the first Kmer
+* @param kmer2 the second Kmer
+* @return kmer1 < kmer2 in alphabetical order
+*/
 bool infId(const Kmer &kmer1, const Kmer &kmer2) {
     return kmer1.getValue() < kmer2.getValue();
 }
 
 /**
- * Compare two Kmers in value
- * @param kmer1 the first Kmer
- * @param kmer2 the second Kmer
- * @return kmer1 == kmer2 in alphabetical order
- */
+* Compare two Kmers in value
+* @param kmer1 the first Kmer
+* @param kmer2 the second Kmer
+* @return kmer1 == kmer2 in alphabetical order
+*/
 bool equalId(const Kmer &kmer1, const Kmer &kmer2) {
     return kmer1.getValue() == kmer2.getValue();
+}
+
 }

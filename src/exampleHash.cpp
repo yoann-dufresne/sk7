@@ -1,10 +1,11 @@
 #include <iostream>
 #include <bitset>
 
-using namespace std;
-
 #include "exampleHash.hpp"
-#include "Minimiser.hpp"
+#include "Minimizer.hpp"
+
+using namespace std;
+using namespace sk7;
 
 /**
  * An hash function based on the order A < C < T < G

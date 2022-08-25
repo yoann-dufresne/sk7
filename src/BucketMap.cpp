@@ -1,55 +1,56 @@
 #include "BucketMap.hpp"
 
+namespace sk7 {
+
 /**
- * Default constructor
- */
+* Default constructor
+*/
 BucketMap::BucketMap() {
-    this->map = new std::unordered_map<uint64_t , sk7::Bucket>();
+    this->map = new std::unordered_map<uint64_t, sk7::Bucket_>();
 };
 
 /// Requests
 
 /**
- * Find the minimizer of a Kmer and interleave it
- * @param kmer the Kmer to prepare for a request
- * @return the value of the minimizer
- */
+* Find the minimizer of a Kmer and interleave it
+* @param kmer the Kmer to prepare for a request
+* @return the value of the minimizer
+*/
 uint64_t minimizer_finder(Kmer kmer) {
-    Minimiser kmerMinimiser = Minimiser(alpha, kmer);
+    Minimizer kmerMinimiser = Minimizer(alpha, kmer);
     return kmerMinimiser.getValue();
 }
 
 
-
 /**
- * Add a Kmer to the proper Bucket
- * @param kmer the Kmer to add
- */
+* Add a Kmer to the proper Bucket_
+* @param kmer the Kmer to add
+*/
 void BucketMap::addKmer(Kmer kmer) {
     uint64_t minimizer = minimizer_finder(kmer);
     try {
         this->map->at(minimizer).addKmer(kmer);
     } catch (const std::out_of_range &e) {
-        sk7::Bucket bucket(minimizer);
+        sk7::Bucket_ bucket(minimizer);
         bucket.addKmer(kmer);
         this->addBucket(bucket);
     }
 }
 
 /**
- * Add a Bucket to this
- * @param bucket the Bucket to add
- */
-void BucketMap::addBucket(sk7::Bucket bucket) {
-    this->map->insert(std::pair<uint64_t, sk7::Bucket> (bucket.minimiser, bucket));
+* Add a Bucket_ to this
+* @param bucket the Bucket_ to add
+*/
+void BucketMap::addBucket(sk7::Bucket_ bucket) {
+    this->map->insert(std::pair<uint64_t, sk7::Bucket_>(bucket.minimiser, bucket));
 }
 
 /**
- * Find a Kmer in the correct bucket
- * @param kmer the Kmer to search
- * @param position a reference to an int to store the found position of kmer in its Bucket
- * @return true if kmer was present, false otherwise
- */
+* Find a Kmer in the correct bucket
+* @param kmer the Kmer to search
+* @param position a reference to an int to store the found position of kmer in its Bucket_
+* @return true if kmer was present, false otherwise
+*/
 bool BucketMap::find(Kmer kmer, int &position) const {
     try {
         std::cout << "minimizer " << std::bitset<20>(minimizer_finder(kmer)) << std::endl;
@@ -62,10 +63,11 @@ bool BucketMap::find(Kmer kmer, int &position) const {
 }
 
 /**
- * Destructor
- */
+* Destructor
+*/
 BucketMap::~BucketMap() {
     map->erase(map->begin(), map->cend());
     delete map;
 }
 
+}

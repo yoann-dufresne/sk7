@@ -126,7 +126,7 @@ const test bucketTest[] {
         SuperKmer SK2 = SuperKmer({0b01010111, 0b01101001, 0b00000111, 0b01101000, 0b11000000});
         SuperKmer SK3 = SuperKmer({0b01100110, 0b11101110, 0b01110011, 0b00111000});
 
-        Bucket bucket(0);
+        Bucket_ bucket(0);
         bucket.addToList(SK2);
         bucket.addToList(SK1);
         bucket.addToList(SK3);
@@ -157,12 +157,12 @@ const test bucketTest[] {
     },
     CASE("isSorted") {
 
-        Bucket bucket(0);
+        Bucket_ bucket(0);
         bucket.addToList(SuperKmer({0b01010111, 0b01101001, 0b00000111, 0b01101000, 0b11000000}));
         bucket.addToList(SuperKmer({0b10101010, 0b11011010, 0b01010011, 0b00111000, 0b01111110, 0b11010000}));
         bucket.addToList(SuperKmer({0b01100110, 0b11101110, 0b01110011, 0b00111000}));
 
-        Bucket spaced = Bucket(0);
+        Bucket_ spaced = Bucket_(0);
         spaced.addToList(SuperKmer({0b01010111, 0b01101001, 0b00000111, 0b01101000, 0b11000000}));
         spaced.addToList(SuperKmer({0b10101010, 0b11011010, 0b01010011, 0b00111000, 0b01111110, 0b11010000}));
         spaced.addToList(SuperKmer({0b01100110, 0b11101110, 0b01110011, 0b00111000}));
@@ -177,7 +177,7 @@ const test bucketTest[] {
         SuperKmer SK2 = SuperKmer({0b01010111, 0b01101001, 0b00000111, 0b01101000, 0b11000000});
         SuperKmer SK3 = SuperKmer({0b01100110, 0b11101110, 0b01110011, 0b00111000});
 
-        Bucket bucket(0);
+        Bucket_ bucket(0);
         bucket.addToList(SK2);
         bucket.addToList(SK1);
         bucket.addToList(SK3);
@@ -217,7 +217,7 @@ const test bucketTest[] {
     },
     CASE("SKtoKmer") {
 
-        Bucket bucket = Bucket(0);
+        Bucket_ bucket = Bucket_(0);
         EXPECT(bucket.SKtoKmer(SuperKmer({0b01010101, 0b01001010, 0b00100100, 0b01010000})).getValue() == (uint64_t) 0b010010100000000000000110000101);
         EXPECT(bucket.SKtoKmer(SuperKmer({0b01000110, 0b01111001, 0b00000111, 0b01001000})).getValue() == (uint64_t) 0b110001110000000000011000010110);
 
@@ -229,7 +229,7 @@ const test bucketTest[] {
         SuperKmer SK2 = SuperKmer({0b01010111, 0b01101001, 0b00000111, 0b01101000, 0b11000000});
         SuperKmer SK3 = SuperKmer({0b01100110, 0b11101110, 0b01110011, 0b00111000});
 
-        Bucket bucket(0);
+        Bucket_ bucket(0);
 
         bucket.addSuperKmer(SK3);
         EXPECT(bucket.getListSize() == (uint64_t) 1);
@@ -250,9 +250,9 @@ const test bucketTest[] {
     },
 
     CASE("Intersection") {
-        Bucket bucket1 = Bucket(0);
-        Bucket bucket2 = Bucket(0);
-        Bucket bucket3 = Bucket(0);
+        Bucket_ bucket1 = Bucket_(0);
+        Bucket_ bucket2 = Bucket_(0);
+        Bucket_ bucket3 = Bucket_(0);
 
 //            int position;
 
@@ -287,16 +287,16 @@ const test bucketTest[] {
         EXPECT((bucket1 & bucket3).getListSize() == (uint64_t) 4);
         EXPECT((bucket1 & bucket3).isSorted());
 
-        Bucket empty = Bucket(0);
+        Bucket_ empty = Bucket_(0);
         EXPECT((bucket1 & empty).getListSize() == (uint64_t) 0);
 
 
     },
 
     CASE("Union") {
-        Bucket bucket1 = Bucket(0);
-        Bucket bucket2 = Bucket(0);
-        Bucket bucket3 = Bucket(0);
+        Bucket_ bucket1 = Bucket_(0);
+        Bucket_ bucket2 = Bucket_(0);
+        Bucket_ bucket3 = Bucket_(0);
 
         bucket1.addToList(SuperKmer({0b01010111, 0b01101001, 0b00000111, 0b01101000, 0b11000000}));
         bucket1.addToList(SuperKmer({0b10101010, 0b11011010, 0b01010011, 0b00111000, 0b01111110, 0b11010000}));
@@ -313,7 +313,7 @@ const test bucketTest[] {
         EXPECT(bucket2.isSorted());
 
 //        cout << "---- 1 | 2 ----" << endl;
-        Bucket test12 = bucket1 | bucket2;
+        Bucket_ test12 = bucket1 | bucket2;
 //        test12.print();
         EXPECT(test12.getListSize() == (uint64_t) 23);
         EXPECT(test12.isSorted());
@@ -327,7 +327,7 @@ const test bucketTest[] {
         EXPECT(bucket3.isSorted());
 
 //        cout << "------ 1 | 3 --------" << endl;
-        Bucket bucket13 = bucket1 | bucket3;
+        Bucket_ bucket13 = bucket1 | bucket3;
 //        bucket13.print();
         EXPECT(bucket13.getListSize() == (uint64_t) 17);
         EXPECT(bucket13.isSorted());
@@ -335,9 +335,9 @@ const test bucketTest[] {
     },
 
     CASE("Symmetrical differnce") {
-        Bucket bucket1 = Bucket(0);
-        Bucket bucket2 = Bucket(0);
-        Bucket bucket3 = Bucket(0);
+        Bucket_ bucket1 = Bucket_(0);
+        Bucket_ bucket2 = Bucket_(0);
+        Bucket_ bucket3 = Bucket_(0);
 
         bucket1.addToList(SuperKmer({0b01010111, 0b01101001, 0b00000111, 0b01101000, 0b11000000}));
         bucket1.addToList(SuperKmer({0b10101010, 0b11011010, 0b01010011, 0b00111000, 0b01111110, 0b11010000}));
@@ -354,7 +354,7 @@ const test bucketTest[] {
         EXPECT(bucket2.isSorted());
 
 //        cout << "---- 1 ^ 2 ----" << endl;
-        Bucket test12 = bucket1 ^ bucket2;
+        Bucket_ test12 = bucket1 ^ bucket2;
 //        test12.print();
         EXPECT(test12.getListSize() == (uint64_t) 12);
         EXPECT(test12.isSorted());
@@ -368,7 +368,7 @@ const test bucketTest[] {
         EXPECT(bucket3.isSorted());
 
 //        cout << "------ 1 ^ 3 --------" << endl;
-        Bucket bucket13 = bucket1 ^ bucket3;
+        Bucket_ bucket13 = bucket1 ^ bucket3;
 //        bucket13.print();
         EXPECT(bucket13.getListSize() == (uint64_t) 13);
         EXPECT(bucket13.isSorted());

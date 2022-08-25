@@ -3,7 +3,7 @@ add_compile_options(-Ofast)
 add_library(sk7
     Kmer.cpp
     exampleHash.cpp
-    Minimiser.cpp
+        Minimizer.cpp
     utils.cpp
     SuperKmer.cpp
     Bucket.cpp

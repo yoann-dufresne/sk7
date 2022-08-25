@@ -6,13 +6,13 @@
 
 #include "SuperKmer.hpp"
 #include "Kmer.hpp"
-#include "Minimiser.hpp"
+#include "Minimizer.hpp"
 #include "exampleHash.hpp"
 #include "utils.hpp"
 
 namespace sk7 {
 
-    class Bucket {
+    class Bucket_ {
 
     private:
         /// Attributes
@@ -25,9 +25,9 @@ namespace sk7 {
         uint64_t minimiser;
 
         /// Constructor
-        Bucket(uint64_t minimiserValue);
+        Bucket_(uint64_t minimiserValue);
 
-        Bucket();
+        Bucket_();
 
         /// Add or request methods
         void addToList(SuperKmer superKmer);
@@ -41,9 +41,9 @@ namespace sk7 {
         std::vector<SuperKmer> getListCopy();
 
         /// Operator overloading
-        Bucket operator|(const Bucket &toAdd); // Union
-        Bucket operator&(Bucket &toIntersect); // Intersection
-        Bucket operator^(const Bucket &toXor); // Symmetrical difference
+        Bucket_ operator|(const Bucket_ &toAdd); // Union
+        Bucket_ operator&(Bucket_ &toIntersect); // Intersection
+        Bucket_ operator^(const Bucket_ &toXor); // Symmetrical difference
 
         /// Intern functions
         Kmer SKtoKmer(SuperKmer superKmer);
@@ -54,12 +54,10 @@ namespace sk7 {
 
         /// Misc.
         bool isSorted();
-
         void print();
 
         /// WIP
-        static Bucket chainedUnion(Bucket bucket1, Bucket bucket2);
-
+        static Bucket_ chainedUnion(Bucket_ bucket1, Bucket_ bucket2);
         static bool compatible(const SuperKmer &SK1, const SuperKmer &SK2);
 
     };

@@ -59,7 +59,7 @@ void Kff_scanner::preparation() {
 
     std::filesystem::create_directory("sk7_tmp/");
 
-    if (not bucketed) { // the file was not bucketed, call Bucket from Kff-tools
+    if (not bucketed) { // the file was not bucketed, call Bucket_ from Kff-tools
         auto bucket = new Bucket(this->file_path, "sk7_tmp/bucket_tmp", this->m);
         bucket->exec();
         delete bucket;
@@ -67,7 +67,7 @@ void Kff_scanner::preparation() {
     }
 
 
-    if (not sorted) { // the file was not sorted, call Bucket from Kff-tools
+    if (not sorted) { // the file was not sorted, call Bucket_ from Kff-tools
         auto compact = new Compact(this->file_path, "sk7_tmp/compact_tmp", true);
         compact->exec();
         delete compact;
@@ -81,12 +81,12 @@ void Kff_scanner::preparation() {
 
 /**
  * Read the content of a kff file
- * @return a map of Bucket where the keys are the minimizer value
+ * @return a map of Bucket_ where the keys are the minimizer value
  */
 BucketMap* Kff_scanner::readAll() {
 
     BucketMap* result = new BucketMap();
-    std::pair<uint64_t , sk7::Bucket> pair;
+    std::pair<uint64_t , sk7::Bucket_> pair;
 
     while(file->tellp() < file->end_position) {
         char section_name = file->read_section_type();
@@ -106,9 +106,9 @@ uint64_t decodeMinimiser(uint8_t * encoded, size_t size);
 SuperKmer decodeSuperKmer(uint8_t * encoded, size_t size, int64_t mini_pos);
 /**
  * Read a minimiser section and build a bucket
- * @return a Bucket containing the SuperKmers in the section
+ * @return a Bucket_ containing the SuperKmers in the section
  */
-sk7::Bucket Kff_scanner::readMinimiserSection() {
+sk7::Bucket_ Kff_scanner::readMinimiserSection() {
 
     // memory to read
     uint8_t * seq = new uint8_t[(max + k) / 8 + 1];
@@ -119,7 +119,7 @@ sk7::Bucket Kff_scanner::readMinimiserSection() {
     // creating the corresponding bucket
     Section_Minimizer sm = Section_Minimizer(file);
     uint64_t minimiser = decodeMinimiser(sm.minimizer, m);
-    sk7::Bucket result = sk7::Bucket(minimiser);
+    sk7::Bucket_ result = sk7::Bucket_(minimiser);
 
     for (uint64_t i=0 ; i<sm.nb_blocks ; i++) {
         uint64_t mini_pos;

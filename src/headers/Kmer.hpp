@@ -5,49 +5,50 @@
 #include <string>
 #include <cmath>
 
+#include "utils.hpp"
+
+/// namespace for share use of variables or initialisation
+namespace sk7 {
 
 typedef unsigned __int128 uint128_t;
 
 class Kmer {
 
-protected:
-    uint128_t value;
+    protected:
+        uint128_t value;
 
-public:
-    /// Attributes
-    ushort length;
+    public:
+        /// Attributes
+        ushort length;
 
-    /// Constructor
-    Kmer();
-    Kmer(uint128_t value);
-    Kmer(uint128_t value, ushort length);
+        /// Constructor
+        Kmer();
+        Kmer(uint128_t value);
+        Kmer(uint128_t value, ushort length);
 
-    /// Getter
-    uint128_t getValue() const;
-    ushort getLength() const;
+        /// Getter
+        uint128_t getValue() const;
+        ushort getLength() const;
 
-    /// Utils
-    Kmer getSubKmer(int start, int end);
-    Kmer removePart(int pos, int fragLength);
-    Kmer reverseComplement();
+        /// Utils
+        Kmer getSubKmer(int start, int end);
+        Kmer removePart(int pos, int fragLength);
+        Kmer reverseComplement();
 
-    /// Operator / Comparator
-    bool operator<(const Kmer &toCompare) const;
-    bool operator==(const Kmer &toCompare) const;
-    bool operator!=(const Kmer &toCompare) const;
-    bool operator>(const Kmer &toCompare) const;
-    bool operator>=(const Kmer &toCompare) const;
-    static bool fullComparison(const Kmer &, const Kmer &);
+        /// Operator / Comparator
+        bool operator<(const Kmer &toCompare) const;
+        bool operator==(const Kmer &toCompare) const;
+        bool operator!=(const Kmer &toCompare) const;
+        bool operator>(const Kmer &toCompare) const;
+        bool operator>=(const Kmer &toCompare) const;
+        static bool fullComparison(const Kmer &, const Kmer &);
 
-    /// Misc.
-    std::string toString();
+        /// Misc.
+        std::string toString();
 
-};
+    };
 
-#include "utils.hpp"
 
-/// namespace for share use of variables or initialisation
-namespace sk7 {
     extern int k;
     extern int m;
     extern int fixBitSize;
