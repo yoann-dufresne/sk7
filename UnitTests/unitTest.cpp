@@ -126,7 +126,7 @@ const test minimiser[] {
         EXPECT(Kmer::fullComparison(testKmer2, Kmer(0b0111000101100111)));
 
         EXPECT(minimiser3.getValue() == (uint64_t) 0b011101);
-        EXPECT(minimiser3.getPos() == 0);
+        EXPECT(minimiser3.getPos() == 2);
         EXPECT(Kmer::fullComparison(testKmer3, Kmer(0b0111011101110111)));
 
         EXPECT(minimiser4.getValue() == (uint64_t) 0b000101);
@@ -222,13 +222,7 @@ const test utilsTest[] {
         EXPECT(mask3 == (uint64_t) 0b111100110011);
         EXPECT(mask4 == (uint64_t) 0b111111111100);
 
-        },
-        CASE ("reorderValue") {
-        EXPECT(reorderValue(0b01101100, 1,2) == (uint64_t) 0b10000111);
-        EXPECT(reorderValue(0b01101101, 2,2) == (uint64_t) 0b01100111);
-        EXPECT(reorderValue(0b01110010, 2,1) == (uint64_t) 0b10110100);
-        EXPECT(reorderValue(0b0110, 1,1) == (uint64_t) 0b1001);
-    }
+        }
 };
 
 const test superKmerTest[] {

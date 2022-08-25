@@ -34,6 +34,7 @@ public:
     /// Operator / Comparator
     bool operator<(const Kmer &toCompare) const;
     bool operator==(const Kmer &toCompare) const;
+    bool operator!=(const Kmer &toCompare) const;
     bool operator>(const Kmer &toCompare) const;
     bool operator>=(const Kmer &toCompare) const;
     static bool fullComparison(const Kmer &, const Kmer &);

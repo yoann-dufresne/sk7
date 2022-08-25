@@ -114,10 +114,11 @@ ushort Kmer::getLength() const{
  */
 Kmer Kmer::getSubKmer(int start, int end) {
     uint64_t mask = (1 << ((this->length - start) * 2)) - 1;
-    int decalage = ((this->length - end - 1) * 2);
-    mask = mask >> decalage;
-    mask = mask << decalage;
-    return Kmer((this->value & mask) >> decalage, end - start + 1);
+    int shift = ((this->length - end - 1) * 2);
+    // set the 0s of the mask
+    mask = mask >> shift;
+    mask = mask << shift;
+    return Kmer((this->value & mask) >> shift, end - start + 1);
 }
 
 /**
@@ -169,6 +170,15 @@ bool Kmer::operator<(const Kmer &toCompare) const {
  */
 bool Kmer::operator==(const Kmer &toCompare) const {
     return sk7::equalKmer(*this, toCompare);
+}
+
+/**
+ * Difference between two Kmers with a personalized function
+ * @param ToCompare the Kmer to compare with
+ * @return true if the Kmers are the same (for the given function), else false
+ */
+bool Kmer::operator!=(const Kmer &toCompare) const {
+    return not (*this == toCompare);
 }
 
 /**

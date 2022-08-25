@@ -10,6 +10,7 @@ void help() {
                  "Options :\n"
                  "\t-h : show this message and exit"
                  "\t-i <input_path> : indicate the input path REQUIRED\n"
+                 "\t-k <kmer_file_path> : indicate the path to a file containing Kmers to test, 1 Kmer per line"
                  "\t-b : put if the input is already a bucketed kff file"
                  "\t-m <m> : specifies the wanted minimizer length, REQUIRED if -b not present\n"
                  "\t-s : the input is sorted" << std::endl;
@@ -36,20 +37,22 @@ Kmer read_kmer(const string &line) {
     return Kmer(value);
 }
 
-void search_kmer_from_file(const uint64_t &n, BucketMap* &map) {
+void search_kmer_from_file(BucketMap* &map, char* kmer_file) {
     ifstream file;
-    file.open("kmers.txt");
+    file.open(kmer_file);
     string line;
     int position;
-    uint i = 0;
-    while(getline(file, line) && i++ < n){
-//        cout << "###\nSearching : " << read_kmer(line).toString() << endl;
+    uint64_t i = 0;
+    while(getline(file, line)) {
+        cout << "###\nSearching : " << read_kmer(line).toString() << endl;
         if (not map->find(read_kmer(line), position)) {
             cout << "i = " << i << " not found = " << read_kmer(line).toString() << endl;
             cout << "position = " << position << endl;
             exit(1);
         }
+        i++;
     }
+    file.close();
 }
 
 int main(int argc, char** argv) {
@@ -58,15 +61,19 @@ int main(int argc, char** argv) {
     bool bucketed = false;
     bool sorted = false;
     char* input_name;
+    char* kmer_name;
     bool set_input = false;
     int m = -1;
 
     /// Parse options
     int c;
-    while((c = getopt(argc, argv, "bsm:i:h")) != -1) {
+    while((c = getopt(argc, argv, "bshm:i:k:")) != -1) {
         switch (c) {
             case 'h':
                 help();
+                break;
+            case 'k':
+                kmer_name = optarg;
                 break;
             case 'i':
                 input_name = optarg;
@@ -78,6 +85,7 @@ int main(int argc, char** argv) {
             case 's':
                 bucketed = true;
                 sorted = true;
+                break;
             case 'm':
                 m = atoi(optarg);
                 break;
@@ -93,6 +101,7 @@ int main(int argc, char** argv) {
                 else {
                     cerr << "Unknown character" << endl;
                 }
+                break;
             default:
                 abort();
         }
@@ -109,7 +118,7 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    /// Lunch the read
+    /// Launch the read
     Kff_scanner* scanner = new Kff_scanner(input_name, m, bucketed, sorted);
     BucketMap* read = scanner->readAll();
     delete scanner;
@@ -128,7 +137,7 @@ int main(int argc, char** argv) {
 
     /// good searches
     cout << "--- deterministic searches ---" << endl;
-    search_kmer_from_file(UINT64_MAX, read);
+    search_kmer_from_file(read, kmer_name);
 
     /// Free memory
     delete read;

@@ -59,7 +59,7 @@ void Kff_scanner::preparation() {
 
     std::filesystem::create_directory("sk7_tmp/");
 
-    if (not bucketed) {
+    if (not bucketed) { // the file was not bucketed, call Bucket from Kff-tools
         auto bucket = new Bucket(this->file_path, "sk7_tmp/bucket_tmp", this->m);
         bucket->exec();
         delete bucket;
@@ -67,7 +67,7 @@ void Kff_scanner::preparation() {
     }
 
 
-    if (not sorted) {
+    if (not sorted) { // the file was not sorted, call Bucket from Kff-tools
         auto compact = new Compact(this->file_path, "sk7_tmp/compact_tmp", true);
         compact->exec();
         delete compact;
@@ -90,7 +90,7 @@ BucketMap* Kff_scanner::readAll() {
 
     while(file->tellp() < file->end_position) {
         char section_name = file->read_section_type();
-        if (section_name == 'm') {
+        if (section_name == 'm') { // reading only sections m
             result->addBucket(readMinimiserSection());
         }
 
@@ -110,11 +110,13 @@ SuperKmer decodeSuperKmer(uint8_t * encoded, size_t size, int64_t mini_pos);
  */
 sk7::Bucket Kff_scanner::readMinimiserSection() {
 
+    // memory to read
     uint8_t * seq = new uint8_t[(max + k) / 8 + 1];
     memset(seq, 0, (max + k) / 8 + 1);
     uint8_t * data = new uint8_t[max * data_size];
     memset(data, 0, max * data_size);
 
+    // creating the corresponding bucket
     Section_Minimizer sm = Section_Minimizer(file);
     uint64_t minimiser = decodeMinimiser(sm.minimizer, m);
     sk7::Bucket result = sk7::Bucket(minimiser);
@@ -126,7 +128,7 @@ sk7::Bucket Kff_scanner::readMinimiserSection() {
         result.addToList(SK);
     }
 
-
+    // free memory
     delete[] seq;
     delete[] data;
 

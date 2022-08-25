@@ -1,5 +1,7 @@
 #include "Minimiser.hpp"
 
+using namespace std;
+
 /**
  * Constructor for the minimiser of a given kmer
  * @param hashFunction a function that gives an value to a mmer
@@ -25,6 +27,7 @@ Minimiser::Minimiser(hashPos (*hashFunction)(Kmer, ushort), Kmer &kmer) {
     hashPos hash = hashFunction(kmer, sk7::m);
     hashPos hashRev = hashFunction(reverse, sk7::m);
 
+    // choice by Minimizer value
     if (hash.hashValue < hashRev.hashValue) {
         this->value = hash.hashValue;
         this->pos = hash.pos;
@@ -37,23 +40,14 @@ Minimiser::Minimiser(hashPos (*hashFunction)(Kmer, ushort), Kmer &kmer) {
         return;
     }
 
-    /// TMP
-//    std::cout << "pos = " << hash.pos << " rev pos = " << hashRev.pos << std::endl;
-//    if (hash.pos <= hashRev.pos) {
-        this->value = hash.hashValue;
-        this->pos = hash.pos;
-//    } else {
-//        this->value = hashRev.hashValue;
-//        this->pos = hashRev.pos;
-//        kmer = reverse;
-//    }
-
-    return;
-    /// END TMP
-
     // same minimiser value, compare distance to middle
-    int dist = abs(hash.pos - (sk7::k - 1) / 2);
-    int distRev = abs(hashRev.pos - (sk7::k - 1) / 2);
+    int dist;
+    int distRev;
+    int middle = (sk7::k - sk7::m) / 2;
+
+    dist = abs(hash.pos - middle);
+    distRev = abs(hashRev.pos - middle);
+
     if (dist < distRev) {
         this->value = hash.hashValue;
         this->pos = hash.pos;
@@ -66,24 +60,19 @@ Minimiser::Minimiser(hashPos (*hashFunction)(Kmer, ushort), Kmer &kmer) {
         return;
     }
 
-    // position and value equivalent, compare interleave
-    Kmer withoutMinimiser = kmer.removePart(hash.pos, sk7::m);
-    interleavedOrder(withoutMinimiser, hash.pos);
-    Kmer withoutMinimiserRev = reverse.removePart(hashRev.pos, sk7::m);
-    interleavedOrder(withoutMinimiserRev, hash.pos);
-    if (withoutMinimiser.getValue() < withoutMinimiserRev.getValue()) {
+    // position and value equivalent, compare alphabetical order A < C < G < T
+    if (kmer.getValue() < reverse.getValue()) {
         this->value = hash.hashValue;
         this->pos = hash.pos;
         return;
     }
 
-    if(withoutMinimiser.getValue() > withoutMinimiserRev.getValue()) {
+    if(kmer.getValue() > reverse.getValue()) {
         this->value = hashRev.hashValue;
         this->pos = hashRev.pos;
         kmer = reverse;
         return;
     }
-
 
     this->value = hash.hashValue;
     this->pos = hash.pos;

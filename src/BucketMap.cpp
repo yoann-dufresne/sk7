@@ -14,7 +14,7 @@ BucketMap::BucketMap() {
  * @param kmer the Kmer to prepare for a request
  * @return the value of the minimizer
  */
-uint64_t minimizer_finder(Kmer& kmer) {
+uint64_t minimizer_finder(Kmer kmer) {
     Minimiser kmerMinimiser = Minimiser(alpha, kmer);
     return kmerMinimiser.getValue();
 }
@@ -51,10 +51,9 @@ void BucketMap::addBucket(sk7::Bucket bucket) {
  * @return true if kmer was present, false otherwise
  */
 bool BucketMap::find(Kmer kmer, int &position) const {
-//    std::cout << "-----" << std::endl;
     try {
-//        std::cout << Kmer(minimizer_finder(kmer), sk7::m).toString() << std::endl;
-//        this->map->at(minimizer_finder(kmer)).print();
+        std::cout << "minimizer " << std::bitset<20>(minimizer_finder(kmer)) << std::endl;
+        this->map->at(minimizer_finder(kmer)).print();
         return this->map->at(minimizer_finder(kmer)).find(kmer, position);
     } catch (const std::out_of_range &e) {
         std::cout << "minimizer not found : " << Kmer(minimizer_finder(kmer), sk7::m).toString() << std::endl;

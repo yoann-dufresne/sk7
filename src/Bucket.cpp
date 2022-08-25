@@ -51,19 +51,14 @@ bool Bucket::find(Kmer kmer, int &position) {
     ///PREPARATION OF THE SEARCH
     Minimiser kmerMinimiser = Minimiser(alpha, kmer);
     Kmer withoutMinimiser = kmer.removePart(kmerMinimiser.getPos(), sk7::m);
-
 //    cout << "no interleave = " << withoutMinimiser.toString() << " len = " << withoutMinimiser.getLength() << " mini pos = " << kmerMinimiser.getPos() << endl;
-
     interleavedOrder(withoutMinimiser, kmerMinimiser.getPos());
-
 //    cout << "striped and interleaved: " << withoutMinimiser.toString() << " of value : " << bitset<128>(withoutMinimiser.getValue()) << endl;
-
     int prefixLen = kmerMinimiser.getPos();
-
     ///START OF THE BINARY SEARCH
     int start = 0;
     int end = this->orderedList.size() - 1;
-    bool infoFound = true;
+    bool infoFound = true; // did we find info during the last loop
     int lastPositionWithInformation;
     int lastStartWithInformation = 0;
     bool lastWasSuperior = false;
