@@ -139,26 +139,7 @@ const test minimiser[] {
 
         sk7::initLib(5, 3);
     },
-        CASE("Minimizer from previous one : ") {
-        Kmer testKmer1 = Kmer(0b0100101010, 5); // CATTT
-        Kmer testKmer2 = Kmer(0b0010101011, 5); // ATTTG
-        Kmer testKmer3 = Kmer(0b1010101101, 5); // TTTGC
-        Kmer testKmer4 = Kmer(0b1010110100, 5); // TTGCA
-        Kmer testKmer5 = Kmer(0b1011010010, 5); // TGCAT
 
-        Minimizer minimiser = Minimizer(alpha, 3);
-        minimiser.init(testKmer1); //ATT
-        EXPECT(minimiser.getValue() == (uint64_t) 0b001010);
-        minimiser.fromNewEnd(testKmer2); // ATT
-        EXPECT(minimiser.getValue() == (uint64_t) 0b001010);
-        minimiser.fromNewEnd(testKmer3); // TTT
-        EXPECT(minimiser.getValue() == (uint64_t) 0b101010);
-        minimiser.fromNewEnd(testKmer4); // TTG
-        EXPECT(minimiser.getValue() == (uint64_t) 0b101011);
-        minimiser.fromNewEnd(testKmer5); // CAT
-        EXPECT(minimiser.getValue() == (uint64_t) 0b010010);
-
-    }
 };
 
 const test kmerTest[] {

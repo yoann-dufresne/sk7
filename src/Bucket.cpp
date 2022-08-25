@@ -146,7 +146,7 @@ void Bucket_::addKmer(Kmer kmer) {
 //        cout << "position find = " << position << endl;
         auto itPos = orderedList.begin() + position;
         // We build a superKmer from the kmer and put it in the bucket
-        Minimizer minimiserKmer = Minimizer(alpha, sk7::m, kmer);
+        Minimizer minimiserKmer = Minimizer(alpha, kmer);
         Kmer withoutMinimiser = kmer.removePart(minimiserKmer.getPos(), sk7::m);
         interleavedOrder(withoutMinimiser, minimiserKmer.getPos());
 

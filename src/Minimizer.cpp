@@ -10,8 +10,11 @@ namespace sk7 {
 * @param length the wanted length of the minimiser
 * @param kmer the initial kmer
 */
-Minimizer::Minimizer(hashPos (*hashFunction)(Kmer, ushort), ushort length, Kmer kmer) : Minimizer(hashFunction,length) {
-    init(kmer);
+Minimizer::Minimizer(hashPos (*hashFunction)(Kmer, ushort), ushort length, Kmer kmer) {
+        this->length = length;
+        hashPos retHash = hashFunction(kmer, this->length);
+        this->value = retHash.hashValue;
+        this->pos = retHash.pos;
 }
 
 /**
@@ -82,47 +85,6 @@ Minimizer::Minimizer(hashPos (*hashFunction)(Kmer, ushort), Kmer &kmer) {
 }
 
 
-/**
-* Constructor for a minimiser for a sequence of kmer
-* @param hashFunction a function that gives an whole value to a mmer
-* @param length the wanted length of the minimiser
-*/
-Minimizer::Minimizer(hashPos (*hashFunction)(Kmer, ushort), ushort length) {
-    this->hashFunction = hashFunction;
-    this->length = length;
-    this->value = 0;
-    this->pos = 0;
-}
-
-/**
-* Initialise value with the hash of the given kmer
-* @param kmer the initializer
-*/
-void Minimizer::init(Kmer kmer) {
-    hashPos retHash = hashFunction(kmer, this->length);
-    this->value = retHash.hashValue;
-    this->pos = retHash.pos;
-}
-
-/**
-* Found the new minimiser depending on the new end
-* @param kmer the current kmer to minimise
-*/
-void Minimizer::fromNewEnd(Kmer kmer) {
-    if (pos == 0) { //Forced change of the minimiser
-        this->init(kmer);
-        return;
-    }
-    Kmer end = kmer.getSubKmer(kmer.getLength() - length, kmer.getLength() - 1);
-    hashPos retHash = hashFunction(end, length);
-    uint64_t end_val = retHash.hashValue;
-    if (end_val < this->value) { //The new ending is the minimiser
-        this->value = end_val;
-        this->pos = kmer.getLength() - length;
-    } else {
-        this->pos--; //We keep the same minimiser but its position shift
-    }
-}
 
 /**
 * Getter for the minimiser value

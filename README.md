@@ -14,7 +14,7 @@ to ensure minimizer compatibility.
 
 ## How to use the library
 
-All the library content is in a namespace named sk7.
+All the library content is in a namespace named sk7 (except Kff_scanner).
 
 ### Input
 
@@ -76,6 +76,21 @@ be careful to the size of the data).
 
 The print function prints the nucleotides in interleave order too.
 
+#### Minimizer
+
+A class that contains a m-mer stored as an uint64_t. The constructor takes a function as a parameter that must return a 
+struct HashPos with the value of the found minimizer and its position (the default function alpha is available in 
+exampleHash.cpp), allowing to compare with the reverse complement.
+
 #### Bucket_
 
-A Bucket_ is a set (represented as )
+A Bucket_ is a set (represented as vector of SuperKmer). It's support binary search of a Kmer.
+The addToList method doesn't guaranty the order, so to add a Kmer use AddKmer or AddSuperKmer.
+It supports intersection, union and symmetrical difference that break the compaction in SuperKmer.
+The chainedUnion method is a union that keep compaction but is still experimental.
+The print method allows to print every SuperKmer in the bucket in the order they're stored.
+
+#### BucketMap
+
+A BucketMap index every Bucket_ contained in its map attribute. It can search for a Kmer or add a Kmer in the right
+Bucket_.

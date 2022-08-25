@@ -21,12 +21,9 @@ protected:
     hashPos (*hashFunction)(Kmer, ushort);
 
 public:
-    /// Constructor and related
-    Minimizer(hashPos (*hashFunction)(Kmer, ushort), ushort length);
+    /// Constructor
     Minimizer(hashPos (*hashFunction)(Kmer, ushort), ushort length, Kmer kmer);
     Minimizer(hashPos (*hashFunction)(Kmer, ushort), Kmer &kmer);
-    void init(Kmer kmer);
-    void fromNewEnd(Kmer kmer);
     /// Getter
     uint64_t getValue() const;
     short getPos() const;
