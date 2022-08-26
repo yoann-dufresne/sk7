@@ -3,17 +3,21 @@
 
 #include "Kff_scanner.hpp"
 
+#define RESET   "\033[0m"
+#define RED     "\033[31m"      /* Red */
+
 using namespace std;
 
 void help() {
     std::cout << "Usage : ./apps/main [OPTIONS]\n"
                  "Options :\n"
-                 "\t-h : show this message and exit"
-                 "\t-i <input_path> : indicate the input path REQUIRED\n"
+                 "\t-h : show this message and exit\n"
+                 "\t-i <input_path> : indicate the input path of the Kff file" << RED << " REQUIRED" << RESET << "\n"
                  "\t-k <kmer_file_path> : indicate the path to a file containing Kmers to test, 1 Kmer per line"
-                 "\t-b : put if the input is already a bucketed kff file"
-                 "\t-m <m> : specifies the wanted minimizer length, REQUIRED if -b not present\n"
-                 "\t-s : the input is sorted" << std::endl;
+                 << RED << " REQUIRED" << RESET << "\n"
+                 "\t-b : put if the input is already a bucketed kff file\n"
+                 "\t-m <m> : specifies the wanted minimizer length," << RED << " REQUIRED" << RESET << " if -b not present\n"
+                 "\t-s : the input is sorted\n" << std::endl;
     exit(0);
 }
 
@@ -70,6 +74,8 @@ int main(int argc, char** argv) {
     while((c = getopt(argc, argv, "bshm:i:k:")) != -1) {
         switch (c) {
             case 'h':
+                sk7::initLib(4, 1);
+                cout << Kmer("ACGT").toString() << endl;
                 help();
                 break;
             case 'k':
@@ -115,6 +121,11 @@ int main(int argc, char** argv) {
 
     if (not bucketed && m <= 0) {
         cerr << "An unbucketed input needs ab specified m via -m <m_value> where 1 <= m_value <= 31" << endl;
+        exit(1);
+    }
+
+    if (kmer_name == nullptr) {
+        cerr << "You need to specify a file with the k-mers to search" << endl;
         exit(1);
     }
 

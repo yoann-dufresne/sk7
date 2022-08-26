@@ -25,6 +25,7 @@ class Kmer {
         Kmer();
         Kmer(uint128_t value);
         Kmer(uint128_t value, ushort length);
+        Kmer(std::string seq);
 
         /// Getter
         uint128_t getValue() const;

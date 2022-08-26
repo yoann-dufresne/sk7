@@ -9,8 +9,17 @@ git submodule init
 git submodule update
 ```
 
-Be sure to use the branch debug_compact / compact of the kff-tools submodule,
+For the moment be sure to use the branch debug_compact / compact of the kff-tools submodule,
 to ensure minimizer compatibility.
+
+## Compilation
+
+This is a CMake project with a minimum version of 3.19.
+To compile:
+```shell
+    cmake .
+    make
+```
 
 ## How to use the library
 
@@ -66,8 +75,8 @@ The content of a SuperKmer (see [here](https://hal.archives-ouvertes.fr/hal-0243
 represented as a vector of uint8_t. The nucleotide are sorted in interleaved order, here is an example:
 
 Let's take k = 5 and m = 3:
-GCAAAG -> minimizer = AAA so we store <span style="color:green">G</span><span style="color:red">C</span>
-|<span style="color:blue">G</span> in this order <span style="color:blue">G</span><span style="color:red">C</span>_
+GCAAAT -> minimizer = AAA so we store <span style="color:green">G</span><span style="color:red">C</span>|<span style="color:blue">G</span> 
+in this order <span style="color:blue">T</span><span style="color:red">C</span>_
 <span style="color:green">G</span>
 
 The first `ceil(log2(k - m + 1))` bits of the vector are used to store the prefix and suffix length (in nucleotides), 
@@ -94,3 +103,12 @@ The print method allows to print every SuperKmer in the bucket in the order they
 
 A BucketMap index every Bucket_ contained in its map attribute. It can search for a Kmer or add a Kmer in the right
 Bucket_.
+
+## Testing
+
+Some tests are ready to be run :
+```shell
+    ./UnitTests/unitTest
+    ./UnitTests/unitTest15-5
+    ./UnitTests/unitTestAltComparison
+```
